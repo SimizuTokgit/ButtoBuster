@@ -11,7 +11,7 @@ class GameObject;
 /// <summary>
 /// サウンド一元管理シングルトンクラス
 /// 起動時に Data/Sound/SE, Data/Sound/BGM 配下を再帰走査して
-/// ファイル名（拡張子なし）をキーに AudioClip を保持する。
+/// フォルダ込みの相対パス（拡張子なし）をキーに AudioClip を保持する。
 /// 内部に AudioSource を複数 AddComponent したプールを持ち、
 /// PlaySE / PlayBGM で未使用のものから再生する（Unity 時代の設計を踏襲）。
 /// </summary>
@@ -44,7 +44,7 @@ public:
     /// 同一 SE は INTERVAL 以内の連続呼び出しを無視する。
     /// プール内の未使用 AudioSource がなければ再生されない。
     /// </summary>
-    /// <param name="seName">SE 名（拡張子なしのファイル名）</param>
+    /// <param name="seName">SE 名（Data/Sound/SE からの拡張子なしの相対パス 例 Player/guard_success）</param>
     /// <param name="volumeScale">音量スケール (0.0～1.0)</param>
     void PlaySE(const std::string& seName, float volumeScale = 1.0f);
 
@@ -57,10 +57,6 @@ public:
     void PlayBGM(const std::string& bgmName, float fadeInDuration = 0.0f);
 
     /// <summary>
-    /// 名前指定で BGM を停止する。
-    /// fadeOutDuration > 0 でフェードアウトしてから停止する。
-    /// </summary>
-    /// <summary>
     /// BGMフォルダのクリップをループさせずに一度だけ鳴らす（ジングル用）
     ///
     /// クリア音やゲームオーバー音は BGM と同じフォルダに置かれているが、
@@ -70,6 +66,10 @@ public:
     /// <param name="volumeScale">音量倍率</param>
     void PlayJingle(const std::string& jingleName, float volumeScale = 1.0f);
 
+    /// <summary>
+    /// 名前指定で BGM を停止する。
+    /// fadeOutDuration > 0 でフェードアウトしてから停止する。
+    /// </summary>
     void StopBGM(const std::string& bgmName, float fadeOutDuration = 0.0f);
 
     /// <summary>

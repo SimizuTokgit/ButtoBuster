@@ -34,7 +34,7 @@ public:
     Transform* parent = nullptr;
 
     /// <summary>
-    /// trueの場合、ワールド座標計算で親の変換を無視するお
+    /// trueの場合、ワールド座標計算で親の変換を無視する
     /// BoneFollower等、ワールド値をlocalに直接書き込むコンポーネント用
     /// </summary>
     bool ignoreParentTransform = false;

@@ -2,7 +2,7 @@
 
 /// <summary>
 /// シーン基底クラス
-/// 各シーン（TitleScene, GameScene, ResultScene等）はこれを継承する
+/// 各シーン（TitleScene, GameScene）はこれを継承する
 /// </summary>
 class SceneBase {
 public:

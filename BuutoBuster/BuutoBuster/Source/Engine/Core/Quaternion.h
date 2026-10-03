@@ -158,8 +158,7 @@ struct Quaternion {
 
     /// <summary>
     /// クォータニオン同士の乗算（回転の合成）
-    /// result = this * q （thisの回転の後にqの回転を適用...ではなく
-    /// 親の回転thisの後に子の回転qを適用する場合: parent * child）
+    /// 親の回転に子の回転を重ねるときは parent * child の順に掛ける
     /// </summary>
     Quaternion operator*(const Quaternion& q) const {
         return Quaternion(

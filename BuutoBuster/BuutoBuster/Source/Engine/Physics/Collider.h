@@ -12,7 +12,7 @@ class Collider;
 
 /// <summary>
 /// コライダー基底クラス
-/// CapsuleCollider, SphereCollider等の基底となる
+/// CapsuleCollider, MeshCollider の基底となる
 /// </summary>
 class Collider : public Component {
 public:

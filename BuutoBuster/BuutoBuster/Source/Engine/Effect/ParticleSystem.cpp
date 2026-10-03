@@ -148,7 +148,7 @@ void ParticleSystem::Update(float deltaTime) {
             // フェード区間：残りライフタイム比率を0.0〜1.0にリマップ
             p.alpha = lifeRatio / (1.0f - alphaFadeRatio);
         } else {
-            // alphaFadeRatio=0: 従来通り線形フェード
+            // alphaFadeRatio=0: 最初から線形にフェード
             p.alpha = lifeRatio;
         }
 
