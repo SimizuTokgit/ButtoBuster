@@ -1,0 +1,8 @@
+# Visual Studio が作るファイル
+.vs/
+x64/
+*.user
+
+# 実行すると作られるファイル
+Log.txt
+SaveData.txt
