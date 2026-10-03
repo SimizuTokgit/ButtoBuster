@@ -33,7 +33,7 @@ namespace {
         { "Anim_Blow_Out.mv1",     "BlowOut",     false },
     };
 
-    // 鳴らす時間は Data\Character\Player\Anim_*.txt の Sound の行から取った
+    // 鳴らす時間はアニメのフレーム 足が着く瞬間や剣を振る瞬間に合わせてある
     void RegisterSounds(Animator* animator) {
         using CharacterBuilder::AddSound;
 
@@ -101,7 +101,7 @@ Player* PlayerFactory::Create(VECTOR position) {
     CharacterBuilder::AttachToBone(model, renderer, "wp", "Data/Character/Weapon/Sabel/Sabel.mv1");
     CharacterBuilder::AttachToBone(model, renderer, "sayabone", "Data/Character/Player/Saya.mv1");
 
-    // 刃は wp ボーンから下に 100 伸びている Param.txt の AttackPosInfo0 の値
+    // 刃は wp ボーンから下に 100 伸びている
     auto* trailObject = model->AddChild("SlashTrail");
     auto* trail = trailObject->AddComponent<SlashTrail>();
     trail->trailColor = GetColorU8(170, 220, 255, 255);

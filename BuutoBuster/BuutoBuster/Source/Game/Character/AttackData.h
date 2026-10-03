@@ -3,7 +3,7 @@
 
 // 近接攻撃1つ分の数値
 // 時間はすべてアニメのフレーム 30fps で数える
-// 判定の出る時間は Data の Anim_*.txt の AttackStart と AttackEnd から取った
+// 判定の出る時間は、アニメで武器を振っているフレームに合わせる
 struct AttackData {
     const char* animationName = "";
     float animationSpeed = 1.0f;

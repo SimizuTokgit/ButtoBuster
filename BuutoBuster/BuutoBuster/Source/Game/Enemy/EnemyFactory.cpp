@@ -68,7 +68,7 @@ namespace {
         }
     }
 
-    // 鳴らす時間は Data\Character\<種類>\Anim_*.txt の Sound の行から取った
+    // 鳴らす時間はアニメのフレーム 振りかぶりや踏み込みの動きに合わせてある
     // 振りかぶる声は、見えていなくても「来る」と分かる合図になる
     void RegisterSounds(EnemyKind kind, Animator* animator) {
         using CharacterBuilder::AddSound;

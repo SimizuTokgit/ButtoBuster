@@ -2,7 +2,7 @@
 #include "AttackData.h"
 
 // プレイヤーの技の数値
-// アニメの判定時間は Data\Character\Player\Anim_Attack*.txt から取った
+// 判定の出る時間は、アニメで剣を振っているフレームに合わせてある
 namespace PlayerAttacks {
     constexpr int SLASH_COUNT = 3;
 

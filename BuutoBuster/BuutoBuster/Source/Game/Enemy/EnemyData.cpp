@@ -1,6 +1,6 @@
 ﻿#include "EnemyData.h"
 
-// 攻撃の判定時間は Data\Character\<種類>\Anim_Attack*.txt の AttackStart と AttackEnd から取った
+// 攻撃の判定時間は、アニメで武器を振っているフレームに合わせてある
 namespace {
 
     // 基本の敵 数で押してくる
