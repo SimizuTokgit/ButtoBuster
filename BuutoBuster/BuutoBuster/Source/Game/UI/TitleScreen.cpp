@@ -49,7 +49,7 @@ void TitleScreen::Render() {
         DrawBox(0, 0, screenWidth, screenHeight, 0x0C0C14, TRUE);
     }
 
-    GameFont::DrawCentered(centerX, 110, "SLASH DUEL", 0xFFFFFF, GameFont::Size::Huge);
+    GameFont::DrawCentered(centerX, 110, "BUUTO BUSTER", 0xFFFFFF, GameFont::Size::Huge);
     GameFont::DrawCentered(centerX, 220, "押し寄せる敵の波を 何フェーズ生き残れるか", 0xD0D0D0, GameFont::Size::Small);
 
     char text[64];
