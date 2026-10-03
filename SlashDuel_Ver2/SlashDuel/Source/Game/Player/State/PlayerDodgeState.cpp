@@ -1,0 +1,52 @@
+﻿#include "PlayerDodgeState.h"
+#include "Player.h"
+#include "PlayerActions.h"
+#include "PlayerIdleState.h"
+#include "EffectManager.h"
+#include <memory>
+
+using std::make_unique;
+
+void PlayerDodgeState::Enter(Player& player) {
+    _direction.y = 0.0f;
+    float length = VSize(_direction);
+    _direction = (length > 0.001f) ? VScale(_direction, 1.0f / length) : VScale(player.GetForward(), -1.0f);
+
+    // 前や横へ抜けるときはそちらを向く 後ろへ下がるときは相手を見たまま
+    if (VDot(_direction, player.GetForward()) > -0.5f) {
+        player.FaceImmediately(_direction);
+    }
+
+    player.SetInvincible(INVINCIBLE_TIME);
+    player.SetOpacity(0.45f);
+
+    // 地面を蹴った土煙 どちらへ抜けたかが残る
+    auto* effects = EffectManager::Get();
+    if (effects && player.IsGrounded()) effects->PlayDust(player.GetPosition(), 6);
+
+    // 回避専用のアニメが無いので、踏み切りの動きを速く流して代わりにする
+    // 音もこのアニメに付けてあるものが鳴る
+    player.PlayAnimation("JumpIn", 1.6f, true);
+}
+
+void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float deltaTime) {
+    _timer += deltaTime;
+
+    if (_timer < DASH_TIME) {
+        player.SetKnockback(VScale(_direction, DASH_SPEED));
+        return;
+    }
+
+    player.DampHorizontal(18.0f, deltaTime);
+    player.SetOpacity(1.0f);
+
+    if (_timer < DASH_TIME + RECOVERY_TIME) return;
+
+    if (PlayerActions::TryStart(player, this, input)) return;
+    player.GetStates().Transition(this, make_unique<PlayerIdleState>());
+}
+
+void PlayerDodgeState::Exit(Player& player) {
+    player.SetOpacity(1.0f);
+    player.StopHorizontal();
+}

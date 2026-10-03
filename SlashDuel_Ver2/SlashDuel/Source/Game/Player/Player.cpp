@@ -1,0 +1,187 @@
+﻿#include "Player.h"
+#include "PlayerIdleState.h"
+#include "PlayerDamageState.h"
+#include "PlayerBlowState.h"
+#include "PlayerDeadState.h"
+#include "CharacterRegistry.h"
+#include "EffectManager.h"
+#include "SlashTrail.h"
+#include "SoundManager.h"
+#include "SkinnedMeshRenderer.h"
+#include "GameObject.h"
+#include "Transform.h"
+#include <memory>
+
+namespace {
+    // これより下に落ちたら戻す 地形の穴に落ちたときの保険
+    constexpr float FALL_LIMIT_Y = -1500.0f;
+
+    // 攻撃を吸い付ける相手の範囲 正面から左右 60 度まで
+    constexpr float AIM_DOT = 0.5f;
+}
+
+void Player::Start() {
+    team = Team::Player;
+    maxHp = MAX_HP;
+    hp = MAX_HP;
+    _spawnPosition = GetPosition();
+
+    _states.Start(*this, std::make_unique<PlayerIdleState>());
+}
+
+void Player::Execute(const InputInfo& input, float deltaTime) {
+    UpdateTimers(deltaTime);
+    UpdateCombo(deltaTime);
+
+    _states.Update(*this, input, deltaTime);
+
+    UpdateAnimation(deltaTime);
+    KeepInsideArena();
+}
+
+HitResult Player::TakeHit(const HitInfo& info) {
+    if (IsDead() || IsInvincible() || isCheatInvincible) return HitResult::Ignored;
+
+    auto* effects = EffectManager::Get();
+
+    // 正面から来た攻撃はガードで止める
+    bool isFrontal = GetFacingDot(info.sourcePosition) > GUARD_DOT;
+    if (_isGuarding && info.canGuard && isFrontal) {
+        _isGuardImpact = true;
+        SetKnockback(VScale(info.knockback, 0.35f));
+
+        VECTOR sparkPosition = VAdd(GetCenter(), VScale(GetForward(), 45.0f));
+        if (effects) {
+            // 盾で弾いた火花は正面へ散らす
+            effects->PlayGuard(sparkPosition, GetForward());
+            effects->HitStop(0.04f);
+        }
+        SoundManager::Instance().PlaySE("Player/guard_success");
+        return HitResult::Guarded;
+    }
+
+    hp -= info.damage;
+    _combo = 0;
+    _comboTimer = 0.0f;
+    StartFlash();
+
+    if (effects) {
+        effects->PlayHit(GetCenter(), info.knockback);
+        effects->Shake(4.0f, 0.2f);
+        // 体力を見ていなくても食らったと分かるよう、画面を赤くする
+        effects->FlashScreen(0xC02020, 0.3f, 0.25f);
+    }
+    if (info.hitSound && info.hitSound[0] != '\0') {
+        SoundManager::Instance().PlaySE(info.hitSound);
+    }
+
+    if (hp <= 0) {
+        hp = 0;
+        SoundManager::Instance().PlaySE("Player/VO_J_dmg_blow");
+        _states.ForceTransition(std::make_unique<PlayerDeadState>(info.knockback));
+        return HitResult::Killed;
+    }
+
+    auto* current = _states.GetCurrent();
+    if (info.reaction == HitReaction::Blow) {
+        SoundManager::Instance().PlaySE("Player/blow_B");
+        _states.Transition(current, std::make_unique<PlayerBlowState>(info.knockback));
+    }
+    else {
+        SoundManager::Instance().PlaySE("Player/VO_J_dmg");
+        _states.Transition(current, std::make_unique<PlayerDamageState>(info.knockback));
+    }
+    return HitResult::Hit;
+}
+
+void Player::SetTrailEmitting(bool isEmitting) {
+    if (_trail) _trail->SetEmitting(isEmitting);
+}
+
+bool Player::ConsumeGuardImpact() {
+    bool isImpact = _isGuardImpact;
+    _isGuardImpact = false;
+    return isImpact;
+}
+
+void Player::AddCombo(int hits) {
+    _combo += hits;
+    _comboTimer = COMBO_KEEP_TIME;
+    if (_combo > _maxCombo) _maxCombo = _combo;
+}
+
+void Player::HealFull() {
+    hp = maxHp;
+
+    if (auto* effects = EffectManager::Get()) {
+        effects->PlayHeal(GetCenter());
+        effects->PlayShockwave(GetPosition(), 500.0f, GetColorU8(120, 255, 160, 255));
+        effects->FlashScreen(0x60FF90, 0.3f, 0.4f);
+    }
+    SoundManager::Instance().PlaySE("Player/guard_On");
+}
+
+VECTOR Player::FindAimDirection(VECTOR inputDirection, float searchRadius) const {
+    inputDirection.y = 0.0f;
+    float inputLength = VSize(inputDirection);
+    VECTOR base = (inputLength > 0.2f) ? VScale(inputDirection, 1.0f / inputLength) : GetForward();
+
+    const Character* best = nullptr;
+    float bestDistance = searchRadius;
+
+    for (const Character* other : CharacterRegistry::GetAll()) {
+        if (!other || other->team == team || other->IsDead()) continue;
+
+        VECTOR toOther = VSub(other->GetPosition(), GetPosition());
+        toOther.y = 0.0f;
+        float distance = VSize(toOther);
+        if (distance < 0.001f || distance > bestDistance) continue;
+
+        if (VDot(VScale(toOther, 1.0f / distance), base) < AIM_DOT) continue;
+
+        best = other;
+        bestDistance = distance;
+    }
+
+    if (!best) return base;
+
+    VECTOR toBest = VSub(best->GetPosition(), GetPosition());
+    toBest.y = 0.0f;
+    return toBest;
+}
+
+void Player::SetOpacity(float rate) {
+    if (_renderer && _renderer->ModelHandle != -1) {
+        MV1SetOpacityRate(_renderer->ModelHandle, rate);
+    }
+}
+
+void Player::UpdateCombo(float deltaTime) {
+    if (_comboTimer <= 0.0f) return;
+
+    _comboTimer -= deltaTime;
+    if (_comboTimer <= 0.0f) {
+        _comboTimer = 0.0f;
+        _combo = 0;
+    }
+}
+
+void Player::KeepInsideArena() {
+    VECTOR position = transform->localPosition;
+
+    if (position.y < FALL_LIMIT_Y) {
+        transform->localPosition = _spawnPosition;
+        SetVerticalVelocity(0.0f);
+        return;
+    }
+
+    VECTOR offset = VSub(position, arenaCenter);
+    offset.y = 0.0f;
+    float distance = VSize(offset);
+    if (distance <= arenaRadius) return;
+
+    VECTOR edge = VAdd(arenaCenter, VScale(offset, arenaRadius / distance));
+    position.x = edge.x;
+    position.z = edge.z;
+    transform->localPosition = position;
+}

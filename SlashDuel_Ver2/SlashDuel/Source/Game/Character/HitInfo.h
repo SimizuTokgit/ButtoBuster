@@ -1,0 +1,38 @@
+﻿#pragma once
+#include "DxLib.h"
+
+class Character;
+
+// 攻撃を受けたときの崩れ方
+enum class HitReaction {
+    Flinch,     // その場でのけぞる
+    Blow,       // 吹き飛んで倒れる
+};
+
+// 1回の攻撃が相手に伝える内容
+struct HitInfo {
+    Character* attacker = nullptr;
+
+    // 攻撃が飛んできた場所 ガードの向きの判定に使う
+    // 飛び道具は撃った本人がもう倒れていることがあるので、本人の位置ではなくこれを見る
+    VECTOR sourcePosition = VGet(0.0f, 0.0f, 0.0f);
+
+    int damage = 0;
+    HitReaction reaction = HitReaction::Flinch;
+
+    // 相手を押す向きと強さ 水平
+    VECTOR knockback = VGet(0.0f, 0.0f, 0.0f);
+
+    bool canGuard = true;
+
+    // 当たったときに鳴らす音 武器によって変わる
+    const char* hitSound = "";
+};
+
+// 当てた結果
+enum class HitResult {
+    Ignored,    // 無敵や倒れた後で効かなかった
+    Guarded,
+    Hit,
+    Killed,
+};
