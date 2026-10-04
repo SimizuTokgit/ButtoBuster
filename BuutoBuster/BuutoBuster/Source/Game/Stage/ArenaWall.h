@@ -57,6 +57,7 @@ namespace ArenaWall {
 
     // 吹き飛んでいる体が壁にぶつかったときに呼ぶ
     // 勢いが足りれば、吹っ飛ばされ値が許容値に届いているときは壁を割り、届いていなければ跳ね返す
+    // 倒されない体 (Character::CanBeDefeated が false、デバッグの無敵中) は、届いていても跳ね返す
     // 割ったときは、体を Defeat で場外へ飛ばしてから知らせを出す 演出はその知らせを受けた Observer が出す
     // 跳ね返ったときの速さと手応え (火花 揺れ 音 光の幕) はここで出す 向きやアニメは呼んだ状態が決める
     Reaction React(Character& character, const Hit& hit);

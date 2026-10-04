@@ -33,7 +33,6 @@ private:
     ParticleSystem* _guardSpark = nullptr;
     ParticleSystem* _killBurst = nullptr;
     ParticleSystem* _killEmber = nullptr;
-    ParticleSystem* _deathSmoke = nullptr;
     ParticleSystem* _spawnSmoke = nullptr;
     ParticleSystem* _healLight = nullptr;
     ParticleSystem* _dust = nullptr;
@@ -68,9 +67,6 @@ public:
     void PlayHit(VECTOR position, VECTOR direction);
     void PlayGuard(VECTOR position, VECTOR direction);
 
-    // 倒した瞬間の弾ける光 倒れきったあとの煙は PlayDeath
-    void PlayKill(VECTOR position, VECTOR direction);
-    void PlayDeath(VECTOR position);
     // 地面の位置を渡す 煙は少し上に、輪は地面に出す
     void PlaySpawn(VECTOR groundPosition);
     void PlayHeal(VECTOR position);

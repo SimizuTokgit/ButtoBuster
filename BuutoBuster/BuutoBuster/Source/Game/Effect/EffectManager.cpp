@@ -118,22 +118,6 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _killEmber->color = GetColorU8(255, 90, 180, 255);
     }
 
-    // 倒した敵から立ち上る煙
-    _deathSmoke = CreateSystem("DeathSmoke", _deadGraph);
-    if (_deathSmoke) {
-        _deathSmoke->emissionShape = EmissionShape::Sphere;
-        _deathSmoke->emissionRadius = 40.0f;
-        _deathSmoke->startSizeMin = 80.0f;
-        _deathSmoke->startSizeMax = 160.0f;
-        _deathSmoke->startSpeedMin = 60.0f;
-        _deathSmoke->startSpeedMax = 260.0f;
-        _deathSmoke->startLifetimeMin = 0.35f;
-        _deathSmoke->startLifetimeMax = 0.7f;
-        _deathSmoke->drag = 300.0f;
-        _deathSmoke->gravity = VGet(0.0f, 250.0f, 0.0f);
-        _deathSmoke->color = GetColorU8(220, 190, 255, 255);
-    }
-
     // 敵が現れる場所の目印 急に湧いたように見えないように
     _spawnSmoke = CreateSystem("SpawnSmoke", _deadGraph);
     if (_spawnSmoke) {
@@ -308,43 +292,6 @@ void EffectManager::PlayGuard(VECTOR position, VECTOR direction) {
     else {
         Burst(_guardSpark, position, 10);
     }
-}
-
-void EffectManager::PlayKill(VECTOR position, VECTOR direction) {
-    Burst(_killBurst, position, 16);
-    Burst(_killEmber, position, 10);
-
-    // 吹き飛ぶ向きへもう一度火花を散らし、最後の一撃を目立たせる
-    direction.y = 0.0f;
-    if (VSquareSize(direction) > 0.0001f) {
-        VECTOR aim = VAdd(VNorm(direction), VScale(UP, SPARK_LIFT));
-        BurstToward(_hitStreak, position, aim, 25.0f, 16);
-    }
-    Burst(_hitFlash, position, 2);
-
-    // とどめの手応え 普通の当たりより長く止め、強く揺らし、少し寄る
-    HitStop(0.09f);
-    Shake(9.0f, 0.3f);
-    ZoomPunch(4.0f, 0.35f);
-    FlashScreen(0xFFFFFF, 0.18f, 0.12f);
-
-    // 足元に紫の輪を広げる 倒した場所が群れの中でも分かるように
-    VECTOR ground = position;
-    StageBuilder::FindGroundHeight(position.x, position.z, ground.y);
-    if (_shapes) {
-        ShapeEffectRenderer::RingDesc ring;
-        ring.center = ground;
-        ring.startRadius = 30.0f;
-        ring.endRadius = 260.0f;
-        ring.width = 70.0f;
-        ring.color = GetColorU8(200, 110, 255, 255);
-        ring.life = 0.4f;
-        _shapes->AddRing(ring);
-    }
-}
-
-void EffectManager::PlayDeath(VECTOR position) {
-    Burst(_deathSmoke, position, 14);
 }
 
 void EffectManager::PlaySpawn(VECTOR groundPosition) {
