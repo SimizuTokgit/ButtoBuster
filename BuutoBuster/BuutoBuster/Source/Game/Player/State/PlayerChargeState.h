@@ -16,7 +16,7 @@ public:
     // 普段の溜めの姿勢 止めるアニメの名前と、止める時間 (アニメのフレーム)
     // ゲーム中に P と , . で探せる 見つけた値をここに書くと、普段の溜めの姿勢になる
     static constexpr const char* DEFAULT_POSE_ANIMATION = "Attack3";
-    static constexpr float DEFAULT_POSE_TIME = 2.0f;
+    static constexpr float DEFAULT_POSE_TIME = 5.5f;
 
 private:
     float _chargeTime = 0.0f;
