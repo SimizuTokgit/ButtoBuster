@@ -18,13 +18,13 @@ enum class Team {
 };
 
 // プレイヤーと敵に共通する体
-// 体力 吹っ飛ばされ値 移動 向き アニメの流し方と、戦える範囲の壁の内側に収めるところをまとめておく
+// 吹っ飛ばされ値 移動 向き アニメの流し方と、戦える範囲の壁の内側に収めるところをまとめておく
 // 何をするかは派生クラスの状態が決める
+//
+// 体力はない 吹っ飛ばされ値が許容値に届いた状態で壁にぶつかると、壁を割って場外へ飛んで倒される
 class Character : public MonoBehaviour {
 public:
     Team team = Team::Enemy;
-    int maxHp = 100;
-    int hp = 100;
 
     // 攻撃の届く距離の計算に使う 当たり判定のカプセルから取る
     float bodyRadius = 30.0f;
@@ -58,6 +58,9 @@ protected:
     // 次の湯気を出すまでの貯め 1 を超えた分だけ粒を出す
     float _steamTimer = 0.0f;
 
+    // 壁を割って倒された もう戻らない
+    bool _isDefeated = false;
+
 public:
     ~Character() override;
 
@@ -73,18 +76,23 @@ public:
     // デバッグ表示に出す今の状態
     virtual const char* GetStateName() const { return "-"; }
 
-    bool IsDead() const { return hp <= 0; }
+    // 倒されたか 壁を割って場外へ飛んだ (敵なら撃破、プレイヤーなら負け) か、地形の穴に落ちた
+    bool IsDead() const { return _isDefeated; }
+
+    // 壁を割ったときに ArenaWall から呼ばれる 倒された印を付け、knockback の向きへ場外へ飛んでいく状態に移る
+    virtual void Defeat(VECTOR knockback) = 0;
+
     bool IsInvincible() const { return _invincibleTimer > 0.0f; }
     // 無敵の残りを延ばす 短くはしない 別々の理由の無敵が重なったとき長いほうを残す
     void SetInvincible(float seconds);
 
     // 無敵の残りをこの長さにそろえる 起き上がったあとなど、延ばしすぎた分を戻すときに使う
     void ResetInvincible(float seconds) { _invincibleTimer = seconds; }
-    float GetHpRatio() const { return maxHp > 0 ? static_cast<float>(hp) / maxHp : 0.0f; }
 
     // ----- 吹っ飛ばされ値 -----
 
     float GetBlowValue() const { return _blowValue; }
+    float GetBlowLimit() const { return GetBlowSettings().limit; }
 
     // 許容値に対する割合 1 で許容値に届いた 赤みと湯気の強さもこれで決まる
     float GetBlowRatio() const;
@@ -161,6 +169,7 @@ protected:
     void UpdateTimers(float deltaTime);
     void UpdateAnimation(float deltaTime);
     void StartFlash() { _flashTimer = FLASH_TIME; }
+    void MarkDefeated() { _isDefeated = true; }
 
     // 壁の内側に収める 状態がこのフレームのうちに跳ね返せるよう、状態の処理より先に呼ぶ
     void UpdateWall();
@@ -190,6 +199,10 @@ private:
     // 赤み 許容値に届いたときに、赤をどれだけ強め、緑と青をどれだけ落とすか
     static constexpr float HEAT_RED = 0.5f;
     static constexpr float HEAT_FADE = 0.55f;
+
+    // 許容値に届いたら赤を脈打たせる 今ぶつければ壁が割れると分かるように 強さと速さ (ラジアン/秒)
+    static constexpr float HEAT_PULSE = 0.6f;
+    static constexpr float HEAT_PULSE_SPEED = 10.0f;
 
     // 湯気 許容値のこの割合から出始める 出る数は 1 秒に STEAM_PER_SECOND × 割合 (許容値で頭打ち)
     static constexpr float STEAM_START_RATIO = 0.3f;

@@ -38,8 +38,28 @@ bool ArenaWall::KeepInside(Character& character, Hit& outHit) {
     return true;
 }
 
-bool ArenaWall::TryBounce(Character& character, const Hit& hit) {
-    if (hit.speed < BOUNCE_MIN_SPEED) return false;
+ArenaWall::Reaction ArenaWall::React(Character& character, const Hit& hit) {
+    if (hit.speed < BOUNCE_MIN_SPEED) return Reaction::None;
+
+    // 火花や割れる光は胴の高さに出す
+    VECTOR impact = hit.point;
+    impact.y = character.GetCenter().y;
+
+    if (character.GetBlowRatio() >= 1.0f) {
+        // 壁の外へ向けて飛ばす 割った勢いのまま場外へ消えていくように
+        float flySpeed = hit.speed * BREAK_FLY_RATE;
+        if (flySpeed < BREAK_FLY_MIN_SPEED) flySpeed = BREAK_FLY_MIN_SPEED;
+        character.Defeat(VScale(hit.normal, -flySpeed));
+
+        WallBreakEvent event;
+        event.character = &character;
+        event.isPlayer = character.team == Team::Player;
+        event.position = impact;
+        event.normal = hit.normal;
+        event.speed = hit.speed;
+        GetBreakEvents().Notify(event);
+        return Reaction::Break;
+    }
 
     // 壁へ向かう分は KeepInside で消してあるので、内側への速さを足せば跳ね返る
     VECTOR velocity = VAdd(character.GetVelocity(), VScale(hit.normal, hit.speed * BOUNCE_RATE));
@@ -49,12 +69,15 @@ bool ArenaWall::TryBounce(Character& character, const Hit& hit) {
     float power = hit.speed / FULL_IMPACT_SPEED;
     if (power > 1.0f) power = 1.0f;
 
-    // 火花は胴の高さに出す
-    VECTOR impact = hit.point;
-    impact.y = character.GetCenter().y;
     if (auto* effects = EffectManager::Get()) effects->PlayWallHit(impact, hit.normal, power);
     SoundManager::Instance().PlaySE("Golem/downing", 0.5f + 0.5f * power);
-    return true;
+    return Reaction::Bounce;
+}
+
+Subject<WallBreakEvent>& ArenaWall::GetBreakEvents() {
+    // 場面をまたいで 1 つだけ置く 受け取る側は場面ごとに作られ、消えるときに自分から外れる
+    static Subject<WallBreakEvent> events;
+    return events;
 }
 
 VECTOR ArenaWall::ClampInside(VECTOR position, float margin) {

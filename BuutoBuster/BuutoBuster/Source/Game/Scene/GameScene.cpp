@@ -7,6 +7,9 @@
 #include "AudioListener.h"
 #include "StageBuilder.h"
 #include "ArenaBoundary.h"
+#include "ArenaWall.h"
+#include "WallBreakEffectObserver.h"
+#include "WallBreakSoundObserver.h"
 #include "EffectManager.h"
 #include "NeedlePool.h"
 #include "PlayerFactory.h"
@@ -52,6 +55,11 @@ bool GameScene::OnLoad() {
     auto* effectObject = scene.CreateGameObject("EffectManager");
     auto* effects = effectObject->AddComponent<EffectManager>();
     effects->Initialize(cameraFollow);
+
+    // 壁が割れたときの演出と音 壁割りの知らせを受けて出すので、変えるときはこの 2 つを書き換える
+    auto* wallBreakObject = scene.CreateGameObject("WallBreakEffects");
+    ArenaWall::GetBreakEvents().AddObserver(wallBreakObject->AddComponent<WallBreakEffectObserver>());
+    ArenaWall::GetBreakEvents().AddObserver(wallBreakObject->AddComponent<WallBreakSoundObserver>());
 
     auto* needleObject = scene.CreateGameObject("NeedlePool");
     auto* needles = needleObject->AddComponent<NeedlePool>();

@@ -2,7 +2,7 @@
 #include "Time.h"
 
 namespace {
-    // 体力の表示は 0 番 それより先に描く
+    // HUD は 0 番 それより先に描く
     constexpr int SORTING_ORDER = -5;
 }
 

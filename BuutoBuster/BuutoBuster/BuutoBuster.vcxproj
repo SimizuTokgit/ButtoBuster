@@ -148,6 +148,8 @@
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp" />
     <ClCompile Include="Source\Game\Stage\ArenaWall.cpp" />
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp" />
+    <ClCompile Include="Source\Game\Stage\WallBreakEffectObserver.cpp" />
+    <ClCompile Include="Source\Game\Stage\WallBreakSoundObserver.cpp" />
     <ClCompile Include="Source\Game\UI\ChainCounter.cpp" />
     <ClCompile Include="Source\Game\UI\GameFont.cpp" />
     <ClCompile Include="Source\Game\UI\Hud.cpp" />
@@ -269,6 +271,9 @@
     <ClInclude Include="Source\Game\Stage\ArenaBoundary.h" />
     <ClInclude Include="Source\Game\Stage\ArenaWall.h" />
     <ClInclude Include="Source\Game\Stage\StageBuilder.h" />
+    <ClInclude Include="Source\Game\Stage\WallBreakEffectObserver.h" />
+    <ClInclude Include="Source\Game\Stage\WallBreakEvent.h" />
+    <ClInclude Include="Source\Game\Stage\WallBreakSoundObserver.h" />
     <ClInclude Include="Source\Game\State\ICharacterState.h" />
     <ClInclude Include="Source\Game\State\StateManager.h" />
     <ClInclude Include="Source\Game\UI\ChainCounter.h" />

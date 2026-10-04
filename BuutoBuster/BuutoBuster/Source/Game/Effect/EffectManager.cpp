@@ -243,6 +243,23 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _steam->color = GetColorU8(235, 235, 240, 255);
     }
 
+    // 割れた壁のかけら 光の幕と同じ水色にして、壁が砕けたと分かるようにする
+    _wallShard = CreateSystem("WallShard", _damageGraph);
+    if (_wallShard) {
+        _wallShard->emissionShape = EmissionShape::Sphere;
+        _wallShard->emissionRadius = 40.0f;
+        _wallShard->startSizeMin = 14.0f;
+        _wallShard->startSizeMax = 30.0f;
+        _wallShard->startSpeedMin = 600.0f;
+        _wallShard->startSpeedMax = 1400.0f;
+        _wallShard->startLifetimeMin = 0.4f;
+        _wallShard->startLifetimeMax = 0.8f;
+        _wallShard->drag = 500.0f;
+        _wallShard->gravity = VGet(0.0f, -900.0f, 0.0f);
+        _wallShard->stretch = 0.03f;
+        _wallShard->color = GetColorU8(150, 220, 255, 255);
+    }
+
     // 弧と輪 画像は剣の軌跡と同じものを使い、見た目をそろえる
     _shapes = gameObject->AddChild("ShapeEffects")->AddComponent<ShapeEffectRenderer>();
     _shapes->Setup("Data/Effect/SlashLocus.png", "Data/Effect/SphereLocus.png");
@@ -493,6 +510,17 @@ void EffectManager::PlayWallHit(VECTOR position, VECTOR normal, float power) {
 
     // 壁は離れていると見えないので、ぶつかった所だけ光らせて、そこに壁があると分かるようにする
     if (auto* boundary = ArenaBoundary::Get()) boundary->Flash(position, 0.5f + power * 0.5f);
+}
+
+void EffectManager::PlayWallBreak(VECTOR position, VECTOR outward) {
+    outward.y = 0.0f;
+    if (VSquareSize(outward) < 0.0001f) outward = VGet(0.0f, 0.0f, 1.0f);
+
+    // かけらと火花は外へ、少し上向きに散らす
+    VECTOR aim = VAdd(VNorm(outward), VScale(UP, 0.4f));
+    BurstToward(_wallShard, position, aim, 45.0f, 36);
+    BurstToward(_hitStreak, position, aim, 30.0f, 20);
+    Burst(_hitFlash, position, 2);
 }
 
 void EffectManager::SetBaseTimeScale(float scale) {

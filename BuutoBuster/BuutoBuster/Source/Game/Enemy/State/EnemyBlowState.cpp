@@ -40,10 +40,16 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
 
     switch (_phase) {
     case Phase::Fly: {
-        // 壁にぶつかったら跳ね返る 速くぶつかれば戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
+        // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割り、届いていなければ跳ね返る
+        // 速くぶつかれば戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
         ArenaWall::Hit wallHit;
-        if (enemy.ConsumeWallHit(wallHit) && ArenaWall::TryBounce(enemy, wallHit)) {
-            if (!isFlying && data.canBlow) {
+        if (enemy.ConsumeWallHit(wallHit)) {
+            ArenaWall::Reaction reaction = ArenaWall::React(enemy, wallHit);
+
+            // 割ったときは場外へ飛んでいく状態に移るので、ここから先はいらない
+            if (reaction == ArenaWall::Reaction::Break) break;
+
+            if (reaction == ArenaWall::Reaction::Bounce && !isFlying && data.canBlow) {
                 // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
                 enemy.PlayAnimation("BlowIn", 1.0f, true);
                 enemy.FaceImmediately(VScale(enemy.GetVelocity(), -1.0f));

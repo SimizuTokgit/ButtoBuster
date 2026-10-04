@@ -24,11 +24,19 @@ void PlayerBlowState::Enter(Player& player) {
 void PlayerBlowState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     switch (_phase) {
     case Phase::Fly: {
-        // 壁にぶつかったら跳ね返る 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+        // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割られて負け、届いていなければ跳ね返る
         ArenaWall::Hit wallHit;
-        if (player.ConsumeWallHit(wallHit) && ArenaWall::TryBounce(player, wallHit)) {
-            player.PlayAnimation("BlowIn", 1.0f, true);
-            player.FaceImmediately(VScale(player.GetVelocity(), -1.0f));
+        if (player.ConsumeWallHit(wallHit)) {
+            ArenaWall::Reaction reaction = ArenaWall::React(player, wallHit);
+
+            // 割られたときは場外へ飛んでいく状態に移るので、ここから先はいらない
+            if (reaction == ArenaWall::Reaction::Break) break;
+
+            if (reaction == ArenaWall::Reaction::Bounce) {
+                // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+                player.PlayAnimation("BlowIn", 1.0f, true);
+                player.FaceImmediately(VScale(player.GetVelocity(), -1.0f));
+            }
         }
 
         player.DampHorizontal(2.0f, deltaTime);

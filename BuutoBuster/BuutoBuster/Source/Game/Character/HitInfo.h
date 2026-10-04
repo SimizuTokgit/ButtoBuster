@@ -19,6 +19,7 @@ struct HitInfo {
     // 飛び道具は撃った本人がもう倒れていることがあるので、本人の位置ではなくこれを見る
     VECTOR sourcePosition = VGet(0.0f, 0.0f, 0.0f);
 
+    // 当たった相手の吹っ飛ばされ値に足す量
     int damage = 0;
     HitReaction reaction = HitReaction::Flinch;
 
@@ -41,10 +42,9 @@ struct HitInfo {
     bool isFromProjectile = false;
 };
 
-// 当てた結果
+// 当てた結果 体力がないので、当てただけでは倒れない 倒すのは壁割り
 enum class HitResult {
-    Ignored,    // 無敵や倒れた後で効かなかった
+    Ignored,    // 無敵や倒された後で効かなかった
     Guarded,
     Hit,
-    Killed,
 };

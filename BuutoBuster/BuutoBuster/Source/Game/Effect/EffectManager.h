@@ -41,6 +41,7 @@ private:
     ParticleSystem* _heavyGlint = nullptr;
     ParticleSystem* _shockDebris = nullptr;
     ParticleSystem* _steam = nullptr;
+    ParticleSystem* _wallShard = nullptr;
 
     ShapeEffectRenderer* _shapes = nullptr;
     ScreenFlash* _screenFlash = nullptr;
@@ -109,6 +110,10 @@ public:
     // 吹き飛んだ体が壁にぶつかって跳ね返ったとき 内側へ火花を散らし、ぶつかった所の光の幕を光らせる
     // normal は壁から内側への向き power は 0〜1 の強さで、速くぶつかるほど大きく止めて揺らす
     void PlayWallHit(VECTOR position, VECTOR normal, float power);
+
+    // 壁が割れたときの粒だけ出す 割れた壁のかけらを外へ散らし、割れた所を光らせる
+    // 止める 揺らす 画面を光らせるといった演出は、壁割りの知らせを受けた WallBreakEffectObserver が決める
+    void PlayWallBreak(VECTOR position, VECTOR outward);
 
     // デバッグのスロー再生用 ヒットストップが明けたらこの速さに戻る
     void SetBaseTimeScale(float scale);

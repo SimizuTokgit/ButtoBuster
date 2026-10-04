@@ -12,6 +12,7 @@ class BlowChain;
 //
 // 連鎖を持って飛んでいる間は砲弾になり、触れた敵を巻き込む
 // 戦える範囲の壁にぶつかったら跳ね返る 速くぶつかれば、戻ってくる間も砲弾のまま
+// 吹っ飛ばされ値が許容値に届いていれば、跳ね返らずに壁を割って場外へ飛ぶ (撃破)
 class EnemyBlowState : public ICharacterState<Enemy> {
 private:
     static constexpr float DOWN_TIME = 0.6f;

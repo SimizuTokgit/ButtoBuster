@@ -6,6 +6,7 @@
 #include "EnemyFactory.h"
 #include "EffectManager.h"
 #include "StageBuilder.h"
+#include "ArenaWall.h"
 #include "SoundManager.h"
 #include "Scene.h"
 #include "GameObject.h"
@@ -90,14 +91,16 @@ int PhaseDirector::GetPhasesUntilHeal() const {
 void PhaseDirector::DefeatAllEnemies() {
     _spawnQueue.clear();
 
-    HitInfo info;
-    info.damage = 99999;
-    info.reaction = HitReaction::Blow;
+    // 体力がないので、真ん中から外へ向けて場外へ飛ばして倒す
+    VECTOR center = StageBuilder::GetArenaCenter();
     for (Enemy* enemy : _enemies) {
-        if (!enemy->IsDead()) {
-            info.sourcePosition = enemy->GetPosition();
-            enemy->TakeHit(info);
-        }
+        if (enemy->IsDead()) continue;
+
+        VECTOR away = VSub(enemy->GetPosition(), center);
+        away.y = 0.0f;
+        float length = VSize(away);
+        VECTOR direction = (length > 1.0f) ? VScale(away, 1.0f / length) : VGet(1.0f, 0.0f, 0.0f);
+        enemy->Defeat(VScale(direction, ArenaWall::BREAK_FLY_MIN_SPEED));
     }
 }
 

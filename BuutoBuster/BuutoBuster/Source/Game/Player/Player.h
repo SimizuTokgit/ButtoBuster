@@ -51,6 +51,9 @@ public:
     StateManager<Player>& GetStates() { return _states; }
     const char* GetStateName() const override { return _states.GetCurrentName(); }
 
+    // 壁を割られたときに呼ばれる 場外へ飛ばされて負け
+    void Defeat(VECTOR knockback) override;
+
     void SetTrail(SlashTrail* trail) { _trail = trail; }
     void SetTrailEmitting(bool isEmitting);
 
@@ -84,6 +87,7 @@ public:
     float GetComboTimer() const { return _comboTimer; }
     int GetMaxCombo() const { return _maxCombo; }
 
+    // 決まったフェーズごとの区切りで呼ぶ 吹っ飛ばされ値を 0 に戻す
     void HealFull();
 
     // 攻撃の向きを決める

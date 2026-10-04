@@ -279,6 +279,12 @@
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp">
       <Filter>Source\Game\Stage</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Stage\WallBreakEffectObserver.cpp">
+      <Filter>Source\Game\Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Stage\WallBreakSoundObserver.cpp">
+      <Filter>Source\Game\Stage</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\UI\ChainCounter.cpp">
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
@@ -636,6 +642,15 @@
       <Filter>Source\Game\Stage</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Stage\StageBuilder.h">
+      <Filter>Source\Game\Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Stage\WallBreakEffectObserver.h">
+      <Filter>Source\Game\Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Stage\WallBreakEvent.h">
+      <Filter>Source\Game\Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Stage\WallBreakSoundObserver.h">
       <Filter>Source\Game\Stage</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\State\ICharacterState.h">
