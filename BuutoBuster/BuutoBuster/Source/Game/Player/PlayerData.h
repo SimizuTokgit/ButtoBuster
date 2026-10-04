@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "PlayerAttacks.h"
+#include "BlowSettings.h"
 #include <string>
 
 // プレイヤーの動きと手応えを決める数値 調整はこのファイルだけ見ればよい
@@ -25,6 +26,9 @@ struct PlayerData {
 
     // 吹き飛ばされて起き上がったあとに残す無敵 秒
     float getUpInvincibleTime = 0.4f;
+
+    // 吹っ飛ばされ値の許容値 溜まり方 減り方 中身は BlowSettings.h
+    BlowSettings blow;
 
     // ----- 移動 -----
 

@@ -44,6 +44,7 @@ void Enemy::Start() {
 
 void Enemy::Execute(const InputInfo& input, float deltaTime) {
     UpdateTimers(deltaTime);
+    UpdateBlow(deltaTime);
     UpdateWall();
     if (_hpBarTimer > 0.0f) _hpBarTimer -= deltaTime;
 
@@ -65,8 +66,13 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     _hpBarTimer = HP_BAR_TIME;
     StartFlash();
 
+    // 当たった技のダメージの分だけ吹っ飛ばされ値が溜まり、溜まっているほど遠くへ飛ぶ
+    // 飛んできた敵に巻き込まれたときも同じように溜まる
+    AddBlow(static_cast<float>(info.damage));
+    VECTOR knockback = ScaleKnockback(info.knockback);
+
     auto* effects = EffectManager::Get();
-    if (effects) effects->PlayHit(GetCenter(), info.knockback);
+    if (effects) effects->PlayHit(GetCenter(), knockback);
 
     // 飛んできた敵がぶつかった音は、連鎖の知らせを受けた側が鳴らす 斬られた音とは違うので
     if (!info.isFromProjectile) SoundManager::Instance().PlaySE(_data->soundHit, 0.8f);
@@ -76,9 +82,9 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
 
     if (hp <= 0) {
         hp = 0;
-        if (effects) effects->PlayKill(GetCenter(), info.knockback);
+        if (effects) effects->PlayKill(GetCenter(), knockback);
         SoundManager::Instance().PlaySE(_data->soundDead);
-        _states.ForceTransition(std::make_unique<EnemyDeadState>(info.knockback, info.chain, isBlown));
+        _states.ForceTransition(std::make_unique<EnemyDeadState>(knockback, info.chain, isBlown));
         return HitResult::Killed;
     }
 
@@ -88,7 +94,7 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     auto* current = _states.GetCurrent();
     if (info.reaction == HitReaction::Blow && isBlown) {
         SoundManager::Instance().PlaySE(_data->soundBlow);
-        _states.Transition(current, std::make_unique<EnemyBlowState>(info.knockback, info.chain));
+        _states.Transition(current, std::make_unique<EnemyBlowState>(knockback, info.chain));
     }
     else {
         SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
@@ -96,7 +102,7 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
         // 空中の斬りは相手を浮かせ、続けて斬れる高さに留める
         // 浮いている敵は羽ばたきで高さを戻すので、地上の敵だけが浮く
         if (info.lift > 0.0f) SetVerticalVelocity(info.lift);
-        _states.Transition(current, std::make_unique<EnemyDamageState>(info.knockback));
+        _states.Transition(current, std::make_unique<EnemyDamageState>(knockback));
     }
     return HitResult::Hit;
 }

@@ -33,6 +33,7 @@ void Player::Start() {
 
 void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateTimers(deltaTime);
+    UpdateBlow(deltaTime);
     UpdateWall();
     UpdateCombo(deltaTime);
     UpdateJustDodge(deltaTime);
@@ -80,12 +81,16 @@ HitResult Player::TakeHit(const HitInfo& info) {
     _combo = 0;
     _comboTimer = 0.0f;
 
+    // 当たった技のダメージの分だけ吹っ飛ばされ値が溜まり、溜まっているほど遠くへ飛ぶ
+    AddBlow(static_cast<float>(info.damage));
+    VECTOR knockback = ScaleKnockback(info.knockback);
+
     // 食らったら反撃の機会も失う
     _counterTimer = 0.0f;
     StartFlash();
 
     if (effects) {
-        effects->PlayHit(GetCenter(), info.knockback);
+        effects->PlayHit(GetCenter(), knockback);
         effects->Shake(4.0f, 0.2f);
         // 体力を見ていなくても食らったと分かるよう、画面を赤くする
         effects->FlashScreen(0xC02020, 0.3f, 0.25f);
@@ -97,18 +102,18 @@ HitResult Player::TakeHit(const HitInfo& info) {
     if (hp <= 0) {
         hp = 0;
         SoundManager::Instance().PlaySE("Player/VO_J_dmg_blow");
-        _states.ForceTransition(std::make_unique<PlayerDeadState>(info.knockback));
+        _states.ForceTransition(std::make_unique<PlayerDeadState>(knockback));
         return HitResult::Killed;
     }
 
     auto* current = _states.GetCurrent();
     if (info.reaction == HitReaction::Blow) {
         SoundManager::Instance().PlaySE("Player/blow_B");
-        _states.Transition(current, std::make_unique<PlayerBlowState>(info.knockback));
+        _states.Transition(current, std::make_unique<PlayerBlowState>(knockback));
     }
     else {
         SoundManager::Instance().PlaySE("Player/VO_J_dmg");
-        _states.Transition(current, std::make_unique<PlayerDamageState>(info.knockback));
+        _states.Transition(current, std::make_unique<PlayerDamageState>(knockback));
     }
     return HitResult::Hit;
 }
@@ -145,6 +150,7 @@ void Player::AddCombo(int hits) {
 
 void Player::HealFull() {
     hp = maxHp;
+    ResetBlow();
 
     if (auto* effects = EffectManager::Get()) {
         effects->PlayHeal(GetCenter());

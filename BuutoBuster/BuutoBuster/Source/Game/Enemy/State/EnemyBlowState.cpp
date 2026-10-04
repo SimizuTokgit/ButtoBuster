@@ -73,6 +73,9 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
         float downTime = isFlying ? GROUNDED_TIME : (data.canBlow ? DOWN_TIME : HEAVY_RECOVER_TIME);
         if (_timer < downTime) break;
 
+        // 起き上がるときに吹っ飛ばされ値を少し戻す 起き上がりに当て続けるだけでは溜まりきらないように
+        enemy.RecoverBlowOnGetUp();
+
         // 飛ぶ敵は飛び直す 浮く高さへはホバリングの力で戻っていく
         // 重い敵は起き上がるアニメが無いので、そのまま動き出す
         if (isFlying || !data.canBlow) {

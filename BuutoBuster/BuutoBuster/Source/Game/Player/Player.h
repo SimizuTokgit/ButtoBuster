@@ -93,6 +93,9 @@ public:
     // 見た目を半透明にする 回避の無敵中に使う
     void SetOpacity(float rate);
 
+protected:
+    const BlowSettings& GetBlowSettings() const override { return data.blow; }
+
 private:
     void UpdateCombo(float deltaTime);
     void UpdateJustDodge(float deltaTime);

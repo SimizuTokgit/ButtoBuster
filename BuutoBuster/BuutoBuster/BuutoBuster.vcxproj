@@ -204,6 +204,7 @@
     <ClInclude Include="Source\Game\Camera\CameraFollow.h" />
     <ClInclude Include="Source\Game\Character\AttackData.h" />
     <ClInclude Include="Source\Game\Character\BlowChain.h" />
+    <ClInclude Include="Source\Game\Character\BlowSettings.h" />
     <ClInclude Include="Source\Game\Character\ChainEvent.h" />
     <ClInclude Include="Source\Game\Character\Character.h" />
     <ClInclude Include="Source\Game\Character\CharacterBuilder.h" />
