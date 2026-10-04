@@ -45,6 +45,8 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
     case Phase::Down:
         _timer += deltaTime;
         if (_timer > player.data.blownDownTime) {
+            // 起き上がるときに吹っ飛ばされ値を少し戻す
+            player.RecoverBlowOnGetUp();
             player.PlayAnimation("BlowOut", 1.3f, true);
             _phase = Phase::GetUp;
         }

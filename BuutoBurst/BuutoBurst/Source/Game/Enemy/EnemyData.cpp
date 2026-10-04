@@ -15,6 +15,8 @@ namespace {
         data.weaponModel = "Data/Character/Weapon/Axe/Axe.mv1";
 
         data.maxHp = 40;
+        // 吹っ飛ばされ値の許容値は、今の体力と同じ量にしてある 体力をなくしたあとも、今倒せるのと同じだけ当てれば壁を割れるように
+        data.blow.limit = 40.0f;
         data.walkSpeed = 150.0f;
         data.runSpeed = 380.0f;
 
@@ -61,6 +63,7 @@ namespace {
         data.scale = 1.05f;
 
         data.maxHp = 100;
+        data.blow.limit = 100.0f;
         data.walkSpeed = 180.0f;
         data.runSpeed = 470.0f;
         data.turnSpeed = 420.0f;
@@ -108,6 +111,7 @@ namespace {
         data.modelFile = "Bee.mv1";
 
         data.maxHp = 35;
+        data.blow.limit = 35.0f;
         data.bodyRadius = 40.0f;
         data.bodyHeight = 110.0f;
         data.bodyCenterY = 90.0f;
@@ -164,6 +168,7 @@ namespace {
         data.modelFile = "golem.mv1";
 
         data.maxHp = 420;
+        data.blow.limit = 420.0f;
         data.bodyRadius = 70.0f;
         data.bodyHeight = 240.0f;
         data.bodyCenterY = 120.0f;

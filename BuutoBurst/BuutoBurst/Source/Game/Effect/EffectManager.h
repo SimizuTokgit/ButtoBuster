@@ -40,6 +40,7 @@ private:
     ParticleSystem* _warningGlint = nullptr;
     ParticleSystem* _heavyGlint = nullptr;
     ParticleSystem* _shockDebris = nullptr;
+    ParticleSystem* _steam = nullptr;
 
     ShapeEffectRenderer* _shapes = nullptr;
     ScreenFlash* _screenFlash = nullptr;
@@ -78,6 +79,9 @@ public:
 
     // 敵が振りかぶった合図 重い技は赤く大きく光らせる
     void PlayWarning(VECTOR position, bool isHeavy);
+
+    // 吹っ飛ばされ値が溜まった体から立ちのぼる湯気 溜まるほど多く呼ばれる
+    void PlaySteam(VECTOR position, int count);
 
     // ----- 形 -----
 

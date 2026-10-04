@@ -223,6 +223,26 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _shockDebris->color = GetColorU8(230, 200, 160, 255);
     }
 
+    // 吹っ飛ばされ値が溜まった体から立ちのぼる湯気 光らせず白く重ねる
+    // 群れの全員から出ることがあるので、粒の数は多めに取っておく
+    _steam = CreateSystem("Steam", _deadGraph);
+    if (_steam) {
+        _steam->maxParticles = 400;
+        _steam->blendMode = DX_BLENDMODE_ALPHA;
+        _steam->emissionShape = EmissionShape::Sphere;
+        _steam->emissionRadius = 25.0f;
+        _steam->startSizeMin = 40.0f;
+        _steam->startSizeMax = 80.0f;
+        _steam->startSpeedMin = 40.0f;
+        _steam->startSpeedMax = 110.0f;
+        _steam->startLifetimeMin = 0.6f;
+        _steam->startLifetimeMax = 1.1f;
+        _steam->drag = 40.0f;
+        _steam->gravity = VGet(0.0f, 120.0f, 0.0f);
+        _steam->alphaFadeRatio = 0.6f;
+        _steam->color = GetColorU8(235, 235, 240, 255);
+    }
+
     // 弧と輪 画像は剣の軌跡と同じものを使い、見た目をそろえる
     _shapes = gameObject->AddChild("ShapeEffects")->AddComponent<ShapeEffectRenderer>();
     _shapes->Setup("Data/Effect/SlashLocus.png", "Data/Effect/SphereLocus.png");
@@ -339,6 +359,10 @@ void EffectManager::PlayDust(VECTOR groundPosition, int count) {
 
 void EffectManager::PlayWarning(VECTOR position, bool isHeavy) {
     Burst(isHeavy ? _heavyGlint : _warningGlint, position, 1);
+}
+
+void EffectManager::PlaySteam(VECTOR position, int count) {
+    BurstToward(_steam, position, UP, 30.0f, count);
 }
 
 // ----- 形 -----

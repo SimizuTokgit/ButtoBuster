@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "AttackData.h"
+#include "BlowSettings.h"
 
 enum class EnemyKind {
     Goblin,
@@ -40,6 +41,7 @@ struct EnemyData {
     bool canFlinch = true;              // 殴られたらのけぞるか
     bool canBlow = true;                // 吹き飛ぶか 吹き飛ぶアニメを持っているか
     float weight = 1.0f;                // 重さ 飛んできた敵とぶつかったときの飛び方に使う
+    BlowSettings blow;                  // 吹っ飛ばされ値の許容値 溜まり方 減り方
 
     // ----- 攻撃 -----
     AttackData slash;                   // Technique::Slash で出す

@@ -63,6 +63,9 @@ public:
     // 見た目ごと透けさせる 沈むときに使う
     void SetOpacity(float rate);
 
+protected:
+    const BlowSettings& GetBlowSettings() const override { return _data->blow; }
+
 private:
     void KeepHovering(float deltaTime);
 };
