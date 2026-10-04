@@ -14,7 +14,7 @@
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{3f8a1c24-9d6b-4e57-b1a0-5c2e7d94f831}</ProjectGuid>
-    <RootNamespace>BuutoBuster</RootNamespace>
+    <RootNamespace>BuutoBurst</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

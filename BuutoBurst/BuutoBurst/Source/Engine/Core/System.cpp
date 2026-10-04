@@ -29,7 +29,7 @@ bool System::Main(const std::function<bool()>& loadFirstScene) {
 bool System::Initialize(const std::function<bool()>& loadFirstScene) {
     ChangeWindowMode(TRUE);
     SetGraphMode(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT, 32);
-    SetMainWindowText("BuutoBuster");
+    SetMainWindowText("BuutoBurst");
 
     // ウィンドウが非アクティブでもゲームを動かす
     SetAlwaysRunFlag(TRUE);
