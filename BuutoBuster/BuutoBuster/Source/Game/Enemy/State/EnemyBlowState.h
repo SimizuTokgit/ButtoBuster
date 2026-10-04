@@ -11,6 +11,7 @@ class BlowChain;
 // 吹き飛ぶアニメを持たない重い敵は、構えたまま押し飛ばされ、着地したら少しして動き出す
 //
 // 連鎖を持って飛んでいる間は砲弾になり、触れた敵を巻き込む
+// 戦える範囲の壁にぶつかったら跳ね返る 速くぶつかれば、戻ってくる間も砲弾のまま
 class EnemyBlowState : public ICharacterState<Enemy> {
 private:
     static constexpr float DOWN_TIME = 0.6f;

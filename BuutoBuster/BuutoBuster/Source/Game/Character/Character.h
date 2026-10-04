@@ -2,6 +2,7 @@
 #include "MonoBehaviour.h"
 #include "InputInfo.h"
 #include "HitInfo.h"
+#include "ArenaWall.h"
 #include "DxLib.h"
 #include <string>
 
@@ -16,7 +17,7 @@ enum class Team {
 };
 
 // プレイヤーと敵に共通する体
-// 体力 移動 向き アニメの流し方をまとめておく
+// 体力 移動 向き アニメの流し方と、戦える範囲の壁の内側に収めるところをまとめておく
 // 何をするかは派生クラスの状態が決める
 class Character : public MonoBehaviour {
 public:
@@ -44,6 +45,10 @@ protected:
 
     // 攻撃を受けた直後に体を白く光らせる時間
     float _flashTimer = 0.0f;
+
+    // このフレームに壁へぶつかった様子 吹き飛んでいる状態が受け取って跳ね返す
+    ArenaWall::Hit _wallHit;
+    bool _hasWallHit = false;
 
 public:
     ~Character() override;
@@ -103,6 +108,13 @@ public:
     VECTOR GetVelocity() const;
     bool IsGrounded() const;
 
+    // このフレームに壁へぶつかっていたら、その様子を 1 回だけ渡す 吹き飛んでいる状態が跳ね返すのに使う
+    bool ConsumeWallHit(ArenaWall::Hit& outHit);
+
+    // 前の状態のときにぶつかった分を捨てる 吹き飛び始めたときに呼ぶ
+    // 外から来た切り替えはフレームの頭で通るので、歩いて壁を押していた分で跳ね返ってしまわないように
+    void ForgetWallHit() { _hasWallHit = false; }
+
     // ----- 向き -----
 
     void FaceTowards(VECTOR direction, float degreesPerSecond, float deltaTime);
@@ -129,6 +141,9 @@ protected:
     void UpdateTimers(float deltaTime);
     void UpdateAnimation(float deltaTime);
     void StartFlash() { _flashTimer = FLASH_TIME; }
+
+    // 壁の内側に収める 状態がこのフレームのうちに跳ね返せるよう、状態の処理より先に呼ぶ
+    void UpdateWall();
 
 private:
     static constexpr float FLASH_TIME = 0.12f;

@@ -1,6 +1,7 @@
 ﻿#include "PlayerBlowState.h"
 #include "Player.h"
 #include "PlayerIdleState.h"
+#include "ArenaWall.h"
 #include "EffectManager.h"
 #include <memory>
 
@@ -10,6 +11,7 @@ void PlayerBlowState::Enter(Player& player) {
     player.PlayAnimation("BlowIn", 1.0f, true);
     player.SetKnockback(_knockback);
     player.SetVerticalVelocity(player.data.blownJumpSpeed);
+    player.ForgetWallHit();
 
     // 起き上がるまでは何も当たらない 倒れたところを殴られ続けないように
     player.SetInvincible(3.0f);
@@ -21,7 +23,14 @@ void PlayerBlowState::Enter(Player& player) {
 
 void PlayerBlowState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     switch (_phase) {
-    case Phase::Fly:
+    case Phase::Fly: {
+        // 壁にぶつかったら跳ね返る 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+        ArenaWall::Hit wallHit;
+        if (player.ConsumeWallHit(wallHit) && ArenaWall::TryBounce(player, wallHit)) {
+            player.PlayAnimation("BlowIn", 1.0f, true);
+            player.FaceImmediately(VScale(player.GetVelocity(), -1.0f));
+        }
+
         player.DampHorizontal(2.0f, deltaTime);
         if (player.IsAnimationFinished() && player.IsGrounded()) {
             player.StopHorizontal();
@@ -31,6 +40,7 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
             _timer = 0.0f;
         }
         break;
+    }
 
     case Phase::Down:
         _timer += deltaTime;

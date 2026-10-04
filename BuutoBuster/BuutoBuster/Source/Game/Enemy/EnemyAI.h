@@ -29,6 +29,9 @@ private:
     // 回り込み先がこれより遠ければ走って追いつく
     static constexpr float SLOT_RUN_DISTANCE = 500.0f;
 
+    // 回り込み先が壁の外に出たら、体の太さとこの分だけ壁の手前に寄せる
+    static constexpr float SLOT_WALL_MARGIN = 50.0f;
+
     Enemy* _enemy = nullptr;
 
     bool _hasToken = false;

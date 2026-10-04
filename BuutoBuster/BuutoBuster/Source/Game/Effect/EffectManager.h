@@ -102,6 +102,10 @@ public:
     // フェーズの最後の1体を倒したとき 止めて寄って光らせ、倒した実感を残す
     void PlayFinalBlow(VECTOR position);
 
+    // 吹き飛んだ体が壁にぶつかって跳ね返ったとき 内側へ火花を散らし、ぶつかった所の光の幕を光らせる
+    // normal は壁から内側への向き power は 0〜1 の強さで、速くぶつかるほど大きく止めて揺らす
+    void PlayWallHit(VECTOR position, VECTOR normal, float power);
+
     // デバッグのスロー再生用 ヒットストップが明けたらこの速さに戻る
     void SetBaseTimeScale(float scale);
     float GetBaseTimeScale() const { return _baseTimeScale; }

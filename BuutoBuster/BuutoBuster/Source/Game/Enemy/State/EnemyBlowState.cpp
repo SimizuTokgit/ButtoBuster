@@ -2,6 +2,7 @@
 #include "Enemy.h"
 #include "EnemyIdleState.h"
 #include "BlowChain.h"
+#include "ArenaWall.h"
 #include "EffectManager.h"
 #include <memory>
 
@@ -10,6 +11,7 @@ using std::make_unique;
 void EnemyBlowState::Enter(Enemy& enemy) {
     const EnemyData& data = enemy.GetData();
     enemy.SetKnockback(_knockback);
+    enemy.ForgetWallHit();
 
     if (data.isFlying) {
         // 羽ばたきを止めて落とす
@@ -38,6 +40,16 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
 
     switch (_phase) {
     case Phase::Fly: {
+        // 壁にぶつかったら跳ね返る 速くぶつかれば戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
+        ArenaWall::Hit wallHit;
+        if (enemy.ConsumeWallHit(wallHit) && ArenaWall::TryBounce(enemy, wallHit)) {
+            if (!isFlying && data.canBlow) {
+                // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+                enemy.PlayAnimation("BlowIn", 1.0f, true);
+                enemy.FaceImmediately(VScale(enemy.GetVelocity(), -1.0f));
+            }
+        }
+
         enemy.DampHorizontal(1.5f, deltaTime);
 
         // 速いうちは砲弾として、触れた敵を巻き込む

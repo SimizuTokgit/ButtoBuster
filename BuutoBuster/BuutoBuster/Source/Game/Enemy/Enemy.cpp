@@ -44,6 +44,7 @@ void Enemy::Start() {
 
 void Enemy::Execute(const InputInfo& input, float deltaTime) {
     UpdateTimers(deltaTime);
+    UpdateWall();
     if (_hpBarTimer > 0.0f) _hpBarTimer -= deltaTime;
 
     _states.Update(*this, input, deltaTime);

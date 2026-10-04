@@ -33,6 +33,7 @@ void Player::Start() {
 
 void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateTimers(deltaTime);
+    UpdateWall();
     UpdateCombo(deltaTime);
     UpdateJustDodge(deltaTime);
 
@@ -42,7 +43,7 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
     _states.Update(*this, input, deltaTime);
 
     UpdateAnimation(deltaTime);
-    KeepInsideArena();
+    ReturnIfFallen();
 }
 
 HitResult Player::TakeHit(const HitInfo& info) {
@@ -217,22 +218,10 @@ void Player::SucceedJustDodge() {
     _justDodgeEvents.Notify(event);
 }
 
-void Player::KeepInsideArena() {
+void Player::ReturnIfFallen() {
     VECTOR position = transform->localPosition;
+    if (position.y >= FALL_LIMIT_Y) return;
 
-    if (position.y < FALL_LIMIT_Y) {
-        transform->localPosition = _spawnPosition;
-        SetVerticalVelocity(0.0f);
-        return;
-    }
-
-    VECTOR offset = VSub(position, arenaCenter);
-    offset.y = 0.0f;
-    float distance = VSize(offset);
-    if (distance <= arenaRadius) return;
-
-    VECTOR edge = VAdd(arenaCenter, VScale(offset, arenaRadius / distance));
-    position.x = edge.x;
-    position.z = edge.z;
-    transform->localPosition = position;
+    transform->localPosition = _spawnPosition;
+    SetVerticalVelocity(0.0f);
 }

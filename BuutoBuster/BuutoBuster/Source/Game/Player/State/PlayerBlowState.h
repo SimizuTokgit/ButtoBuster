@@ -4,8 +4,8 @@
 
 class Player;
 
-// 吹き飛んで倒れ、起き上がるまで
-// 跳ねる速さ 倒れている時間 起き上がったあとの無敵は PlayerData
+// 吹き飛んで倒れ、起き上がるまで 壁にぶつかったら跳ね返る
+// 跳ねる速さ 倒れている時間 起き上がったあとの無敵は PlayerData 壁で跳ね返る強さは ArenaWall
 class PlayerBlowState : public ICharacterState<Player> {
 private:
     enum class Phase {

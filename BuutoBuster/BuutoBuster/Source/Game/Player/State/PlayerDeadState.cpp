@@ -1,5 +1,6 @@
 ﻿#include "PlayerDeadState.h"
 #include "Player.h"
+#include "ArenaWall.h"
 #include "EffectManager.h"
 
 void PlayerDeadState::Enter(Player& player) {
@@ -7,12 +8,20 @@ void PlayerDeadState::Enter(Player& player) {
     player.SetKnockback(_knockback);
     player.SetVerticalVelocity(player.data.blownJumpSpeed);
     player.SetTrailEmitting(false);
+    player.ForgetWallHit();
 }
 
 void PlayerDeadState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     if (_isDown) {
         player.StopHorizontal();
         return;
+    }
+
+    // 倒れながら飛ばされても、壁は抜けずに跳ね返る
+    ArenaWall::Hit wallHit;
+    if (player.ConsumeWallHit(wallHit) && ArenaWall::TryBounce(player, wallHit)) {
+        player.PlayAnimation("BlowIn", 1.0f, true);
+        player.FaceImmediately(VScale(player.GetVelocity(), -1.0f));
     }
 
     player.DampHorizontal(2.0f, deltaTime);

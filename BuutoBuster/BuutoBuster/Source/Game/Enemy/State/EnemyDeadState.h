@@ -7,7 +7,7 @@ class Enemy;
 class BlowChain;
 
 // 倒れて、しばらく横たわってから地面に沈む
-// 倒れながら飛ばされている間も砲弾になり、触れた敵を巻き込む
+// 倒れながら飛ばされている間も砲弾になり、触れた敵を巻き込む 壁にぶつかったら跳ね返る
 class EnemyDeadState : public ICharacterState<Enemy> {
 private:
     // 重い敵が飛ばされながら倒れるときの上向きの速さ
