@@ -9,7 +9,7 @@ class Camera;
 namespace StageBuilder {
 
     // 戦える範囲 ステージ自体はもっと広いが、敵に囲まれる距離に絞る
-    constexpr float ARENA_RADIUS = 2200.0f;
+    constexpr float ARENA_RADIUS = 1600.0f;
 
     bool Build(Camera* camera);
 

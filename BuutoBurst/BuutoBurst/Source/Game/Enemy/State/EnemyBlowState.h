@@ -20,7 +20,7 @@ private:
     // 落とされた Bee が地面にいる時間 ここで地上の斬りが届く
     static constexpr float GROUNDED_TIME = 1.4f;
 
-    // 重い敵が押し飛ばされるときの上向きの速さと、着地してから動き出すまでの時間
+    // 重い敵が押し飛ばされるときの上向きの最低の速さと、着地してから動き出すまでの時間
     static constexpr float HEAVY_JUMP_SPEED = 250.0f;
     static constexpr float HEAVY_RECOVER_TIME = 0.5f;
 

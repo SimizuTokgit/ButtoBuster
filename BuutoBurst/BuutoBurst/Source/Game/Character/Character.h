@@ -109,6 +109,20 @@ public:
 
     void ResetBlow();
 
+    // ----- 吹っ飛ばし -----
+
+    // 吹っ飛び倍率 当たったときの吹っ飛ばしの速さに、プレイヤーにも敵にもすべてこれを掛ける
+    // のけぞりで押される分にも、連鎖で巻き込まれた分にもかかる
+    static constexpr float LAUNCH_RATE = 1.3f;
+
+    // 吹っ飛ぶ角度 (度) 吹き飛ぶときは、少なくともこの角度で斜め上へ飛び出す 強く飛ばされるほど高く上がる
+    // 大きくするほど高い弧を描くが、高く上がっている間は地上の敵に触れないので、連鎖は起きにくくなる
+    static constexpr float LAUNCH_ANGLE = 20.0f;
+
+    // 吹き飛び始めるときの上向きの速さ 水平の吹っ飛ばしが LAUNCH_ANGLE の角度になる速さを返す
+    // 弱い吹っ飛ばしでも minSpeed だけは跳ねる 吹き飛ぶ状態に入ったときに呼ぶ
+    static float GetLaunchUpSpeed(VECTOR knockback, float minSpeed);
+
     // ----- アニメ -----
 
     void PlayAnimation(const std::string& name, float speed = 1.0f, bool restart = false);
@@ -184,7 +198,7 @@ protected:
     // 当たった技のダメージの分だけ溜める 減り始めるまでの時間も最初から数え直す
     void AddBlow(float amount);
 
-    // 吹っ飛ばしの向きと速さに、溜まり具合に応じた倍率を掛ける 溜めてから呼ぶ
+    // 吹っ飛ばしの向きと速さに、吹っ飛び倍率と、溜まり具合に応じた倍率を掛ける 溜めてから呼ぶ
     VECTOR ScaleKnockback(VECTOR knockback) const;
 
     // 時間で減らし、溜まり具合に応じて湯気を出す 毎フレーム呼ぶ

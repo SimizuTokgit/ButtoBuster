@@ -13,21 +13,22 @@ void EnemyBlowState::Enter(Enemy& enemy) {
     enemy.SetKnockback(_knockback);
     enemy.ForgetWallHit();
 
+    // 吹っ飛ぶ角度 (Character::LAUNCH_ANGLE) で斜め上へ飛ばす 弱く飛ばされても、下の速さだけは跳ねる
     if (data.isFlying) {
         // 羽ばたきを止めて落とす
         enemy.SetHovering(false);
         enemy.PlayAnimation("Damage", 1.0f, true);
-        enemy.SetVerticalVelocity(250.0f);
+        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, 250.0f));
     }
     else if (data.canBlow) {
         enemy.PlayAnimation("BlowIn", 1.0f, true);
-        enemy.SetVerticalVelocity(380.0f);
+        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, 380.0f));
         enemy.FaceImmediately(VScale(_knockback, -1.0f));
     }
     else {
         // 吹き飛ぶアニメを持たない重い敵は、構えたまま押し飛ばされる
         enemy.PlayAnimation("Idle", 1.0f, true);
-        enemy.SetVerticalVelocity(HEAVY_JUMP_SPEED);
+        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, HEAVY_JUMP_SPEED));
     }
 
     if (_chain) _chain->BeginFlight(enemy);

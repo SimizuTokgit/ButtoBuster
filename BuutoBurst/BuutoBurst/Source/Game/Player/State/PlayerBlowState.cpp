@@ -10,7 +10,9 @@ using std::make_unique;
 void PlayerBlowState::Enter(Player& player) {
     player.PlayAnimation("BlowIn", 1.0f, true);
     player.SetKnockback(_knockback);
-    player.SetVerticalVelocity(player.data.blownJumpSpeed);
+
+    // 吹っ飛ぶ角度 (Character::LAUNCH_ANGLE) で斜め上へ飛ぶ 弱く飛ばされても blownJumpSpeed だけは跳ねる
+    player.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, player.data.blownJumpSpeed));
     player.ForgetWallHit();
 
     // 起き上がるまでは何も当たらない 倒れたところを殴られ続けないように

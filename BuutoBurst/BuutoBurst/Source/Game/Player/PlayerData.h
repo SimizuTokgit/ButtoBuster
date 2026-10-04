@@ -18,7 +18,8 @@ struct PlayerData {
     // 被弾してから次に食らうまでの猶予 囲まれて起き上がれないまま殴られ続けるのを防ぐ
     float hurtInvincibleTime = 0.6f;
 
-    // 吹き飛ばされたときに上へ跳ねる速さと、倒れている時間 秒
+    // 吹き飛ばされたときに上へ跳ねる最低の速さと、倒れている時間 秒
+    // 強く飛ばされたときは、吹っ飛ぶ角度 (Character::LAUNCH_ANGLE) になるまで高く跳ねる
     float blownJumpSpeed = 420.0f;
     float blownDownTime = 0.45f;
 

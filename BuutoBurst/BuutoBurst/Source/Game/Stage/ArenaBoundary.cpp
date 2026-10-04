@@ -1,4 +1,5 @@
 ﻿#include "ArenaBoundary.h"
+#include "StageBuilder.h"
 #include "Transform.h"
 #include <cmath>
 
@@ -21,6 +22,15 @@ void ArenaBoundary::Setup(VECTOR center, float radius) {
     _instance = this;
     _center = center;
     _radius = radius;
+
+    // 幕の足元を地面に合わせる 地面が見つからなければ中心の高さ
+    for (int i = 0; i < SEGMENT_COUNT; ++i) {
+        VECTOR point = PointAt(DX_TWO_PI_F * i / SEGMENT_COUNT, center.y);
+        float groundY = center.y;
+        StageBuilder::FindGroundHeight(point.x, point.z, groundY);
+        _groundHeights[i] = groundY;
+    }
+
     renderQueue = RENDER_QUEUE_TRANSPARENT;
     Register();
 }
@@ -45,7 +55,7 @@ void ArenaBoundary::Render() {
 
     _vertices.clear();
 
-    if (_viewer) AddViewerGlow();
+    AddCurtain();
 
     int now = GetNowCount();
     for (const Impact& impact : _impacts) {
@@ -71,30 +81,32 @@ void ArenaBoundary::Render() {
     SetUseZBufferFlag(FALSE);
 }
 
-void ArenaBoundary::AddViewerGlow() {
-    VECTOR viewer = _viewer->position;
-    float bottom = viewer.y - WALL_BELOW;
-    float top = viewer.y + WALL_ABOVE;
+void ArenaBoundary::AddCurtain() {
     COLOR_U8 color = GetColorU8(90, 200, 255, 255);
 
     for (int i = 0; i < SEGMENT_COUNT; ++i) {
+        int next = (i + 1) % SEGMENT_COUNT;
         float angleA = DX_TWO_PI_F * i / SEGMENT_COUNT;
         float angleB = DX_TWO_PI_F * (i + 1) / SEGMENT_COUNT;
 
-        // 幕の近いところほど濃く
-        VECTOR middle = VScale(VAdd(PointAt(angleA, 0.0f), PointAt(angleB, 0.0f)), 0.5f);
-        float distance = VSize(VGet(middle.x - viewer.x, 0.0f, middle.z - viewer.z));
-        float strength = 1.0f - distance / VISIBLE_DISTANCE;
-        if (strength <= 0.0f) continue;
-
-        float alpha = strength * 0.55f;
+        // いつも薄く見せ、見る人に近いところほど濃く
+        float alpha = BASE_ALPHA;
+        if (_viewer) {
+            VECTOR viewer = _viewer->position;
+            VECTOR middle = VScale(VAdd(PointAt(angleA, 0.0f), PointAt(angleB, 0.0f)), 0.5f);
+            float distance = VSize(VGet(middle.x - viewer.x, 0.0f, middle.z - viewer.z));
+            float closeness = 1.0f - distance / VISIBLE_DISTANCE;
+            if (closeness > 0.0f) alpha += (NEAR_ALPHA - BASE_ALPHA) * closeness;
+        }
 
         // 上に行くほど消える
+        float groundA = _groundHeights[i];
+        float groundB = _groundHeights[next];
         AddQuad(
-            MakeVertex(PointAt(angleA, bottom), color, alpha),
-            MakeVertex(PointAt(angleA, top), color, 0.0f),
-            MakeVertex(PointAt(angleB, bottom), color, alpha),
-            MakeVertex(PointAt(angleB, top), color, 0.0f));
+            MakeVertex(PointAt(angleA, groundA - WALL_BELOW), color, alpha),
+            MakeVertex(PointAt(angleA, groundA + WALL_ABOVE), color, 0.0f),
+            MakeVertex(PointAt(angleB, groundB - WALL_BELOW), color, alpha),
+            MakeVertex(PointAt(angleB, groundB + WALL_ABOVE), color, 0.0f));
     }
 }
 

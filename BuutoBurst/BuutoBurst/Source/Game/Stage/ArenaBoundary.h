@@ -6,7 +6,7 @@
 class Transform;
 
 // 戦える範囲の端に壁があることを知らせる光の幕
-// 近づいた部分だけ浮かび上がらせる 常に見えていると景色の邪魔になる
+// いつも薄く見せておき、近づいた部分は濃くする 場の端がどこか、どこへ飛ばせば壁に届くかがいつでも分かるように
 // 吹き飛んだ体がぶつかった所は、離れていても一瞬光らせる 何もない所で跳ね返ったように見えないように
 //
 // シーンに 1 つだけ置き、どこからでも Get() で呼べるようにする 壁そのものの決まりは ArenaWall
@@ -16,9 +16,12 @@ private:
 
     static constexpr int SEGMENT_COUNT = 72;
 
-    // これより離れていれば見えない
+    // 幕の濃さ 離れていてもこの濃さで見せ、VISIBLE_DISTANCE より近づくほど NEAR_ALPHA へ濃くする
+    static constexpr float BASE_ALPHA = 0.25f;
+    static constexpr float NEAR_ALPHA = 0.55f;
     static constexpr float VISIBLE_DISTANCE = 700.0f;
 
+    // 幕の高さ 地面から下と上へどこまで張るか 上へ行くほど消える
     static constexpr float WALL_BELOW = 200.0f;
     static constexpr float WALL_ABOVE = 450.0f;
 
@@ -46,6 +49,9 @@ private:
     VECTOR _center = VGet(0.0f, 0.0f, 0.0f);
     float _radius = 0.0f;
     Transform* _viewer = nullptr;
+
+    // 幕の区切りごとの地面の高さ 幕の足元をここに合わせる 作ったときに一度だけ調べる
+    float _groundHeights[SEGMENT_COUNT] = {};
     std::vector<VERTEX3D> _vertices;
 
     Impact _impacts[IMPACT_COUNT];
@@ -58,7 +64,7 @@ public:
 
     void Setup(VECTOR center, float radius);
 
-    // 誰に近いところを光らせるか ふつうはプレイヤー
+    // 誰に近いところを濃くするか ふつうはプレイヤー
     void SetViewer(Transform* viewer) { _viewer = viewer; }
 
     // ぶつかった所の幕を光らせる strength は 0〜1
@@ -68,7 +74,8 @@ public:
     void Render() override;
 
 private:
-    void AddViewerGlow();
+    // 円の幕を一周ぶん足す
+    void AddCurtain();
     void AddImpactGlow(const Impact& impact, float fade);
 
     // 幕の上の点 angle は中心から見た向き

@@ -75,13 +75,19 @@ VECTOR Character::ScaleKnockback(VECTOR knockback) const {
     if (ratio > KNOCKBACK_RATIO_MAX) ratio = KNOCKBACK_RATIO_MAX;
 
     float baseSpeed = VSize(knockback);
-    VECTOR scaled = VScale(knockback, 1.0f + GetBlowSettings().growth * ratio);
+    VECTOR scaled = VScale(knockback, LAUNCH_RATE * (1.0f + GetBlowSettings().growth * ratio));
 
     // 伸ばした分だけを上限で抑える 技そのものの速さは変えない
     float speedLimit = (baseSpeed > KNOCKBACK_SPEED_MAX) ? baseSpeed : KNOCKBACK_SPEED_MAX;
     float speed = VSize(scaled);
     if (speed > speedLimit) scaled = VScale(scaled, speedLimit / speed);
     return scaled;
+}
+
+float Character::GetLaunchUpSpeed(VECTOR knockback, float minSpeed) {
+    float horizontal = sqrtf(knockback.x * knockback.x + knockback.z * knockback.z);
+    float upSpeed = horizontal * tanf(LAUNCH_ANGLE * DX_PI_F / 180.0f);
+    return (upSpeed > minSpeed) ? upSpeed : minSpeed;
 }
 
 void Character::UpdateBlow(float deltaTime) {
