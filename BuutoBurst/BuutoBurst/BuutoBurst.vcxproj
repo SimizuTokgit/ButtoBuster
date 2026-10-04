@@ -146,6 +146,7 @@
     <ClCompile Include="Source\Game\Projectile\NeedlePool.cpp" />
     <ClCompile Include="Source\Game\Scene\GameScene.cpp" />
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp" />
+    <ClCompile Include="Source\Game\Stage\ArenaWall.cpp" />
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp" />
     <ClCompile Include="Source\Game\UI\ChainCounter.cpp" />
     <ClCompile Include="Source\Game\UI\GameFont.cpp" />
@@ -265,6 +266,7 @@
     <ClInclude Include="Source\Game\Scene\GameScene.h" />
     <ClInclude Include="Source\Game\Scene\TitleScene.h" />
     <ClInclude Include="Source\Game\Stage\ArenaBoundary.h" />
+    <ClInclude Include="Source\Game\Stage\ArenaWall.h" />
     <ClInclude Include="Source\Game\Stage\StageBuilder.h" />
     <ClInclude Include="Source\Game\State\ICharacterState.h" />
     <ClInclude Include="Source\Game\State\StateManager.h" />

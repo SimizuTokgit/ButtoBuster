@@ -63,8 +63,6 @@ bool GameScene::OnLoad() {
 
     auto* player = PlayerFactory::Create(start);
     if (!player) return false;
-    player->arenaCenter = StageBuilder::GetArenaCenter();
-    player->arenaRadius = StageBuilder::ARENA_RADIUS;
     auto* controller = player->GetComponent<PlayerController>();
 
     // 移動はカメラから見た向き 視点を回す操作とロックオンもコントローラーから渡す

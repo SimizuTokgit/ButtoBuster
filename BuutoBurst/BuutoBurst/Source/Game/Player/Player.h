@@ -19,10 +19,6 @@ public:
     // デバッグの無敵
     bool isCheatInvincible = false;
 
-    // 戦える範囲 外に出ようとしたら押し戻す
-    VECTOR arenaCenter = VGet(0.0f, 0.0f, 0.0f);
-    float arenaRadius = 2200.0f;
-
 private:
     StateManager<Player> _states;
     SlashTrail* _trail = nullptr;
@@ -101,5 +97,7 @@ private:
     void UpdateCombo(float deltaTime);
     void UpdateJustDodge(float deltaTime);
     void SucceedJustDodge();
-    void KeepInsideArena();
+
+    // 地形の穴に落ちたら、最初の場所へ戻す
+    void ReturnIfFallen();
 };

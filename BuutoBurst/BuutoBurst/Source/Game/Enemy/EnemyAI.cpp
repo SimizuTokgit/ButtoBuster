@@ -1,5 +1,6 @@
 ﻿#include "EnemyAI.h"
 #include "Enemy.h"
+#include "ArenaWall.h"
 #include "PhaseDirector.h"
 #include "GameObject.h"
 #include <cmath>
@@ -103,6 +104,9 @@ InputInfo EnemyAI::Surround(InputInfo input, VECTOR toTarget, float deltaTime) {
     float radius = _enemy->GetData().surroundRadius;
     VECTOR targetPosition = VAdd(_enemy->GetPosition(), toTarget);
     VECTOR slot = VAdd(targetPosition, VGet(cosf(_orbitAngle) * radius, 0.0f, sinf(_orbitAngle) * radius));
+
+    // プレイヤーが壁際にいると待つ場所が壁の外に出るので、壁の手前に寄せる 壁に向かって足踏みしないように
+    slot = ArenaWall::ClampInside(slot, _enemy->bodyRadius + SLOT_WALL_MARGIN);
 
     VECTOR toSlot = VSub(slot, _enemy->GetPosition());
     toSlot.y = 0.0f;

@@ -133,6 +133,14 @@ bool Character::IsGrounded() const {
     return _rigidbody ? _rigidbody->isGrounded : true;
 }
 
+bool Character::ConsumeWallHit(ArenaWall::Hit& outHit) {
+    if (!_hasWallHit) return false;
+
+    _hasWallHit = false;
+    outHit = _wallHit;
+    return true;
+}
+
 void Character::FaceTowards(VECTOR direction, float degreesPerSecond, float deltaTime) {
     direction.y = 0.0f;
     if (VSquareSize(direction) < 0.0001f) return;
@@ -207,6 +215,10 @@ void Character::UpdateTimers(float deltaTime) {
 void Character::UpdateAnimation(float deltaTime) {
     if (!_animator || _animationName.empty()) return;
     _animator->Play(_animationName, deltaTime * _animationSpeed);
+}
+
+void Character::UpdateWall() {
+    _hasWallHit = ArenaWall::KeepInside(*this, _wallHit);
 }
 
 void Character::UpdateFlash() {

@@ -273,6 +273,9 @@
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp">
       <Filter>Source\Game\Stage</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Stage\ArenaWall.cpp">
+      <Filter>Source\Game\Stage</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp">
       <Filter>Source\Game\Stage</Filter>
     </ClCompile>
@@ -624,6 +627,9 @@
       <Filter>Source\Game\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Stage\ArenaBoundary.h">
+      <Filter>Source\Game\Stage</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Stage\ArenaWall.h">
       <Filter>Source\Game\Stage</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Stage\StageBuilder.h">

@@ -5,6 +5,7 @@
 #include "ScreenFlash.h"
 #include "CameraFollow.h"
 #include "StageBuilder.h"
+#include "ArenaBoundary.h"
 #include "Time.h"
 
 namespace {
@@ -450,6 +451,24 @@ void EffectManager::PlayFinalBlow(VECTOR position) {
     Burst(_killBurst, center, 40);
     Burst(_killEmber, center, 30);
     Burst(_hitStreak, center, 30);
+}
+
+void EffectManager::PlayWallHit(VECTOR position, VECTOR normal, float power) {
+    // 壁から内側、跳ね返る向きへ火花を散らす
+    VECTOR aim = VAdd(normal, VScale(UP, SPARK_LIFT));
+    BurstToward(_hitStreak, position, aim, 40.0f, 6 + static_cast<int>(power * 10.0f));
+    BurstToward(_hitSpark, position, aim, 70.0f, 4 + static_cast<int>(power * 6.0f));
+    Burst(_hitFlash, position, 1);
+
+    VECTOR ground = position;
+    StageBuilder::FindGroundHeight(position.x, position.z, ground.y);
+    PlayDust(ground, 6 + static_cast<int>(power * 6.0f));
+
+    HitStop(0.03f + power * 0.04f);
+    Shake(3.0f + power * 7.0f, 0.25f);
+
+    // 壁は離れていると見えないので、ぶつかった所だけ光らせて、そこに壁があると分かるようにする
+    if (auto* boundary = ArenaBoundary::Get()) boundary->Flash(position, 0.5f + power * 0.5f);
 }
 
 void EffectManager::SetBaseTimeScale(float scale) {

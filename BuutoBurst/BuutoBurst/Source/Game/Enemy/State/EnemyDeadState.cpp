@@ -1,6 +1,7 @@
 ﻿#include "EnemyDeadState.h"
 #include "Enemy.h"
 #include "BlowChain.h"
+#include "ArenaWall.h"
 #include "EffectManager.h"
 #include "Transform.h"
 
@@ -10,6 +11,7 @@ void EnemyDeadState::Enter(Enemy& enemy) {
     // 倒れた体で生きている相手を押さない
     enemy.SetBodySolid(false);
     enemy.SetKnockback(_knockback);
+    enemy.ForgetWallHit();
 
     if (data.isFlying) {
         enemy.SetHovering(false);
@@ -46,6 +48,15 @@ void EnemyDeadState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
 
     switch (_phase) {
     case Phase::Fall: {
+        // 倒れながら飛ばされても、壁は抜けずに跳ね返る
+        ArenaWall::Hit wallHit;
+        if (enemy.ConsumeWallHit(wallHit) && ArenaWall::TryBounce(enemy, wallHit)) {
+            if (data.canBlow && !data.isFlying) {
+                enemy.PlayAnimation("BlowIn", 1.0f, true);
+                enemy.FaceImmediately(VScale(enemy.GetVelocity(), -1.0f));
+            }
+        }
+
         enemy.DampHorizontal(2.0f, deltaTime);
 
         // 倒れた敵も、速いうちは砲弾として触れた敵を巻き込む
