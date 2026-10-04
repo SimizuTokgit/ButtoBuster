@@ -17,21 +17,16 @@ namespace {
     // これより下に落ちたら戻す 地形の穴に落ちたときの保険
     constexpr float FALL_LIMIT_Y = -1500.0f;
 
-    // 攻撃を吸い付ける相手の範囲 正面から左右 60 度まで
-    constexpr float AIM_DOT = 0.5f;
-
     // 頭の上のどこにジャスト回避の知らせを出すか
     constexpr float HEAD_OFFSET = 30.0f;
 }
 
 void Player::Start() {
     team = Team::Player;
-    maxHp = MAX_HP;
-    hp = MAX_HP;
+    maxHp = params.maxHp;
+    hp = params.maxHp;
+    _airHangLeft = params.airHangCount;
     _spawnPosition = GetPosition();
-
-    chargePoseAnimation = PlayerChargeState::DEFAULT_POSE_ANIMATION;
-    chargePoseTime = PlayerChargeState::DEFAULT_POSE_TIME;
 
     _states.Start(*this, std::make_unique<PlayerIdleState>());
 }
@@ -42,7 +37,7 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateJustDodge(deltaTime);
 
     // 着地したら、空中で浮き直せる回数を戻す
-    if (IsGrounded()) _airHangLeft = AIR_HANG_COUNT;
+    if (IsGrounded()) _airHangLeft = params.airHangCount;
 
     _states.Update(*this, input, deltaTime);
 
@@ -65,10 +60,10 @@ HitResult Player::TakeHit(const HitInfo& info) {
     auto* effects = EffectManager::Get();
 
     // 正面から来た攻撃はガードで止める
-    bool isFrontal = GetFacingDot(info.sourcePosition) > GUARD_DOT;
+    bool isFrontal = GetFacingDot(info.sourcePosition) > params.guardDot;
     if (_isGuarding && info.canGuard && isFrontal) {
         _isGuardImpact = true;
-        SetKnockback(VScale(info.knockback, 0.35f));
+        SetKnockback(VScale(info.knockback, params.guardPushRate));
 
         VECTOR sparkPosition = VAdd(GetCenter(), VScale(GetForward(), 45.0f));
         if (effects) {
@@ -143,7 +138,7 @@ bool Player::TryUseAirHang() {
 
 void Player::AddCombo(int hits) {
     _combo += hits;
-    _comboTimer = COMBO_KEEP_TIME;
+    _comboTimer = params.comboKeepTime;
     if (_combo > _maxCombo) _maxCombo = _combo;
 }
 
@@ -174,7 +169,7 @@ VECTOR Player::FindAimDirection(VECTOR inputDirection, float searchRadius) const
         float distance = VSize(toOther);
         if (distance < 0.001f || distance > bestDistance) continue;
 
-        if (VDot(VScale(toOther, 1.0f / distance), base) < AIM_DOT) continue;
+        if (VDot(VScale(toOther, 1.0f / distance), base) < params.aimDot) continue;
 
         best = other;
         bestDistance = distance;
@@ -212,8 +207,8 @@ void Player::UpdateJustDodge(float deltaTime) {
 
 void Player::SucceedJustDodge() {
     _justDodgeTimer = 0.0f;
-    _counterTimer = COUNTER_TIME;
-    SetInvincible(JUST_DODGE_INVINCIBLE_TIME);
+    _counterTimer = params.counterTime;
+    SetInvincible(params.justDodgeInvincibleTime);
 
     // スロー 音 画面の文字は、知らせを受け取った側が出す
     JustDodgeEvent event;

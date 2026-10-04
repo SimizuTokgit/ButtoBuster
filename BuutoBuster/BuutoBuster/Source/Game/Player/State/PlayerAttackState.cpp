@@ -19,8 +19,11 @@ PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, Kin
 }
 
 void PlayerAttackState::Enter(Player& player) {
-    // ジャスト回避のあとなら、この振りが反撃になる
-    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data);
+    const PlayerParams& params = player.params;
+
+    // 強化で上がった倍率を掛ける ジャスト回避のあとなら、さらにこの振りが反撃になる
+    _data = PlayerAttacks::ApplyRates(_data, params);
+    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, params);
 
     bool isFromCharge = _chargeLevel >= 0;
     player.PlayAnimation(_data.animationName, _data.animationSpeed, !isFromCharge);
@@ -29,7 +32,7 @@ void PlayerAttackState::Enter(Player& player) {
     _chain = BlowChain::Create(&player.GetChainEvents());
 
     if (player.IsGrounded()) {
-        if (_kind == Kind::AntiAir) player.SetVerticalVelocity(ANTI_AIR_JUMP_SPEED);
+        if (_kind == Kind::AntiAir) player.SetVerticalVelocity(params.antiAirJumpSpeed);
         return;
     }
 
@@ -37,8 +40,8 @@ void PlayerAttackState::Enter(Player& player) {
     // 浮き直せるのは着地までに決まった回数だけ いつまでも宙にいられないように
     // 跳び上がっている途中なら、その勢いは止めない
     _isHanging = player.TryUseAirHang();
-    if (_isHanging && player.GetVelocity().y < AIR_HANG_SPEED) {
-        player.SetVerticalVelocity(AIR_HANG_SPEED);
+    if (_isHanging && player.GetVelocity().y < params.airHangSpeed) {
+        player.SetVerticalVelocity(params.airHangSpeed);
     }
 }
 
@@ -48,7 +51,7 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
     if (_isFirstFrame) {
         _isFirstFrame = false;
         bool isLockedOn = VSquareSize(input.look) > 0.0001f;
-        player.FaceImmediately(isLockedOn ? input.look : player.FindAimDirection(input.move, AIM_RADIUS));
+        player.FaceImmediately(isLockedOn ? input.look : player.FindAimDirection(input.move, player.params.aimRadius));
     }
 
     float time = player.GetAnimationTime();
@@ -62,8 +65,9 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
     }
 
     // 浮き直した振りの間は、落ちる速さを抑えて宙に留まる
-    if (_isHanging && !player.IsGrounded() && player.GetVelocity().y < -AIR_FALL_SPEED) {
-        player.SetVerticalVelocity(-AIR_FALL_SPEED);
+    float fallSpeed = player.params.airFallSpeed;
+    if (_isHanging && !player.IsGrounded() && player.GetVelocity().y < -fallSpeed) {
+        player.SetVerticalVelocity(-fallSpeed);
     }
 
     // 軌跡は判定より少しだけ長く出すと、振りの頭と終わりが自然に見える

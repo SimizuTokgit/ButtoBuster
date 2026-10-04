@@ -8,12 +8,6 @@
 using std::make_unique;
 
 namespace {
-    // 押し始めてからこの秒数で 1 2 3 段目に上がる
-    // 1 段目より前に離したら、溜めていない普通のヘビーアタックになる
-    constexpr float LEVEL_UP_TIMES[] = { 0.35f, 0.85f, 1.4f };
-    static_assert(sizeof(LEVEL_UP_TIMES) / sizeof(LEVEL_UP_TIMES[0]) == PlayerAttacks::CHARGE_LEVEL_MAX,
-        "段階の数と上がる時間の数をそろえる");
-
     // 頭の上のどこに溜めの光を出すか
     constexpr float HEAD_OFFSET = 30.0f;
 }
@@ -36,8 +30,9 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
     // その場で踏ん張って動かない 走りながら溜め始めても滑らないよう毎フレーム止める
     // 向きだけは変えて狙える ロックオン中は相手を向き続ける
     player.StopHorizontal();
+    const PlayerParams& params = player.params;
     bool isLockedOn = VSquareSize(input.look) > 0.0001f;
-    player.FaceTowards(isLockedOn ? input.look : input.move, Player::TURN_SPEED * 0.5f, deltaTime);
+    player.FaceTowards(isLockedOn ? input.look : input.move, params.turnSpeed * params.holdTurnRate, deltaTime);
 
     if (!input.isHeavyHeld) {
         Release(player);
@@ -45,7 +40,7 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
     }
 
     _chargeTime += deltaTime;
-    if (_level < PlayerAttacks::CHARGE_LEVEL_MAX && _chargeTime >= LEVEL_UP_TIMES[_level]) {
+    if (_level < PlayerAttacks::CHARGE_LEVEL_MAX && _chargeTime >= params.chargeLevelUpTimes[_level]) {
         _level++;
         Notify(player, PlayerChargeEvent::Type::LevelUp);
     }
@@ -65,8 +60,8 @@ const char* PlayerChargeState::GetName() const {
 
 void PlayerChargeState::HoldPose(Player& player) const {
     // 速さ 0 で止めたまま、決めた時間の姿勢にする 間を再生しないので、アニメに付けた音は鳴らない
-    player.PlayAnimation(player.chargePoseAnimation, 0.0f);
-    player.SetAnimationTime(player.chargePoseTime);
+    player.PlayAnimation(player.params.chargePoseAnimation, 0.0f);
+    player.SetAnimationTime(player.params.chargePoseTime);
 }
 
 void PlayerChargeState::Release(Player& player) {

@@ -566,6 +566,9 @@
     <ClInclude Include="Source\Game\Player\PlayerFactory.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Player\PlayerParams.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerActions.h">
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>

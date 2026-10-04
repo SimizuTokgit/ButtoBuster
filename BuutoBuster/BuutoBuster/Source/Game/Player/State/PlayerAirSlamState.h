@@ -15,14 +15,9 @@ private:
     // 振り抜き終わるフレーム 刃の軌跡をここまで出す
     static constexpr float SWING_END_TIME = 13.0f;
 
-    // 落ちる速さ
-    static constexpr float DIVE_SPEED = 2200.0f;
-
     // 地面に着かないまま落ち続けたときに、叩きつけたことにするまでの時間 秒
+    // 落ちる速さと着地の隙は PlayerParams
     static constexpr float DIVE_TIME_LIMIT = 1.5f;
-
-    // 着地してから次の行動を受け付けるまで 秒 外したときの隙
-    static constexpr float RECOVERY_TIME = 0.35f;
 
     enum class Phase {
         Windup,     // 宙で止まって振りかぶる
@@ -30,7 +25,7 @@ private:
         Land,       // 叩きつけて振り抜く
     };
 
-    // ジャスト回避のあとなら反撃に書き換えるので、技の数値は写しを持つ
+    // 強化の倍率を掛けたり、ジャスト回避のあとなら反撃に書き換えたりするので、技の数値は写しを持つ
     AttackData _data;
 
     Phase _phase = Phase::Windup;

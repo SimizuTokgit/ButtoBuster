@@ -3,10 +3,9 @@
 
 class Player;
 
+// 跳ぶ 落ちる 着地する 跳ぶ強さと空中で動ける速さは PlayerParams
 class PlayerJumpState : public ICharacterState<Player> {
 private:
-    static constexpr float JUMP_SPEED = 760.0f;
-
     // 跳んだ直後はまだ地面に触れていることがあるので、少し待ってから着地を見る
     static constexpr float MIN_AIR_TIME = 0.15f;
 

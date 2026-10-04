@@ -6,7 +6,7 @@ class Player;
 // 溜めで止める姿勢を、遊びながら探すための制作用の機能
 // P で止めるアニメを替え、, と . で止める時間を動かす 溜めている間なら、その場で姿勢が変わる
 // 一度使うと、今の姿勢を画面の左に出し続ける
-// 見つけた値を PlayerChargeState.h に書けば、普段の溜めの姿勢になる
+// 見つけた値を PlayerParams.h に書けば、普段の溜めの姿勢になる
 class ChargePoseDebugger : public UIImage {
 private:
     // 1 回押したときに動かす時間 アニメのフレーム

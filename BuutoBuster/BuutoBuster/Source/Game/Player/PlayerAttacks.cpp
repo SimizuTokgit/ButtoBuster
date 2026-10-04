@@ -1,18 +1,7 @@
 ﻿#include "PlayerAttacks.h"
+#include "PlayerParams.h"
 
 namespace {
-    // 反撃にしたときの重さ 元の技の何倍か
-    constexpr float COUNTER_DAMAGE_RATE = 1.5f;
-    constexpr float COUNTER_KNOCKBACK_RATE = 1.5f;
-
-    // 軽い斬りの反撃でも、群れを崩せるだけは飛ばす
-    constexpr float COUNTER_KNOCKBACK_MIN = 900.0f;
-
-    // 反撃の手応えに足す分
-    constexpr float COUNTER_HIT_STOP_ADD = 0.06f;
-    constexpr float COUNTER_SHAKE_ADD = 6.0f;
-    constexpr float COUNTER_ZOOM_ADD = 4.0f;
-
     AttackData CreateSlash1() {
         AttackData attack;
         attack.animationName = "Attack1";
@@ -246,21 +235,28 @@ const AttackData& PlayerAttacks::GetAirSlam() {
     return slam;
 }
 
-AttackData PlayerAttacks::CreateCounter(const AttackData& base) {
+AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerParams& params) {
+    AttackData attack = base;
+    attack.damage = static_cast<int>(base.damage * params.damageRate + 0.5f);
+    attack.knockback = base.knockback * params.knockbackRate;
+    return attack;
+}
+
+AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerParams& params) {
     AttackData attack = base;
 
     // どの技でも吹き飛ばす 吹き飛ばすなら、浮かせて留める必要は無い
     attack.reaction = HitReaction::Blow;
     attack.lift = 0.0f;
 
-    attack.damage = static_cast<int>(base.damage * COUNTER_DAMAGE_RATE);
-    float knockback = base.knockback * COUNTER_KNOCKBACK_RATE;
-    attack.knockback = (knockback > COUNTER_KNOCKBACK_MIN) ? knockback : COUNTER_KNOCKBACK_MIN;
+    attack.damage = static_cast<int>(base.damage * params.counterDamageRate);
+    float knockback = base.knockback * params.counterKnockbackRate;
+    attack.knockback = (knockback > params.counterKnockbackMin) ? knockback : params.counterKnockbackMin;
 
     // 手応えも重くし、ジャスト回避と同じ水色の弧で反撃だと分かるようにする
-    attack.hitStop = base.hitStop + COUNTER_HIT_STOP_ADD;
-    attack.shake = base.shake + COUNTER_SHAKE_ADD;
-    attack.zoomPunch = base.zoomPunch + COUNTER_ZOOM_ADD;
+    attack.hitStop = base.hitStop + params.counterHitStopAdd;
+    attack.shake = base.shake + params.counterShakeAdd;
+    attack.zoomPunch = base.zoomPunch + params.counterZoomAdd;
     attack.arcColor = GetColorU8(120, 230, 255, 255);
     return attack;
 }

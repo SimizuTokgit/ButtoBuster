@@ -4,15 +4,9 @@
 
 class Player;
 
+// 回避 速さ 長さ 無敵の時間は PlayerParams
 class PlayerDodgeState : public ICharacterState<Player> {
 private:
-    static constexpr float DASH_SPEED = 1500.0f;
-    static constexpr float DASH_TIME = 0.26f;
-    static constexpr float RECOVERY_TIME = 0.1f;
-
-    // 回避の無敵 走り抜けている間は全部かわせる
-    static constexpr float INVINCIBLE_TIME = 0.3f;
-
     VECTOR _direction;
     float _timer = 0.0f;
 

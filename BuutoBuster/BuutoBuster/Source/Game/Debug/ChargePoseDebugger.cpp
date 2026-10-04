@@ -49,16 +49,16 @@ void ChargePoseDebugger::Render() {
         const auto& names = animator->GetClipNames();
         count = static_cast<int>(names.size());
         for (int i = 0; i < count; ++i) {
-            if (names[i] == _player->chargePoseAnimation) index = i + 1;
+            if (names[i] == _player->params.chargePoseAnimation) index = i + 1;
         }
     }
 
     char animationLine[128];
     snprintf(animationLine, sizeof(animationLine), "アニメ    %s  (%d / %d)",
-        _player->chargePoseAnimation.c_str(), index, count);
+        _player->params.chargePoseAnimation.c_str(), index, count);
 
     char timeLine[128];
-    snprintf(timeLine, sizeof(timeLine), "フレーム  %.1f / %.1f", _player->chargePoseTime, GetTotalTime());
+    snprintf(timeLine, sizeof(timeLine), "フレーム  %.1f / %.1f", _player->params.chargePoseTime, GetTotalTime());
 
     const char* lines[] = {
         "溜めの姿勢 (制作用)",
@@ -67,7 +67,7 @@ void ChargePoseDebugger::Render() {
         "P 次のアニメ   Shift + P 前のアニメ",
         ", 戻す   . 進める   押し続けると続けて動く",
         "溜めている間は、その場で姿勢が変わる",
-        "決まったら PlayerChargeState.h の DEFAULT_POSE_ANIMATION と TIME に書く",
+        "決まったら PlayerParams.h の chargePoseAnimation と chargePoseTime に書く",
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
 
@@ -102,29 +102,29 @@ void ChargePoseDebugger::ChangeAnimation(int direction) {
 
     int index = 0;
     for (int i = 0; i < count; ++i) {
-        if (names[i] == _player->chargePoseAnimation) {
+        if (names[i] == _player->params.chargePoseAnimation) {
             index = i;
             break;
         }
     }
     index = (index + direction + count) % count;
-    _player->chargePoseAnimation = names[index];
+    _player->params.chargePoseAnimation = names[index];
 
     // 長さの違うアニメに替えたとき、止める時間がアニメの終わりを越えないようにする
     float totalTime = GetTotalTime();
-    if (totalTime > 0.0f && _player->chargePoseTime > totalTime) _player->chargePoseTime = totalTime;
+    if (totalTime > 0.0f && _player->params.chargePoseTime > totalTime) _player->params.chargePoseTime = totalTime;
 
     _isActive = true;
 }
 
 void ChargePoseDebugger::StepTime(float amount) {
-    float time = _player->chargePoseTime + amount;
+    float time = _player->params.chargePoseTime + amount;
     if (time < 0.0f) time = 0.0f;
 
     float totalTime = GetTotalTime();
     if (totalTime > 0.0f && time > totalTime) time = totalTime;
 
-    _player->chargePoseTime = time;
+    _player->params.chargePoseTime = time;
     _isActive = true;
 }
 
@@ -159,6 +159,6 @@ float ChargePoseDebugger::GetTotalTime() const {
     Animator* animator = _player->GetAnimator();
     if (!animator) return 0.0f;
 
-    const AnimationClip* clip = animator->GetClip(_player->chargePoseAnimation);
+    const AnimationClip* clip = animator->GetClip(_player->params.chargePoseAnimation);
     return clip ? clip->TotalTime : 0.0f;
 }

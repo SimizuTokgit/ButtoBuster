@@ -5,6 +5,7 @@
 #include "PlayerChargeEvent.h"
 #include "ChainEvent.h"
 #include "JustDodgeEvent.h"
+#include "PlayerParams.h"
 
 class SlashTrail;
 
@@ -12,31 +13,8 @@ class SlashTrail;
 // 何をするかは状態クラスが決め、ここには状態から使われる窓口をまとめる
 class Player : public Character {
 public:
-    static constexpr int MAX_HP = 100;
-    static constexpr float MOVE_SPEED = 600.0f;
-    static constexpr float TURN_SPEED = 900.0f;
-
-    // 被弾してから次に食らうまでの猶予
-    // 囲まれて起き上がれないまま削り切られるのを防ぐ
-    static constexpr float HURT_INVINCIBLE_TIME = 0.6f;
-
-    // 正面から左右にどこまでの攻撃を防げるか 1 で真正面だけ
-    static constexpr float GUARD_DOT = 0.2f;
-
-    // コンボが途切れるまでの時間
-    static constexpr float COMBO_KEEP_TIME = 2.5f;
-
-    // 回避を始めてからこの秒数のうちに攻撃が来たら、ジャスト回避になる
-    static constexpr float JUST_DODGE_WINDOW = 0.15f;
-
-    // ジャスト回避が決まったあとの無敵 スローの間に続けて来た攻撃も受けない
-    static constexpr float JUST_DODGE_INVINCIBLE_TIME = 0.6f;
-
-    // ジャスト回避のあと、次の攻撃が反撃になる時間
-    static constexpr float COUNTER_TIME = 1.5f;
-
-    // 着地までに空中で浮き直せる回数 空中の斬り 1 回分
-    static constexpr int AIR_HANG_COUNT = 3;
+    // 動きと手応えの数値 各状態はここから読み、強化はここを書き換える
+    PlayerParams params;
 
     // デバッグの無敵
     bool isCheatInvincible = false;
@@ -44,11 +22,6 @@ public:
     // 戦える範囲 外に出ようとしたら押し戻す
     VECTOR arenaCenter = VGet(0.0f, 0.0f, 0.0f);
     float arenaRadius = 2200.0f;
-
-    // 溜めで止める姿勢 アニメの名前と止める時間
-    // 始めは PlayerChargeState に書いた値 デバッグの姿勢探しで、遊びながら書き換えられる
-    std::string chargePoseAnimation;
-    float chargePoseTime = 0.0f;
 
 private:
     StateManager<Player> _states;
@@ -70,7 +43,7 @@ private:
     float _counterTimer = 0.0f;
 
     // 着地までに、あと何回空中で浮き直せるか
-    int _airHangLeft = AIR_HANG_COUNT;
+    int _airHangLeft = 0;
 
     VECTOR _spawnPosition = VGet(0.0f, 0.0f, 0.0f);
 
@@ -95,7 +68,7 @@ public:
     Subject<JustDodgeEvent>& GetJustDodgeEvents() { return _justDodgeEvents; }
 
     // 回避を始めたときに呼ぶ ここから少しのうちに来た攻撃はジャスト回避になる
-    void OpenJustDodgeWindow() { _justDodgeTimer = JUST_DODGE_WINDOW; }
+    void OpenJustDodgeWindow() { _justDodgeTimer = params.justDodgeWindow; }
 
     // ジャスト回避のあとの反撃を使う 使えたら true 技を始めるときに呼び、使えたらその技を反撃にする
     bool ConsumeCounter();

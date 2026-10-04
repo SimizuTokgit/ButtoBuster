@@ -245,6 +245,7 @@
     <ClInclude Include="Source\Game\Player\PlayerAttacks.h" />
     <ClInclude Include="Source\Game\Player\PlayerChargeEvent.h" />
     <ClInclude Include="Source\Game\Player\PlayerFactory.h" />
+    <ClInclude Include="Source\Game\Player\PlayerParams.h" />
     <ClInclude Include="Source\Game\Player\State\PlayerActions.h" />
     <ClInclude Include="Source\Game\Player\State\PlayerAirSlamState.h" />
     <ClInclude Include="Source\Game\Player\State\PlayerAttackState.h" />

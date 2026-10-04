@@ -5,10 +5,9 @@
 class Player;
 
 // 吹き飛んで倒れ、起き上がるまで
+// 跳ねる速さ 倒れている時間 起き上がったあとの無敵は PlayerParams
 class PlayerBlowState : public ICharacterState<Player> {
 private:
-    static constexpr float DOWN_TIME = 0.45f;
-
     enum class Phase {
         Fly,
         Down,

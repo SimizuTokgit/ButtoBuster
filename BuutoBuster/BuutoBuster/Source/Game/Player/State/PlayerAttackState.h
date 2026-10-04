@@ -19,17 +19,7 @@ public:
     };
 
 private:
-    // 攻撃の向きを吸い付ける範囲
-    static constexpr float AIM_RADIUS = 420.0f;
-
-    // 対空斬りで跳ぶ強さ
-    static constexpr float ANTI_AIR_JUMP_SPEED = 620.0f;
-
-    // 空中で振るときに浮き直す速さと、振っている間に落ちる速さの上限
-    static constexpr float AIR_HANG_SPEED = 150.0f;
-    static constexpr float AIR_FALL_SPEED = 120.0f;
-
-    // ジャスト回避のあとなら反撃に書き換えるので、技の数値は写しを持つ
+    // 強化の倍率を掛けたり、ジャスト回避のあとなら反撃に書き換えたりするので、技の数値は写しを持つ
     AttackData _data;
 
     // 通常の斬りの何段目か 強斬りなど段のない技は -1

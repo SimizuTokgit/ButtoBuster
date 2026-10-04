@@ -5,7 +5,7 @@
 void PlayerDeadState::Enter(Player& player) {
     player.PlayAnimation("BlowIn", 1.0f, true);
     player.SetKnockback(_knockback);
-    player.SetVerticalVelocity(420.0f);
+    player.SetVerticalVelocity(player.params.blownJumpSpeed);
     player.SetTrailEmitting(false);
 }
 

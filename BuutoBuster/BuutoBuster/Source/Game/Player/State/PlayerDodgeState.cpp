@@ -17,7 +17,7 @@ void PlayerDodgeState::Enter(Player& player) {
         player.FaceImmediately(_direction);
     }
 
-    player.SetInvincible(INVINCIBLE_TIME);
+    player.SetInvincible(player.params.dodgeInvincibleTime);
     player.SetOpacity(0.45f);
 
     // 踏み切った直後に攻撃が来たら、ジャスト回避になる
@@ -40,15 +40,16 @@ void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float del
     bool canCounter = player.HasCounter() && input.technique != Technique::None;
     if (canCounter && PlayerActions::TryStart(player, this, input)) return;
 
-    if (_timer < DASH_TIME) {
-        player.SetKnockback(VScale(_direction, DASH_SPEED));
+    const PlayerParams& params = player.params;
+    if (_timer < params.dodgeTime) {
+        player.SetKnockback(VScale(_direction, params.dodgeSpeed));
         return;
     }
 
     player.DampHorizontal(18.0f, deltaTime);
     player.SetOpacity(1.0f);
 
-    if (_timer < DASH_TIME + RECOVERY_TIME) return;
+    if (_timer < params.dodgeTime + params.dodgeRecoveryTime) return;
 
     if (PlayerActions::TryStart(player, this, input)) return;
     player.GetStates().Transition(this, make_unique<PlayerIdleState>());

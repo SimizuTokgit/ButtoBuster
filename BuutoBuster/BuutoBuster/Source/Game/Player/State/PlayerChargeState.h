@@ -8,16 +8,11 @@ class Player;
 // 決めた姿勢でアニメを止め、押している長さで段階を上げる
 // 溜めている間はその場から動けず、向きだけ変えられる
 // 離したら、溜まった段階のヘビーアタックを振る 止めた姿勢が振りのアニメなら、その続きから振る
+// 段階が上がる時間と止める姿勢は PlayerParams
 //
 // 段階が変わったことは Player の Subject で知らせる
 // 音やエフェクトはそれを受け取る側が鳴らすので、ここには書かない
 class PlayerChargeState : public ICharacterState<Player> {
-public:
-    // 普段の溜めの姿勢 止めるアニメの名前と、止める時間 (アニメのフレーム)
-    // ゲーム中に P と , . で探せる 見つけた値をここに書くと、普段の溜めの姿勢になる
-    static constexpr const char* DEFAULT_POSE_ANIMATION = "Attack3";
-    static constexpr float DEFAULT_POSE_TIME = 5.5f;
-
 private:
     float _chargeTime = 0.0f;
     int _level = 0;
