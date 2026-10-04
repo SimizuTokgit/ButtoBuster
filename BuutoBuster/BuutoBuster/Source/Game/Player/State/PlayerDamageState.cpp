@@ -8,7 +8,7 @@ using std::make_unique;
 void PlayerDamageState::Enter(Player& player) {
     player.PlayAnimation("Damage", 1.3f, true);
     player.SetKnockback(_knockback);
-    player.SetInvincible(player.params.hurtInvincibleTime);
+    player.SetInvincible(player.data.hurtInvincibleTime);
 }
 
 void PlayerDamageState::Execute(Player& player, const InputInfo& input, float deltaTime) {

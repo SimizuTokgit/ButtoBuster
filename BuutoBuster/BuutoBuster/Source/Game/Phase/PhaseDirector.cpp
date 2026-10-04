@@ -43,7 +43,7 @@ void PhaseDirector::Update(float deltaTime) {
     switch (_step) {
     case Step::Announce:
         UpdateSpawning(deltaTime);
-        if (_stepTimer >= ANNOUNCE_TIME) EnterStep(Step::Battle);
+        if (_stepTimer >= data.announceTime) EnterStep(Step::Battle);
         break;
 
     case Step::Battle:
@@ -55,9 +55,9 @@ void PhaseDirector::Update(float deltaTime) {
         break;
 
     case Step::Clear:
-        if (_stepTimer < CLEAR_TIME) break;
+        if (_stepTimer < data.clearTime) break;
 
-        if (_phase % HEAL_INTERVAL == 0) {
+        if (_phase % data.healInterval == 0) {
             EnterStep(Step::Rest);
             if (_player) _player->HealFull();
             if (auto* effects = EffectManager::Get()) effects->Shake(6.0f, 0.5f);
@@ -69,11 +69,11 @@ void PhaseDirector::Update(float deltaTime) {
         break;
 
     case Step::Rest:
-        if (_stepTimer >= REST_TIME) StartPhase(_phase + 1);
+        if (_stepTimer >= data.restTime) StartPhase(_phase + 1);
         break;
 
     case Step::GameOver:
-        if (_stepTimer >= RESULT_DELAY) _isResultReady = true;
+        if (_stepTimer >= data.resultDelay) _isResultReady = true;
         break;
     }
 }
@@ -83,8 +83,8 @@ int PhaseDirector::GetRemainingEnemyCount() const {
 }
 
 int PhaseDirector::GetPhasesUntilHeal() const {
-    int remainder = _phase % HEAL_INTERVAL;
-    return (remainder == 0) ? 0 : HEAL_INTERVAL - remainder;
+    int remainder = _phase % data.healInterval;
+    return (remainder == 0) ? 0 : data.healInterval - remainder;
 }
 
 void PhaseDirector::DefeatAllEnemies() {
@@ -160,7 +160,7 @@ void PhaseDirector::UpdateSpawning(float deltaTime) {
     Spawn(kind);
 
     // 一度に湧くと、どこから来たのか分からなくなるので少しずつ出す
-    _spawnTimer = SPAWN_INTERVAL;
+    _spawnTimer = data.spawnInterval;
 }
 
 void PhaseDirector::RemoveFinishedEnemies() {
@@ -196,8 +196,8 @@ void PhaseDirector::RemoveFinishedEnemies() {
 }
 
 Enemy* PhaseDirector::Spawn(EnemyKind kind) {
-    const EnemyData& data = EnemyDatabase::Get(kind);
-    VECTOR position = ChooseSpawnPosition(data);
+    const EnemyData& enemyData = EnemyDatabase::Get(kind);
+    VECTOR position = ChooseSpawnPosition(enemyData);
 
     Enemy* enemy = EnemyFactory::Create(kind, position, _player, _nextEnemyId++);
     if (!enemy) return nullptr;
@@ -214,16 +214,16 @@ Enemy* PhaseDirector::Spawn(EnemyKind kind) {
     return enemy;
 }
 
-VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& data) const {
+VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& enemyData) const {
     VECTOR arenaCenter = StageBuilder::GetArenaCenter();
     VECTOR playerPosition = _player ? _player->GetPosition() : arenaCenter;
     float limit = StageBuilder::ARENA_RADIUS - 150.0f;
-    float height = data.isFlying ? data.hoverHeight : 40.0f;
+    float height = enemyData.isFlying ? enemyData.hoverHeight : 40.0f;
 
     constexpr int ATTEMPTS = 8;
     for (int i = 0; i < ATTEMPTS; ++i) {
         float angle = RandomRange(0.0f, DX_TWO_PI_F);
-        float distance = RandomRange(SPAWN_DISTANCE_MIN, SPAWN_DISTANCE_MAX);
+        float distance = RandomRange(data.spawnDistanceMin, data.spawnDistanceMax);
         VECTOR position = VAdd(playerPosition, VGet(cosf(angle) * distance, 0.0f, sinf(angle) * distance));
 
         // 戦える範囲の外に出たら端まで戻す
@@ -237,7 +237,7 @@ VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& data) const {
         // 端へ戻したせいでプレイヤーの目の前になったら選び直す
         VECTOR gap = VSub(position, playerPosition);
         gap.y = 0.0f;
-        if (VSize(gap) < SPAWN_MIN_GAP) continue;
+        if (VSize(gap) < data.spawnMinGap) continue;
 
         float groundY = 0.0f;
         if (!StageBuilder::FindGroundHeight(position.x, position.z, groundY)) continue;
@@ -261,7 +261,7 @@ VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& data) const {
 }
 
 std::vector<EnemyKind> PhaseDirector::BuildComposition(int phase) const {
-    float budget = BASE_BUDGET + phase * BUDGET_PER_PHASE;
+    float budget = data.baseBudget + phase * data.budgetPerPhase;
 
     std::vector<EnemyKind> result;
     int counts[static_cast<int>(EnemyKind::Count)] = {};
@@ -284,15 +284,15 @@ std::vector<EnemyKind> PhaseDirector::BuildComposition(int phase) const {
         int totalWeight = 0;
         for (int i = 0; i < static_cast<int>(EnemyKind::Count); ++i) {
             EnemyKind kind = static_cast<EnemyKind>(i);
-            const EnemyData& data = EnemyDatabase::Get(kind);
+            const EnemyData& enemyData = EnemyDatabase::Get(kind);
 
-            bool isAvailable = data.unlockPhase <= phase
-                && data.cost <= budget
-                && counts[i] < data.maxPerPhase;
+            bool isAvailable = enemyData.unlockPhase <= phase
+                && enemyData.cost <= budget
+                && counts[i] < enemyData.maxPerPhase;
             if (!isAvailable) continue;
 
             candidates.push_back(kind);
-            totalWeight += data.pickWeight;
+            totalWeight += enemyData.pickWeight;
         }
         if (candidates.empty() || totalWeight <= 0) break;
 
@@ -319,24 +319,23 @@ int PhaseDirector::GetAliveCount() const {
 
 // std::min は DxLib が読む Windows.h の min マクロとぶつかって使えないので、比べて書く
 int PhaseDirector::GetConcurrentLimit() const {
-    int limit = MIN_CONCURRENT + _phase / 2;
-    return (limit < MAX_CONCURRENT) ? limit : MAX_CONCURRENT;
+    int limit = data.minConcurrent + _phase / 2;
+    return (limit < data.maxConcurrent) ? limit : data.maxConcurrent;
 }
 
 int PhaseDirector::GetTokenCapacity() const {
-    // フェーズが進むほど同時に殴ってくる数を増やす 4 体が上限
-    constexpr int MAX_TOKENS = 4;
-    int capacity = 1 + (_phase - 1) / 3;
-    return (capacity < MAX_TOKENS) ? capacity : MAX_TOKENS;
+    // フェーズが進むほど同時に殴ってくる数を増やす
+    int capacity = 1 + (_phase - 1) / data.tokenStepPhases;
+    return (capacity < data.maxTokens) ? capacity : data.maxTokens;
 }
 
 void PhaseDirector::UpdateBgm() {
     const char* bgm = "BGM_stg0";
-    if (_phase >= 10) bgm = "BGM_boss";
-    else if (_phase >= HEAL_INTERVAL) bgm = "BGM_stg1";
+    if (_phase >= data.bossBgmPhase) bgm = "BGM_boss";
+    else if (_phase >= data.stage2BgmPhase) bgm = "BGM_stg1";
 
     if (_currentBgm == bgm) return;
 
-    SoundManager::Instance().CrossfadeBGM(bgm, 2.0f);
+    SoundManager::Instance().CrossfadeBGM(bgm, data.bgmCrossfadeTime);
     _currentBgm = bgm;
 }

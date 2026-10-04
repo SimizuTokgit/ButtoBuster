@@ -2,6 +2,7 @@
 #include "MonoBehaviour.h"
 #include "EnemyData.h"
 #include "AttackTokenPool.h"
+#include "PhaseData.h"
 #include "DxLib.h"
 #include <deque>
 #include <string>
@@ -13,11 +14,11 @@ class Enemy;
 
 // フェーズの進行
 // 敵の組み合わせをその場で組み立てて出し、全滅したら次へ進める
-// 5 フェーズごとに全回復 プレイヤーが倒れたら終わり
+// 決まったフェーズごとに全回復 プレイヤーが倒れたら終わり
 //
 // 敵の並びを表に書くのではなく、フェーズ番号から強さの予算を決め、
 // 出せる敵の中から予算に収まるまで選ぶ
-// 数値を1つ変えるだけで難易度の伸び方を変えられる
+// 数値を1つ変えるだけで難易度の伸び方を変えられる その数値は PhaseData にまとめてある
 class PhaseDirector : public MonoBehaviour {
 public:
     enum class Step {
@@ -28,28 +29,11 @@ public:
         GameOver,
     };
 
-    static constexpr int HEAL_INTERVAL = 5;
+    // 進み方の数値 進め方の処理とフェーズの表示はここから読む
+    PhaseData data;
 
 private:
     static inline PhaseDirector* _instance = nullptr;
-
-    static constexpr float BASE_BUDGET = 3.0f;
-    static constexpr float BUDGET_PER_PHASE = 1.6f;
-
-    // 同時に出す数 これ以上は処理が重くなり、画面も見えなくなる
-    static constexpr int MIN_CONCURRENT = 5;
-    static constexpr int MAX_CONCURRENT = 10;
-
-    static constexpr float ANNOUNCE_TIME = 1.8f;
-    static constexpr float CLEAR_TIME = 1.2f;
-    static constexpr float REST_TIME = 3.0f;
-    static constexpr float SPAWN_INTERVAL = 0.35f;
-    static constexpr float RESULT_DELAY = 2.5f;
-
-    // プレイヤーからこの距離の輪の上に出す 近すぎると出た瞬間に殴られる
-    static constexpr float SPAWN_DISTANCE_MIN = 800.0f;
-    static constexpr float SPAWN_DISTANCE_MAX = 1200.0f;
-    static constexpr float SPAWN_MIN_GAP = 500.0f;
 
     Player* _player = nullptr;
     PlayerController* _controller = nullptr;
@@ -109,7 +93,7 @@ private:
     void RemoveFinishedEnemies();
 
     Enemy* Spawn(EnemyKind kind);
-    VECTOR ChooseSpawnPosition(const EnemyData& data) const;
+    VECTOR ChooseSpawnPosition(const EnemyData& enemyData) const;
     std::vector<EnemyKind> BuildComposition(int phase) const;
 
     int GetAliveCount() const;

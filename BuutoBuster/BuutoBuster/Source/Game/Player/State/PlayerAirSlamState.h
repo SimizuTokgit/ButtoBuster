@@ -16,7 +16,7 @@ private:
     static constexpr float SWING_END_TIME = 13.0f;
 
     // 地面に着かないまま落ち続けたときに、叩きつけたことにするまでの時間 秒
-    // 落ちる速さと着地の隙は PlayerParams
+    // 落ちる速さと着地の隙は PlayerData
     static constexpr float DIVE_TIME_LIMIT = 1.5f;
 
     enum class Phase {

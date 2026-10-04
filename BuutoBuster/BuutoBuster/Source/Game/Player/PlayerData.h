@@ -3,15 +3,15 @@
 #include <string>
 
 // プレイヤーの動きと手応えを決める数値 調整はこのファイルだけ見ればよい
-// Unity の ScriptableObject のように、数値の入れ物と、それを読む処理を分けてある
+// 敵の EnemyData と同じ形 Unity の ScriptableObject のように、数値の入れ物と、それを読む処理を分けてある
 //
-// Player が 1 つ持ち、各状態は player.params から読む
+// Player が 1 つ持ち、各状態は player.data から読む
 // 遊んでいる途中でも書き換えられるので、強化はこの値を変える
 // 新しいゲームでは Player が作り直されるので、ここに書いた初期値に戻る
 //
 // 技ごとの数値 (ダメージ 届く距離 判定のフレーム) は PlayerAttacks.cpp に置く
 // アニメのフレームに結び付いた数は、アニメを差し替えたときに一緒に直すので各状態に残す
-struct PlayerParams {
+struct PlayerData {
     // ----- 体 -----
 
     int maxHp = 100;

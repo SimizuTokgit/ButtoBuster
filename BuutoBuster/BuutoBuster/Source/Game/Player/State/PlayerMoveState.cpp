@@ -18,8 +18,8 @@ void PlayerMoveState::Execute(Player& player, const InputInfo& input, float delt
         return;
     }
 
-    player.SetHorizontalVelocity(input.move, player.params.moveSpeed);
-    player.FaceTowards(input.move, player.params.turnSpeed, deltaTime);
+    player.SetHorizontalVelocity(input.move, player.data.moveSpeed);
+    player.FaceTowards(input.move, player.data.turnSpeed, deltaTime);
 
     // 少しだけ倒したときは足の運びもゆっくりにする
     float amount = VSize(input.move);

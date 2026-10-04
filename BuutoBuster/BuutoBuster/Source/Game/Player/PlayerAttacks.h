@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "AttackData.h"
 
-struct PlayerParams;
+struct PlayerData;
 
 // プレイヤーの技の数値
 // 判定の出る時間は、アニメで剣を振っているフレームに合わせてある
@@ -24,9 +24,9 @@ namespace PlayerAttacks {
     constexpr float AIR_SLAM_RADIUS = 380.0f;
     const AttackData& GetAirSlam();
 
-    // PlayerParams の倍率 (強化で上がる分) を掛けた技にする 技を振り始めるときに通す
-    AttackData ApplyRates(const AttackData& base, const PlayerParams& params);
+    // PlayerData の倍率 (強化で上がる分) を掛けた技にする 技を振り始めるときに通す
+    AttackData ApplyRates(const AttackData& base, const PlayerData& playerData);
 
-    // ジャスト回避のあとの反撃 元の技を、必ず吹き飛ばす重い一撃にする どれだけ重くするかは PlayerParams
-    AttackData CreateCounter(const AttackData& base, const PlayerParams& params);
+    // ジャスト回避のあとの反撃 元の技を、必ず吹き飛ばす重い一撃にする どれだけ重くするかは PlayerData
+    AttackData CreateCounter(const AttackData& base, const PlayerData& playerData);
 }

@@ -9,7 +9,7 @@ using std::make_unique;
 void PlayerBlowState::Enter(Player& player) {
     player.PlayAnimation("BlowIn", 1.0f, true);
     player.SetKnockback(_knockback);
-    player.SetVerticalVelocity(player.params.blownJumpSpeed);
+    player.SetVerticalVelocity(player.data.blownJumpSpeed);
 
     // 起き上がるまでは何も当たらない 倒れたところを殴られ続けないように
     player.SetInvincible(3.0f);
@@ -34,7 +34,7 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
 
     case Phase::Down:
         _timer += deltaTime;
-        if (_timer > player.params.blownDownTime) {
+        if (_timer > player.data.blownDownTime) {
             player.PlayAnimation("BlowOut", 1.3f, true);
             _phase = Phase::GetUp;
         }
@@ -43,7 +43,7 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
     case Phase::GetUp:
         if (player.IsAnimationFinished()) {
             // 倒れている間の無敵は長めに取ってあるので、起き上がったら少しだけ残す
-            player.ResetInvincible(player.params.getUpInvincibleTime);
+            player.ResetInvincible(player.data.getUpInvincibleTime);
             player.GetStates().Transition(this, make_unique<PlayerIdleState>());
         }
         break;

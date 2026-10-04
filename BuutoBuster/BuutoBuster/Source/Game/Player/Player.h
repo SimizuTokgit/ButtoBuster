@@ -5,7 +5,7 @@
 #include "PlayerChargeEvent.h"
 #include "ChainEvent.h"
 #include "JustDodgeEvent.h"
-#include "PlayerParams.h"
+#include "PlayerData.h"
 
 class SlashTrail;
 
@@ -14,7 +14,7 @@ class SlashTrail;
 class Player : public Character {
 public:
     // 動きと手応えの数値 各状態はここから読み、強化はここを書き換える
-    PlayerParams params;
+    PlayerData data;
 
     // デバッグの無敵
     bool isCheatInvincible = false;
@@ -68,7 +68,7 @@ public:
     Subject<JustDodgeEvent>& GetJustDodgeEvents() { return _justDodgeEvents; }
 
     // 回避を始めたときに呼ぶ ここから少しのうちに来た攻撃はジャスト回避になる
-    void OpenJustDodgeWindow() { _justDodgeTimer = params.justDodgeWindow; }
+    void OpenJustDodgeWindow() { _justDodgeTimer = data.justDodgeWindow; }
 
     // ジャスト回避のあとの反撃を使う 使えたら true 技を始めるときに呼び、使えたらその技を反撃にする
     bool ConsumeCounter();

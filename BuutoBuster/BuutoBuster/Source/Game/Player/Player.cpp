@@ -23,9 +23,9 @@ namespace {
 
 void Player::Start() {
     team = Team::Player;
-    maxHp = params.maxHp;
-    hp = params.maxHp;
-    _airHangLeft = params.airHangCount;
+    maxHp = data.maxHp;
+    hp = data.maxHp;
+    _airHangLeft = data.airHangCount;
     _spawnPosition = GetPosition();
 
     _states.Start(*this, std::make_unique<PlayerIdleState>());
@@ -37,7 +37,7 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateJustDodge(deltaTime);
 
     // 着地したら、空中で浮き直せる回数を戻す
-    if (IsGrounded()) _airHangLeft = params.airHangCount;
+    if (IsGrounded()) _airHangLeft = data.airHangCount;
 
     _states.Update(*this, input, deltaTime);
 
@@ -60,10 +60,10 @@ HitResult Player::TakeHit(const HitInfo& info) {
     auto* effects = EffectManager::Get();
 
     // 正面から来た攻撃はガードで止める
-    bool isFrontal = GetFacingDot(info.sourcePosition) > params.guardDot;
+    bool isFrontal = GetFacingDot(info.sourcePosition) > data.guardDot;
     if (_isGuarding && info.canGuard && isFrontal) {
         _isGuardImpact = true;
-        SetKnockback(VScale(info.knockback, params.guardPushRate));
+        SetKnockback(VScale(info.knockback, data.guardPushRate));
 
         VECTOR sparkPosition = VAdd(GetCenter(), VScale(GetForward(), 45.0f));
         if (effects) {
@@ -138,7 +138,7 @@ bool Player::TryUseAirHang() {
 
 void Player::AddCombo(int hits) {
     _combo += hits;
-    _comboTimer = params.comboKeepTime;
+    _comboTimer = data.comboKeepTime;
     if (_combo > _maxCombo) _maxCombo = _combo;
 }
 
@@ -169,7 +169,7 @@ VECTOR Player::FindAimDirection(VECTOR inputDirection, float searchRadius) const
         float distance = VSize(toOther);
         if (distance < 0.001f || distance > bestDistance) continue;
 
-        if (VDot(VScale(toOther, 1.0f / distance), base) < params.aimDot) continue;
+        if (VDot(VScale(toOther, 1.0f / distance), base) < data.aimDot) continue;
 
         best = other;
         bestDistance = distance;
@@ -207,8 +207,8 @@ void Player::UpdateJustDodge(float deltaTime) {
 
 void Player::SucceedJustDodge() {
     _justDodgeTimer = 0.0f;
-    _counterTimer = params.counterTime;
-    SetInvincible(params.justDodgeInvincibleTime);
+    _counterTimer = data.counterTime;
+    SetInvincible(data.justDodgeInvincibleTime);
 
     // スロー 音 画面の文字は、知らせを受け取った側が出す
     JustDodgeEvent event;

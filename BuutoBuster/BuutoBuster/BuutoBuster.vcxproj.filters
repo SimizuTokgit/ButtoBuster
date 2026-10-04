@@ -428,6 +428,9 @@
     <ClInclude Include="Source\Engine\UI\UIManager.h">
       <Filter>Source\Engine\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Camera\CameraData.h">
+      <Filter>Source\Game\Camera</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Camera\CameraFollow.h">
       <Filter>Source\Game\Camera</Filter>
     </ClInclude>
@@ -527,6 +530,9 @@
     <ClInclude Include="Source\Game\Input\TargetLock.h">
       <Filter>Source\Game\Input</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Phase\PhaseData.h">
+      <Filter>Source\Game\Phase</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Phase\PhaseDirector.h">
       <Filter>Source\Game\Phase</Filter>
     </ClInclude>
@@ -566,7 +572,7 @@
     <ClInclude Include="Source\Game\Player\PlayerFactory.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\Player\PlayerParams.h">
+    <ClInclude Include="Source\Game\Player\PlayerData.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerActions.h">

@@ -35,12 +35,14 @@ void PhaseBanner::Render() {
     int centerX = screenWidth / 2;
     int centerY = screenHeight / 2 - 60;
 
+    // 表示の長さは、進め方と同じ PhaseData の時間に合わせる
+    const PhaseData& phase = _director->data;
     float time = _director->GetStepTimer();
     char text[64];
 
     switch (_director->GetStep()) {
     case PhaseDirector::Step::Announce: {
-        float alpha = FadeAlpha(time, 1.8f);
+        float alpha = FadeAlpha(time, phase.announceTime);
         if (alpha <= 0.0f) break;
 
         DrawBand(screenWidth, centerY + 30, 170, alpha);
@@ -58,7 +60,7 @@ void PhaseBanner::Render() {
     }
 
     case PhaseDirector::Step::Clear: {
-        float alpha = FadeAlpha(time, 1.2f);
+        float alpha = FadeAlpha(time, phase.clearTime);
         if (alpha <= 0.0f) break;
 
         SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
@@ -68,7 +70,7 @@ void PhaseBanner::Render() {
     }
 
     case PhaseDirector::Step::Rest: {
-        float alpha = FadeAlpha(time, 3.0f);
+        float alpha = FadeAlpha(time, phase.restTime);
         if (alpha <= 0.0f) break;
 
         DrawBand(screenWidth, centerY + 30, 150, alpha);

@@ -15,8 +15,8 @@ using std::make_unique;
 
 void PlayerAirSlamState::Enter(Player& player) {
     // 強化で上がった倍率を掛ける ジャスト回避のあとなら、さらにこの叩きつけが反撃になる
-    _data = PlayerAttacks::ApplyRates(PlayerAttacks::GetAirSlam(), player.params);
-    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, player.params);
+    _data = PlayerAttacks::ApplyRates(PlayerAttacks::GetAirSlam(), player.data);
+    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, player.data);
 
     // 宙で止まって振りかぶる 跳んだ勢いも横の勢いも消して、真下へ落ちられるようにする
     player.SetGravityEnabled(false);
@@ -40,7 +40,7 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
     }
 
     case Phase::Dive:
-        player.SetVerticalVelocity(-player.params.airSlamDiveSpeed);
+        player.SetVerticalVelocity(-player.data.airSlamDiveSpeed);
         if (player.IsGrounded() || _timer > DIVE_TIME_LIMIT) Land(player);
         break;
 
@@ -48,7 +48,7 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
         player.SetTrailEmitting(player.GetAnimationTime() <= SWING_END_TIME);
 
         if (input.technique != Technique::None) _queued = input.technique;
-        if (_timer < player.params.airSlamRecoveryTime) break;
+        if (_timer < player.data.airSlamRecoveryTime) break;
 
         // 地面に着かないまま叩きつけたときは、そのまま着地まで落ちる
         if (!player.IsGrounded()) {
@@ -82,7 +82,7 @@ void PlayerAirSlamState::StartDive(Player& player) {
     // 振りかぶった姿勢のまま落ちる 刃の軌跡で、落ちていく線を見せる
     player.SetAnimationSpeed(0.0f);
     player.SetAnimationTime(POSE_TIME);
-    player.SetVerticalVelocity(-player.params.airSlamDiveSpeed);
+    player.SetVerticalVelocity(-player.data.airSlamDiveSpeed);
     player.SetTrailEmitting(true);
 }
 

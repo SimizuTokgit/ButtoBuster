@@ -5,7 +5,7 @@
 class Player;
 
 // 吹き飛んで倒れ、起き上がるまで
-// 跳ねる速さ 倒れている時間 起き上がったあとの無敵は PlayerParams
+// 跳ねる速さ 倒れている時間 起き上がったあとの無敵は PlayerData
 class PlayerBlowState : public ICharacterState<Player> {
 private:
     enum class Phase {

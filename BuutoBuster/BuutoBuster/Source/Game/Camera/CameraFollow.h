@@ -1,41 +1,20 @@
 ﻿#pragma once
 #include "MonoBehaviour.h"
+#include "CameraData.h"
 #include "DxLib.h"
 
 class Transform;
 class Camera;
 
+// 追いかけ方の数値は CameraData にまとめてある
 class CameraFollow : public MonoBehaviour {
 public:
     Transform* target = nullptr;
 
-    // 足元からこの高さを見る 肩の高さにして、背中越しに前を見る
-    float lookHeight = 150.0f;
-
-    // 見ている点からカメラまでの距離 近いほど背中に張り付いた TPS らしい見え方になる
-    float distance = 430.0f;
-
-    // 見る点を右へずらす量 プレイヤーが画面の少し左に来て、右肩越しに前が見える
-    // ロックオン中は相手を真ん中に置きたいので、ずらすのをやめる
-    float shoulderOffset = 55.0f;
-
-    // 大きいほどすぐ追いつく 上下はゆっくりにして、跳んだときに画面が揺れすぎないようにする
-    float followSharpness = 10.0f;
-    float verticalSharpness = 5.0f;
-
-    // 動いている間、背中側へ回り込む強さ 大きいほど早く背中に付く 0 なら回り込まない
-    // TPS のように、走る向きがいつも画面の奥になる
-    float behindFollowSharpness = 2.5f;
-
-    // 回り込むいちばん速い速さ 度/秒 速すぎると画面が振り回されて酔う
-    float behindFollowMaxSpeed = 150.0f;
+    // 追いかけ方の数値 追いかける処理はここから読む
+    CameraData data;
 
 private:
-    // 見下ろす角度 度 上を向きすぎると地面にめり込み、下を向きすぎると周りが見えない
-    static constexpr float BASE_PITCH = 10.0f;
-    static constexpr float MIN_PITCH = -10.0f;
-    static constexpr float MAX_PITCH = 55.0f;
-
     Camera* _camera = nullptr;
     VECTOR _focus = VGet(0.0f, 0.0f, 0.0f);
     bool _hasFocus = false;
@@ -45,8 +24,9 @@ private:
     VECTOR _moveVelocity = VGet(0.0f, 0.0f, 0.0f);
 
     // 向き 度 左右は +Z が 0 で右回りがプラス 上下は見下ろすほどプラス
+    // 上下は使う前に SnapToTarget で data.basePitch にする
     float _yaw = 0.0f;
-    float _pitch = BASE_PITCH;
+    float _pitch = 0.0f;
 
     // Rotate で受け取って、次の Update でまとめて回す
     float _pendingYaw = 0.0f;

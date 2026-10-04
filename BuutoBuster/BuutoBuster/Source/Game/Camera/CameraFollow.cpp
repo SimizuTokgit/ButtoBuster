@@ -7,45 +7,6 @@
 #include <cmath>
 
 namespace {
-    // 寄るのにかける割合 残りでゆっくり戻す
-    constexpr float PUNCH_IN_RATE = 0.15f;
-
-    // 手で回してから、背中側へ回り込み始めるまで 回した向きをすぐ戻されないように
-    constexpr float FOLLOW_DELAY = 0.6f;
-
-    // この速さより遅いときは回り込まない 立ち止まって向きを変えただけで回らないように
-    constexpr float FOLLOW_MIN_SPEED = 150.0f;
-
-    // 背中とカメラの向きがこれより離れていたら回り込まない
-    // カメラへ向かって走ってくるときに、画面がぐるりと半周するのを防ぐ
-    constexpr float FOLLOW_MAX_ANGLE = 150.0f;
-
-    // ロックオンの相手へ向き直る速さ
-    constexpr float LOCK_TURN_SHARPNESS = 6.0f;
-
-    // 注視点を相手の方へどれだけ寄せるか 0 でプレイヤー 1 で相手
-    constexpr float LOCK_LOOK_WEIGHT = 0.3f;
-
-    // 相手が遠いほど引いて、プレイヤーと相手の両方を画面に入れる
-    constexpr float LOCK_EXTRA_DISTANCE_RATE = 0.15f;
-    constexpr float LOCK_EXTRA_DISTANCE_MAX = 250.0f;
-
-    // 相手がこれより近いと向きが定まらず回り続けるので、向き直らない
-    constexpr float LOCK_MIN_HORIZONTAL = 120.0f;
-
-    // ロックオンを付けたり外したりしたとき、注視点が飛ばないよう混ぜる速さ
-    constexpr float LOCK_BLEND_SHARPNESS = 6.0f;
-
-    // 背中側へ戻す速さ
-    constexpr float RESET_SHARPNESS = 12.0f;
-
-    // 障害物からどれだけ手前に止めるか 近すぎると近クリップで壁が欠けて見える
-    constexpr float OBSTACLE_MARGIN = 30.0f;
-    constexpr float MIN_DISTANCE = 120.0f;
-
-    // 遮るものが無くなったとき、元の距離へ戻る速さ 急に戻ると画面が跳ねる
-    constexpr float DISTANCE_RETURN_SHARPNESS = 3.0f;
-
     float ToRadian(float degree) { return degree * DX_PI_F / 180.0f; }
 
     float WrapDegree(float degree) {
@@ -67,7 +28,10 @@ namespace {
 
 void CameraFollow::Start() {
     _camera = GetComponent<Camera>();
-    if (_camera) _baseFieldOfView = _camera->fieldOfView;
+    if (_camera) {
+        _camera->fieldOfView = data.fieldOfView;
+        _baseFieldOfView = data.fieldOfView;
+    }
     SnapToTarget();
 }
 
@@ -83,7 +47,7 @@ void CameraFollow::Update(float deltaTime) {
     UpdateAngles(unscaled);
 
     // 肩越しに見るよう、見る点もカメラも右へずらす
-    float shoulder = shoulderOffset * (1.0f - _lockBlend);
+    float shoulder = data.shoulderOffset * (1.0f - _lockBlend);
     VECTOR lookAt = VAdd(GetLookAt(), VScale(GetGroundRight(), shoulder));
 
     // 見ている点からカメラへ向かう向き
@@ -168,7 +132,7 @@ void CameraFollow::SnapToTarget() {
     VECTOR facing = target->forward;
     facing.y = 0.0f;
     if (VSquareSize(facing) > 0.0001f) _yaw = YawFromDirection(facing);
-    _pitch = BASE_PITCH;
+    _pitch = data.basePitch;
     _isResetting = false;
 
     // 次の Update で障害物を見て決め直す
@@ -186,8 +150,8 @@ void CameraFollow::UpdateFocus(float deltaTime) {
     }
     _prevGoal = goal;
 
-    float horizontal = BlendRate(followSharpness, deltaTime);
-    float vertical = BlendRate(verticalSharpness, deltaTime);
+    float horizontal = BlendRate(data.followSharpness, deltaTime);
+    float vertical = BlendRate(data.verticalSharpness, deltaTime);
     _focus.x += (goal.x - _focus.x) * horizontal;
     _focus.z += (goal.z - _focus.z) * horizontal;
     _focus.y += (goal.y - _focus.y) * vertical;
@@ -209,35 +173,35 @@ void CameraFollow::UpdateAngles(float deltaTime) {
         _idleTime += deltaTime;
     }
 
-    _lockBlend += ((_hasLockPoint ? 1.0f : 0.0f) - _lockBlend) * BlendRate(LOCK_BLEND_SHARPNESS, deltaTime);
+    _lockBlend += ((_hasLockPoint ? 1.0f : 0.0f) - _lockBlend) * BlendRate(data.lockBlendSharpness, deltaTime);
 
     if (_hasLockPoint) {
         // プレイヤーから相手への向きの後ろに回る 相手がいつも画面の奥に来る
         VECTOR toLock = VSub(_lockPoint, _focus);
         toLock.y = 0.0f;
-        if (VSize(toLock) > LOCK_MIN_HORIZONTAL) {
+        if (VSize(toLock) > data.lockMinHorizontal) {
             float difference = WrapDegree(YawFromDirection(toLock) - _yaw);
-            _yaw += difference * BlendRate(LOCK_TURN_SHARPNESS, deltaTime);
+            _yaw += difference * BlendRate(data.lockTurnSharpness, deltaTime);
         }
     }
     else if (_isResetting) {
-        float rate = BlendRate(RESET_SHARPNESS, deltaTime);
+        float rate = BlendRate(data.resetSharpness, deltaTime);
         float difference = WrapDegree(_resetYaw - _yaw);
         _yaw += difference * rate;
-        _pitch += (BASE_PITCH - _pitch) * rate;
+        _pitch += (data.basePitch - _pitch) * rate;
         if (fabsf(difference) < 0.5f) _isResetting = false;
     }
-    else if (_idleTime > FOLLOW_DELAY && behindFollowSharpness > 0.0f) {
+    else if (_idleTime > data.followDelay && data.behindFollowSharpness > 0.0f) {
         // 動いている間は、プレイヤーの背中の向きへ回り込む
         VECTOR facing = target->forward;
         facing.y = 0.0f;
-        bool isMoving = VSize(_moveVelocity) > FOLLOW_MIN_SPEED;
+        bool isMoving = VSize(_moveVelocity) > data.followMinSpeed;
 
         if (isMoving && VSquareSize(facing) > 0.0001f) {
             float difference = WrapDegree(YawFromDirection(facing) - _yaw);
-            if (fabsf(difference) < FOLLOW_MAX_ANGLE) {
-                float step = difference * BlendRate(behindFollowSharpness, deltaTime);
-                float maxStep = behindFollowMaxSpeed * deltaTime;
+            if (fabsf(difference) < data.followMaxAngle) {
+                float step = difference * BlendRate(data.behindFollowSharpness, deltaTime);
+                float maxStep = data.behindFollowMaxSpeed * deltaTime;
                 if (step > maxStep) step = maxStep;
                 if (step < -maxStep) step = -maxStep;
                 _yaw += step;
@@ -246,38 +210,38 @@ void CameraFollow::UpdateAngles(float deltaTime) {
     }
 
     _yaw = WrapDegree(_yaw);
-    if (_pitch < MIN_PITCH) _pitch = MIN_PITCH;
-    if (_pitch > MAX_PITCH) _pitch = MAX_PITCH;
+    if (_pitch < data.minPitch) _pitch = data.minPitch;
+    if (_pitch > data.maxPitch) _pitch = data.maxPitch;
 }
 
 VECTOR CameraFollow::GetLookAt() const {
-    VECTOR lookAt = VAdd(_focus, VGet(0.0f, lookHeight, 0.0f));
+    VECTOR lookAt = VAdd(_focus, VGet(0.0f, data.lookHeight, 0.0f));
     if (_lockBlend <= 0.001f) return lookAt;
 
     // 相手の方へ少し寄せて、プレイヤーと相手の両方を画面に入れる
     VECTOR toLock = VSub(_lockPoint, lookAt);
-    return VAdd(lookAt, VScale(toLock, LOCK_LOOK_WEIGHT * _lockBlend));
+    return VAdd(lookAt, VScale(toLock, data.lockLookWeight * _lockBlend));
 }
 
 float CameraFollow::GetDesiredDistance() const {
-    if (_lockBlend <= 0.001f) return distance;
+    if (_lockBlend <= 0.001f) return data.distance;
 
     VECTOR toLock = VSub(_lockPoint, _focus);
     toLock.y = 0.0f;
-    float extra = VSize(toLock) * LOCK_EXTRA_DISTANCE_RATE;
-    if (extra > LOCK_EXTRA_DISTANCE_MAX) extra = LOCK_EXTRA_DISTANCE_MAX;
-    return distance + extra * _lockBlend;
+    float extra = VSize(toLock) * data.lockExtraDistanceRate;
+    if (extra > data.lockExtraDistanceMax) extra = data.lockExtraDistanceMax;
+    return data.distance + extra * _lockBlend;
 }
 
 float CameraFollow::ResolveObstacle(VECTOR lookAt, VECTOR back, float desiredDistance, float deltaTime) {
     float allowed = desiredDistance;
 
     // 余白の分だけ先まで調べる 壁のすぐ手前に置いて、近クリップで壁が欠けないように
-    VECTOR farEnd = VAdd(lookAt, VScale(back, desiredDistance + OBSTACLE_MARGIN));
+    VECTOR farEnd = VAdd(lookAt, VScale(back, desiredDistance + data.obstacleMargin));
     VECTOR hit;
     if (PhysicsManager::Instance().Linecast(lookAt, farEnd, hit)) {
-        allowed = VSize(VSub(hit, lookAt)) - OBSTACLE_MARGIN;
-        if (allowed < MIN_DISTANCE) allowed = MIN_DISTANCE;
+        allowed = VSize(VSub(hit, lookAt)) - data.obstacleMargin;
+        if (allowed < data.minDistance) allowed = data.minDistance;
     }
 
     // 遮られたらすぐ寄る 遅れるとその間だけ岩の中が見えてしまう
@@ -286,7 +250,7 @@ float CameraFollow::ResolveObstacle(VECTOR lookAt, VECTOR back, float desiredDis
         _currentDistance = allowed;
     }
     else {
-        _currentDistance += (allowed - _currentDistance) * BlendRate(DISTANCE_RETURN_SHARPNESS, deltaTime);
+        _currentDistance += (allowed - _currentDistance) * BlendRate(data.distanceReturnSharpness, deltaTime);
     }
     return _currentDistance;
 }
@@ -306,11 +270,11 @@ void CameraFollow::UpdateZoomPunch() {
     // 0 から 1 へ進む 最初の少しで一気に寄り、残りで戻る
     float progress = 1.0f - _punchTime / _punchDuration;
     float amount = 0.0f;
-    if (progress < PUNCH_IN_RATE) {
-        amount = progress / PUNCH_IN_RATE;
+    if (progress < data.punchInRate) {
+        amount = progress / data.punchInRate;
     }
     else {
-        float back = (progress - PUNCH_IN_RATE) / (1.0f - PUNCH_IN_RATE);
+        float back = (progress - data.punchInRate) / (1.0f - data.punchInRate);
         amount = (1.0f - back) * (1.0f - back);
     }
 

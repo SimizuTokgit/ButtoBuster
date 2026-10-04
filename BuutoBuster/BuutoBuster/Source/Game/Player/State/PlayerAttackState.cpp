@@ -19,11 +19,11 @@ PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, Kin
 }
 
 void PlayerAttackState::Enter(Player& player) {
-    const PlayerParams& params = player.params;
+    const PlayerData& playerData = player.data;
 
     // 強化で上がった倍率を掛ける ジャスト回避のあとなら、さらにこの振りが反撃になる
-    _data = PlayerAttacks::ApplyRates(_data, params);
-    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, params);
+    _data = PlayerAttacks::ApplyRates(_data, playerData);
+    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, playerData);
 
     bool isFromCharge = _chargeLevel >= 0;
     player.PlayAnimation(_data.animationName, _data.animationSpeed, !isFromCharge);
@@ -32,7 +32,7 @@ void PlayerAttackState::Enter(Player& player) {
     _chain = BlowChain::Create(&player.GetChainEvents());
 
     if (player.IsGrounded()) {
-        if (_kind == Kind::AntiAir) player.SetVerticalVelocity(params.antiAirJumpSpeed);
+        if (_kind == Kind::AntiAir) player.SetVerticalVelocity(playerData.antiAirJumpSpeed);
         return;
     }
 
@@ -40,8 +40,8 @@ void PlayerAttackState::Enter(Player& player) {
     // 浮き直せるのは着地までに決まった回数だけ いつまでも宙にいられないように
     // 跳び上がっている途中なら、その勢いは止めない
     _isHanging = player.TryUseAirHang();
-    if (_isHanging && player.GetVelocity().y < params.airHangSpeed) {
-        player.SetVerticalVelocity(params.airHangSpeed);
+    if (_isHanging && player.GetVelocity().y < playerData.airHangSpeed) {
+        player.SetVerticalVelocity(playerData.airHangSpeed);
     }
 }
 
@@ -51,7 +51,7 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
     if (_isFirstFrame) {
         _isFirstFrame = false;
         bool isLockedOn = VSquareSize(input.look) > 0.0001f;
-        player.FaceImmediately(isLockedOn ? input.look : player.FindAimDirection(input.move, player.params.aimRadius));
+        player.FaceImmediately(isLockedOn ? input.look : player.FindAimDirection(input.move, player.data.aimRadius));
     }
 
     float time = player.GetAnimationTime();
@@ -65,7 +65,7 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
     }
 
     // 浮き直した振りの間は、落ちる速さを抑えて宙に留まる
-    float fallSpeed = player.params.airFallSpeed;
+    float fallSpeed = player.data.airFallSpeed;
     if (_isHanging && !player.IsGrounded() && player.GetVelocity().y < -fallSpeed) {
         player.SetVerticalVelocity(-fallSpeed);
     }

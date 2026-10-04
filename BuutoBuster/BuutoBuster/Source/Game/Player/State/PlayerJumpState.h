@@ -3,7 +3,7 @@
 
 class Player;
 
-// 跳ぶ 落ちる 着地する 跳ぶ強さと空中で動ける速さは PlayerParams
+// 跳ぶ 落ちる 着地する 跳ぶ強さと空中で動ける速さは PlayerData
 class PlayerJumpState : public ICharacterState<Player> {
 private:
     // 跳んだ直後はまだ地面に触れていることがあるので、少し待ってから着地を見る

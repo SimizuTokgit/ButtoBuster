@@ -199,6 +199,7 @@
     <ClInclude Include="Source\Engine\Render\SpriteRenderer.h" />
     <ClInclude Include="Source\Engine\UI\UIImage.h" />
     <ClInclude Include="Source\Engine\UI\UIManager.h" />
+    <ClInclude Include="Source\Game\Camera\CameraData.h" />
     <ClInclude Include="Source\Game\Camera\CameraFollow.h" />
     <ClInclude Include="Source\Game\Character\AttackData.h" />
     <ClInclude Include="Source\Game\Character\BlowChain.h" />
@@ -232,6 +233,7 @@
     <ClInclude Include="Source\Game\Input\InputInfo.h" />
     <ClInclude Include="Source\Game\Input\PlayerController.h" />
     <ClInclude Include="Source\Game\Input\TargetLock.h" />
+    <ClInclude Include="Source\Game\Phase\PhaseData.h" />
     <ClInclude Include="Source\Game\Phase\PhaseDirector.h" />
     <ClInclude Include="Source\Game\Phase\SaveData.h" />
     <ClInclude Include="Source\Game\Player\ChainEffectObserver.h" />
@@ -245,7 +247,7 @@
     <ClInclude Include="Source\Game\Player\PlayerAttacks.h" />
     <ClInclude Include="Source\Game\Player\PlayerChargeEvent.h" />
     <ClInclude Include="Source\Game\Player\PlayerFactory.h" />
-    <ClInclude Include="Source\Game\Player\PlayerParams.h" />
+    <ClInclude Include="Source\Game\Player\PlayerData.h" />
     <ClInclude Include="Source\Game\Player\State\PlayerActions.h" />
     <ClInclude Include="Source\Game\Player\State\PlayerAirSlamState.h" />
     <ClInclude Include="Source\Game\Player\State\PlayerAttackState.h" />

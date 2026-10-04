@@ -1,5 +1,5 @@
 ﻿#include "PlayerAttacks.h"
-#include "PlayerParams.h"
+#include "PlayerData.h"
 
 namespace {
     AttackData CreateSlash1() {
@@ -235,28 +235,28 @@ const AttackData& PlayerAttacks::GetAirSlam() {
     return slam;
 }
 
-AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerParams& params) {
+AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerData& playerData) {
     AttackData attack = base;
-    attack.damage = static_cast<int>(base.damage * params.damageRate + 0.5f);
-    attack.knockback = base.knockback * params.knockbackRate;
+    attack.damage = static_cast<int>(base.damage * playerData.damageRate + 0.5f);
+    attack.knockback = base.knockback * playerData.knockbackRate;
     return attack;
 }
 
-AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerParams& params) {
+AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerData& playerData) {
     AttackData attack = base;
 
     // どの技でも吹き飛ばす 吹き飛ばすなら、浮かせて留める必要は無い
     attack.reaction = HitReaction::Blow;
     attack.lift = 0.0f;
 
-    attack.damage = static_cast<int>(base.damage * params.counterDamageRate);
-    float knockback = base.knockback * params.counterKnockbackRate;
-    attack.knockback = (knockback > params.counterKnockbackMin) ? knockback : params.counterKnockbackMin;
+    attack.damage = static_cast<int>(base.damage * playerData.counterDamageRate);
+    float knockback = base.knockback * playerData.counterKnockbackRate;
+    attack.knockback = (knockback > playerData.counterKnockbackMin) ? knockback : playerData.counterKnockbackMin;
 
     // 手応えも重くし、ジャスト回避と同じ水色の弧で反撃だと分かるようにする
-    attack.hitStop = base.hitStop + params.counterHitStopAdd;
-    attack.shake = base.shake + params.counterShakeAdd;
-    attack.zoomPunch = base.zoomPunch + params.counterZoomAdd;
+    attack.hitStop = base.hitStop + playerData.counterHitStopAdd;
+    attack.shake = base.shake + playerData.counterShakeAdd;
+    attack.zoomPunch = base.zoomPunch + playerData.counterZoomAdd;
     attack.arcColor = GetColorU8(120, 230, 255, 255);
     return attack;
 }

@@ -30,9 +30,9 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
     // その場で踏ん張って動かない 走りながら溜め始めても滑らないよう毎フレーム止める
     // 向きだけは変えて狙える ロックオン中は相手を向き続ける
     player.StopHorizontal();
-    const PlayerParams& params = player.params;
+    const PlayerData& data = player.data;
     bool isLockedOn = VSquareSize(input.look) > 0.0001f;
-    player.FaceTowards(isLockedOn ? input.look : input.move, params.turnSpeed * params.holdTurnRate, deltaTime);
+    player.FaceTowards(isLockedOn ? input.look : input.move, data.turnSpeed * data.holdTurnRate, deltaTime);
 
     if (!input.isHeavyHeld) {
         Release(player);
@@ -40,7 +40,7 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
     }
 
     _chargeTime += deltaTime;
-    if (_level < PlayerAttacks::CHARGE_LEVEL_MAX && _chargeTime >= params.chargeLevelUpTimes[_level]) {
+    if (_level < PlayerAttacks::CHARGE_LEVEL_MAX && _chargeTime >= data.chargeLevelUpTimes[_level]) {
         _level++;
         Notify(player, PlayerChargeEvent::Type::LevelUp);
     }
@@ -60,8 +60,8 @@ const char* PlayerChargeState::GetName() const {
 
 void PlayerChargeState::HoldPose(Player& player) const {
     // 速さ 0 で止めたまま、決めた時間の姿勢にする 間を再生しないので、アニメに付けた音は鳴らない
-    player.PlayAnimation(player.params.chargePoseAnimation, 0.0f);
-    player.SetAnimationTime(player.params.chargePoseTime);
+    player.PlayAnimation(player.data.chargePoseAnimation, 0.0f);
+    player.SetAnimationTime(player.data.chargePoseTime);
 }
 
 void PlayerChargeState::Release(Player& player) {

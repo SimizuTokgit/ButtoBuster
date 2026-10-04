@@ -9,7 +9,7 @@ using std::make_unique;
 
 void PlayerJumpState::Enter(Player& player) {
     if (_hasImpulse) {
-        player.SetVerticalVelocity(player.params.jumpSpeed);
+        player.SetVerticalVelocity(player.data.jumpSpeed);
         player.PlayAnimation("JumpIn", 1.0f, true);
         _isRising = true;
     }
@@ -35,9 +35,9 @@ void PlayerJumpState::Execute(Player& player, const InputInfo& input, float delt
     }
 
     // 空中でも少しは曲がれる
-    const PlayerParams& params = player.params;
-    player.SetHorizontalVelocity(input.move, params.moveSpeed * params.airMoveRate);
-    player.FaceTowards(input.move, params.turnSpeed, deltaTime);
+    const PlayerData& data = player.data;
+    player.SetHorizontalVelocity(input.move, data.moveSpeed * data.airMoveRate);
+    player.FaceTowards(input.move, data.turnSpeed, deltaTime);
 
     if (_isRising && player.IsAnimationFinished()) {
         player.PlayAnimation("JumpLoop");
