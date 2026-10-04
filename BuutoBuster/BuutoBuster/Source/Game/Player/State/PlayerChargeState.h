@@ -14,7 +14,7 @@ class Player;
 class PlayerChargeState : public ICharacterState<Player> {
 private:
     // 振りかぶりきった姿勢のアニメの時間 ここで止めて溜める
-    static constexpr float HOLD_POSE_TIME = 2.5f;
+    static constexpr float HOLD_POSE_TIME = 2.0f;
 
     float _chargeTime = 0.0f;
     int _level = 0;
