@@ -184,12 +184,6 @@ void Character::SetGravityEnabled(bool isEnabled) {
     _rigidbody->useGravity = isEnabled;
 }
 
-void Character::SetKinematic(bool isKinematic) {
-    if (!_rigidbody) return;
-    _rigidbody->isKinematic = isKinematic;
-    if (isKinematic) _rigidbody->linearVelocity = VGet(0.0f, 0.0f, 0.0f);
-}
-
 void Character::SetBodySolid(bool isSolid) {
     if (_body) _body->isTrigger = !isSolid;
 }

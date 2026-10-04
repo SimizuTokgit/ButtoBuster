@@ -51,7 +51,7 @@ protected:
     ArenaWall::Hit _wallHit;
     bool _hasWallHit = false;
 
-    // 吹っ飛ばされ値と、最後に当たってからの時間
+    // 吹っ飛ばされ値と、最後に当たってから (吹き飛んでいたら着地してから) の時間
     float _blowValue = 0.0f;
     float _blowIdleTime = 0.0f;
 
@@ -82,6 +82,9 @@ public:
     // 壁を割ったときに ArenaWall から呼ばれる 倒された印を付け、knockback の向きへ場外へ飛んでいく状態に移る
     virtual void Defeat(VECTOR knockback) = 0;
 
+    // 壁を割って倒されてよいか false なら、許容値に届いていても壁で跳ね返る デバッグの無敵に使う
+    virtual bool CanBeDefeated() const { return true; }
+
     bool IsInvincible() const { return _invincibleTimer > 0.0f; }
     // 無敵の残りを延ばす 短くはしない 別々の理由の無敵が重なったとき長いほうを残す
     void SetInvincible(float seconds);
@@ -96,6 +99,10 @@ public:
 
     // 許容値に対する割合 1 で許容値に届いた 赤みと湯気の強さもこれで決まる
     float GetBlowRatio() const;
+
+    // 吹き飛んでいる間、毎フレーム呼ぶ 値を減らさずに保ち、減り始めるまでの時間は着地してから数え直す
+    // 飛ぶ前に許容値に届いていれば、長く飛んでも壁まで届けば割れるように
+    void HoldBlow() { _blowIdleTime = 0.0f; }
 
     // 吹き飛んで起き上がったときに呼ぶ 値を少し戻す
     void RecoverBlowOnGetUp();
@@ -126,9 +133,6 @@ public:
 
     void SetVerticalVelocity(float speed);
     void SetGravityEnabled(bool isEnabled);
-
-    // 物理を止めて自分で位置を動かす 倒れた敵を地面に沈めるときに使う
-    void SetKinematic(bool isKinematic);
 
     // 体で押し合うかどうか 倒れた敵が生きている敵やプレイヤーを押さないように切る
     // 判定そのものを切ると地形とも当たらなくなって落ちていくので、すり抜けにするだけ

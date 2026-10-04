@@ -24,6 +24,9 @@ void PlayerBlowState::Enter(Player& player) {
 void PlayerBlowState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     switch (_phase) {
     case Phase::Fly: {
+        // 飛んでいる間は吹っ飛ばされ値を減らさない
+        player.HoldBlow();
+
         // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割られて負け、届いていなければ跳ね返る
         ArenaWall::Hit wallHit;
         if (player.ConsumeWallHit(wallHit)) {

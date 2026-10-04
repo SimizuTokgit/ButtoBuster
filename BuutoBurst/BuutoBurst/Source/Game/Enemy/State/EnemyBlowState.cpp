@@ -40,6 +40,9 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
 
     switch (_phase) {
     case Phase::Fly: {
+        // 飛んでいる間は吹っ飛ばされ値を減らさない
+        enemy.HoldBlow();
+
         // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割り、届いていなければ跳ね返る
         // 速くぶつかれば戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
         ArenaWall::Hit wallHit;

@@ -16,7 +16,7 @@ public:
     // 動きと手応えの数値 各状態はここから読み、強化はここを書き換える
     PlayerData data;
 
-    // デバッグの無敵
+    // デバッグの無敵 攻撃を受けず、壁でも割られない
     bool isCheatInvincible = false;
 
 private:
@@ -53,6 +53,9 @@ public:
 
     // 壁を割られたときに呼ばれる 場外へ飛ばされて負け
     void Defeat(VECTOR knockback) override;
+
+    // デバッグの無敵中は、壁を割られずに跳ね返る
+    bool CanBeDefeated() const override { return !isCheatInvincible; }
 
     void SetTrail(SlashTrail* trail) { _trail = trail; }
     void SetTrailEmitting(bool isEmitting);

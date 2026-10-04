@@ -45,7 +45,8 @@ ArenaWall::Reaction ArenaWall::React(Character& character, const Hit& hit) {
     VECTOR impact = hit.point;
     impact.y = character.GetCenter().y;
 
-    if (character.GetBlowRatio() >= 1.0f) {
+    // デバッグの無敵中のように倒されない体は、許容値に届いていても跳ね返す
+    if (character.GetBlowRatio() >= 1.0f && character.CanBeDefeated()) {
         // 壁の外へ向けて飛ばす 割った勢いのまま場外へ消えていくように
         float flySpeed = hit.speed * BREAK_FLY_RATE;
         if (flySpeed < BREAK_FLY_MIN_SPEED) flySpeed = BREAK_FLY_MIN_SPEED;
