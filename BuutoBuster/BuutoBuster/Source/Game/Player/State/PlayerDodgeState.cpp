@@ -20,6 +20,9 @@ void PlayerDodgeState::Enter(Player& player) {
     player.SetInvincible(INVINCIBLE_TIME);
     player.SetOpacity(0.45f);
 
+    // 踏み切った直後に攻撃が来たら、ジャスト回避になる
+    player.OpenJustDodgeWindow();
+
     // 地面を蹴った土煙 どちらへ抜けたかが残る
     auto* effects = EffectManager::Get();
     if (effects && player.IsGrounded()) effects->PlayDust(player.GetPosition(), 6);
@@ -31,6 +34,11 @@ void PlayerDodgeState::Enter(Player& player) {
 
 void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     _timer += deltaTime;
+
+    // ジャスト回避が決まったら、走り抜けるのを待たずに反撃へ移れる
+    // 全体がゆっくりになるので、待っているとスローが終わるまで振れない
+    bool canCounter = player.HasCounter() && input.technique != Technique::None;
+    if (canCounter && PlayerActions::TryStart(player, this, input)) return;
 
     if (_timer < DASH_TIME) {
         player.SetKnockback(VScale(_direction, DASH_SPEED));

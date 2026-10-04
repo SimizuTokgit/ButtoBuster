@@ -1,5 +1,6 @@
 ﻿#include "PlayerActions.h"
 #include "Player.h"
+#include "PlayerAirSlamState.h"
 #include "PlayerAttacks.h"
 #include "PlayerAttackState.h"
 #include "PlayerChargeState.h"
@@ -24,14 +25,16 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
 
     switch (input.technique) {
     case Technique::Slash:
-        return states.Transition(from, make_unique<PlayerAttackState>(PlayerAttacks::GetSlash(0), 0, false));
+        return states.Transition(from,
+            make_unique<PlayerAttackState>(PlayerAttacks::GetSlash(0), 0, PlayerAttackState::Kind::Ground));
 
     // 強攻撃はヘビーアタック 押し続けると溜まり、すぐ離せば溜めずに振る
     case Technique::StrongSlash:
         return states.Transition(from, make_unique<PlayerChargeState>());
 
     case Technique::AntiAir:
-        return states.Transition(from, make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, true));
+        return states.Transition(from,
+            make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, PlayerAttackState::Kind::AntiAir));
 
     case Technique::Dodge: {
         // 倒していなければ後ろへ下がる
@@ -52,4 +55,28 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
     }
 
     return false;
+}
+
+bool PlayerActions::TryStartAir(Player& player, const ICharacterState<Player>* from, const InputInfo& input) {
+    auto& states = player.GetStates();
+
+    switch (input.technique) {
+    case Technique::Slash:
+        return states.Transition(from,
+            make_unique<PlayerAttackState>(PlayerAttacks::GetAirSlash(0), 0, PlayerAttackState::Kind::Air));
+
+    // 空中では溜めずに、すぐ真下へ叩きつける
+    // 跳んだ直後でまだ地面から離れていないうちは出さない その場での叩きつけになってしまうので
+    case Technique::StrongSlash:
+        if (player.IsGrounded()) return false;
+        return states.Transition(from, make_unique<PlayerAirSlamState>());
+
+    // 空の Bee を落とすための斬り上げは、空中でも出せる
+    case Technique::AntiAir:
+        return states.Transition(from,
+            make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, PlayerAttackState::Kind::AntiAir));
+
+    default:
+        return false;
+    }
 }

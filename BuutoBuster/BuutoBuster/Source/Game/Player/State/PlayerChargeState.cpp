@@ -71,7 +71,8 @@ void PlayerChargeState::HoldPose(Player& player) const {
 
 void PlayerChargeState::Release(Player& player) {
     const AttackData& attack = PlayerAttacks::GetHeavy(_level);
-    bool isStarted = player.GetStates().Transition(this, make_unique<PlayerAttackState>(attack, -1, false, _level));
+    bool isStarted = player.GetStates().Transition(this,
+        make_unique<PlayerAttackState>(attack, -1, PlayerAttackState::Kind::Ground, _level));
     if (!isStarted) return;
 
     _hasReleased = true;

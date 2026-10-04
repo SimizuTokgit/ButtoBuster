@@ -25,6 +25,9 @@ struct HitInfo {
     // 相手を押す向きと強さ 水平
     VECTOR knockback = VGet(0.0f, 0.0f, 0.0f);
 
+    // のけぞった相手を真上へ浮かせる速さ 0 なら浮かせない
+    float lift = 0.0f;
+
     bool canGuard = true;
 
     // 当たったときに鳴らす音 武器によって変わる

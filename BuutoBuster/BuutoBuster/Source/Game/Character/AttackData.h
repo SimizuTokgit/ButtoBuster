@@ -21,6 +21,10 @@ struct AttackData {
     HitReaction reaction = HitReaction::Flinch;
     float knockback = 200.0f;
 
+    // 0 より大きければ、のけぞらせた相手をこの速さで真上へ浮かせる
+    // 空中の斬りで相手を宙に留め、続けて斬れるようにする
+    float lift = 0.0f;
+
     // 自分の正面の扇形で当てる
     float reach = 150.0f;
     float arcDegree = 70.0f;

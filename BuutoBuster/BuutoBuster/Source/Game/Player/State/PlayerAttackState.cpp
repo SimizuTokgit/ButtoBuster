@@ -11,22 +11,34 @@
 
 using std::make_unique;
 
-PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, bool isAntiAir, int chargeLevel)
+PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, Kind kind, int chargeLevel)
     : _data(data)
     , _comboIndex(comboIndex)
-    , _isAntiAir(isAntiAir)
+    , _kind(kind)
     , _chargeLevel(chargeLevel) {
 }
 
 void PlayerAttackState::Enter(Player& player) {
+    // ジャスト回避のあとなら、この振りが反撃になる
+    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data);
+
     bool isFromCharge = _chargeLevel >= 0;
     player.PlayAnimation(_data.animationName, _data.animationSpeed, !isFromCharge);
     player.SetTrailEmitting(false);
 
     _chain = BlowChain::Create(&player.GetChainEvents());
 
-    if (_isAntiAir && player.IsGrounded()) {
-        player.SetVerticalVelocity(ANTI_AIR_JUMP_SPEED);
+    if (player.IsGrounded()) {
+        if (_kind == Kind::AntiAir) player.SetVerticalVelocity(ANTI_AIR_JUMP_SPEED);
+        return;
+    }
+
+    // 空中で振るときは少し浮き直し、振っている間はゆっくり落ちる
+    // 浮き直せるのは着地までに決まった回数だけ いつまでも宙にいられないように
+    // 跳び上がっている途中なら、その勢いは止めない
+    _isHanging = player.TryUseAirHang();
+    if (_isHanging && player.GetVelocity().y < AIR_HANG_SPEED) {
+        player.SetVerticalVelocity(AIR_HANG_SPEED);
     }
 }
 
@@ -49,6 +61,11 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
         player.StopHorizontal();
     }
 
+    // 浮き直した振りの間は、落ちる速さを抑えて宙に留まる
+    if (_isHanging && !player.IsGrounded() && player.GetVelocity().y < -AIR_FALL_SPEED) {
+        player.SetVerticalVelocity(-AIR_FALL_SPEED);
+    }
+
     // 軌跡は判定より少しだけ長く出すと、振りの頭と終わりが自然に見える
     bool isTrailTime = time >= _data.hitStart - 1.0f && time <= _data.hitEnd + 1.5f;
     player.SetTrailEmitting(isTrailTime);
@@ -62,8 +79,8 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
 
     if (!player.IsAnimationFinished()) return;
 
-    // 対空斬りは空中で振り終わるので、着地まで落ちるのを待つ
-    if (_isAntiAir && !player.IsGrounded()) {
+    // 対空斬りや空中の斬りは空中で振り終わるので、着地まで落ちるのを待つ
+    if (!player.IsGrounded()) {
         player.GetStates().Transition(this, make_unique<PlayerJumpState>(false));
         return;
     }
@@ -77,7 +94,7 @@ void PlayerAttackState::Exit(Player& player) {
 }
 
 const char* PlayerAttackState::GetName() const {
-    if (_isAntiAir) return "AntiAir";
+    if (_kind == Kind::AntiAir) return "AntiAir";
 
     if (_chargeLevel >= 0) {
         static const char* heavyNames[] = { "Heavy", "Heavy1", "Heavy2", "Heavy3" };
@@ -86,7 +103,8 @@ const char* PlayerAttackState::GetName() const {
     if (_comboIndex < 0) return "Strong";
 
     static const char* names[] = { "Slash1", "Slash2", "Slash3" };
-    return names[_comboIndex];
+    static const char* airNames[] = { "AirSlash1", "AirSlash2", "AirSlash3" };
+    return (_kind == Kind::Air) ? airNames[_comboIndex] : names[_comboIndex];
 }
 
 void PlayerAttackState::PlaySwingEffects(Player& player, float time) {
@@ -170,21 +188,32 @@ bool PlayerAttackState::TryContinue(Player& player, const InputInfo& input) {
     float time = player.GetAnimationTime();
 
     // 回避だけは振り終わった直後から受け付ける 危ないときに逃げられるように
+    // 受け付ける時間の無い技も、振り終われば押してあった技を出す 対空斬りから空中の斬りへつなげるため
     bool canDodge = _queued == Technique::Dodge && time > _data.hitEnd;
-    bool canCancel = _data.cancelTime > 0.0f && time >= _data.cancelTime;
+    bool canCancel = (_data.cancelTime > 0.0f && time >= _data.cancelTime) || player.IsAnimationFinished();
     if (!canDodge && !canCancel) return false;
 
     auto& states = player.GetStates();
+    bool isAirborne = !player.IsGrounded();
 
+    // 段を進めるのは同じ場所で振り続けたときだけ 着地したり宙に出たりしたら、そこの 1 段目から振り直す
+    Kind nextKind = isAirborne ? Kind::Air : Kind::Ground;
     bool isNextSlash = _queued == Technique::Slash
+        && _kind == nextKind
         && _comboIndex >= 0
         && _comboIndex + 1 < PlayerAttacks::SLASH_COUNT;
     if (isNextSlash) {
         int next = _comboIndex + 1;
-        return states.Transition(this, make_unique<PlayerAttackState>(PlayerAttacks::GetSlash(next), next, false));
+        const AttackData& data = isAirborne ? PlayerAttacks::GetAirSlash(next) : PlayerAttacks::GetSlash(next);
+        return states.Transition(this, make_unique<PlayerAttackState>(data, next, nextKind));
     }
 
     InputInfo buffered = input;
     buffered.technique = _queued;
+
+    // 空中では空中の技を出す 回避は今までどおり地上と同じ入口から出す
+    if (isAirborne && _queued != Technique::Dodge) {
+        return PlayerActions::TryStartAir(player, this, buffered);
+    }
     return PlayerActions::TryStart(player, this, buffered);
 }

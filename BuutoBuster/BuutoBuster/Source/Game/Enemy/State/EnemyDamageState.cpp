@@ -13,6 +13,11 @@ void EnemyDamageState::Enter(Enemy& enemy) {
 void EnemyDamageState::Execute(Enemy& enemy, const InputInfo& input, float deltaTime) {
     enemy.DampHorizontal(8.0f, deltaTime);
 
+    // 空中の斬りで浮かされている間は、のけぞったまま落ちる 宙で歩き出したり攻撃したりしないように
+    // 浮いている敵は地面に着かないので待たない
+    bool canRecover = enemy.GetData().isFlying || enemy.IsGrounded();
+    if (!canRecover) return;
+
     if (enemy.GetAnimationTime() > 12.0f || enemy.IsAnimationFinished()) {
         enemy.GetStates().Transition(this, make_unique<EnemyIdleState>());
     }

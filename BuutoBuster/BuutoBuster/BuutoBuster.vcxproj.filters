@@ -210,6 +210,12 @@
     <ClCompile Include="Source\Game\Player\ChargeSoundObserver.cpp">
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Player\JustDodgeEffectObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\JustDodgeSoundObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Player\Player.cpp">
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
@@ -220,6 +226,9 @@
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Player\State\PlayerActions.cpp">
+      <Filter>Source\Game\Player\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\State\PlayerAirSlamState.cpp">
       <Filter>Source\Game\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Player\State\PlayerAttackState.cpp">
@@ -274,6 +283,9 @@
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\Hud.cpp">
+      <Filter>Source\Game\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\UI\JustDodgeBanner.cpp">
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\LockOnMarker.cpp">
@@ -533,6 +545,15 @@
     <ClInclude Include="Source\Game\Player\ChargeSoundObserver.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Player\JustDodgeEffectObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\JustDodgeEvent.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\JustDodgeSoundObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Player\Player.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
@@ -546,6 +567,9 @@
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerActions.h">
+      <Filter>Source\Game\Player\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\State\PlayerAirSlamState.h">
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerAttackState.h">
@@ -609,6 +633,9 @@
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\Hud.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\JustDodgeBanner.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\LockOnMarker.h">

@@ -18,6 +18,7 @@ namespace CombatSystem {
     int ApplyMelee(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList,
         const std::shared_ptr<BlowChain>& chain = nullptr);
 
-    // 自分を中心にした円 Golem の踏みつけに使う
-    int ApplyArea(Character& attacker, float radius, const AttackData& attack, std::vector<Character*>& hitList);
+    // 自分を中心にした円 Golem の踏みつけと、プレイヤーの空中からの叩きつけに使う
+    int ApplyArea(Character& attacker, float radius, const AttackData& attack, std::vector<Character*>& hitList,
+        const std::shared_ptr<BlowChain>& chain = nullptr);
 }

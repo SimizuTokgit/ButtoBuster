@@ -18,6 +18,7 @@
 #include "LockOnMarker.h"
 #include "ResultScreen.h"
 #include "ChainCounter.h"
+#include "JustDodgeBanner.h"
 #include "DebugCheats.h"
 #include "ChargePoseDebugger.h"
 
@@ -96,6 +97,11 @@ bool GameScene::OnLoad() {
     auto* chainCounter = uiObject->AddChild("ChainCounter")->AddComponent<ChainCounter>();
     chainCounter->Setup();
     player->GetChainEvents().AddObserver(chainCounter);
+
+    // ジャスト回避の文字も、プレイヤーの知らせを受けて出す
+    auto* justDodgeBanner = uiObject->AddChild("JustDodgeBanner")->AddComponent<JustDodgeBanner>();
+    justDodgeBanner->Setup();
+    player->GetJustDodgeEvents().AddObserver(justDodgeBanner);
 
     auto* debugObject = scene.CreateGameObject("DebugCheats");
     auto* cheats = debugObject->AddComponent<DebugCheats>();

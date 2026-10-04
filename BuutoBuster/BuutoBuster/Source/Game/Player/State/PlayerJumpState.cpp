@@ -1,8 +1,6 @@
 ﻿#include "PlayerJumpState.h"
 #include "Player.h"
 #include "PlayerActions.h"
-#include "PlayerAttacks.h"
-#include "PlayerAttackState.h"
 #include "PlayerIdleState.h"
 #include "EffectManager.h"
 #include <memory>
@@ -45,13 +43,8 @@ void PlayerJumpState::Execute(Player& player, const InputInfo& input, float delt
         _isRising = false;
     }
 
-    // 空中で攻撃を押したら斬り上げ 空の Bee を落とすため
-    bool isAirAttack = input.technique == Technique::Slash || input.technique == Technique::AntiAir;
-    if (isAirAttack) {
-        player.GetStates().Transition(this,
-            make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, true));
-        return;
-    }
+    // 空中で攻撃を押したら空中の技 □ は空中の斬り、△ は真下への叩きつけ
+    if (PlayerActions::TryStartAir(player, this, input)) return;
 
     if (_airTime > MIN_AIR_TIME && player.IsGrounded()) {
         _isLanding = true;

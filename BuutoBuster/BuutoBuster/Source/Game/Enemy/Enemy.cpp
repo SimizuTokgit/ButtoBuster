@@ -91,6 +91,10 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     }
     else {
         SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
+
+        // 空中の斬りは相手を浮かせ、続けて斬れる高さに留める
+        // 浮いている敵は羽ばたきで高さを戻すので、地上の敵だけが浮く
+        if (info.lift > 0.0f) SetVerticalVelocity(info.lift);
         _states.Transition(current, std::make_unique<EnemyDamageState>(info.knockback));
     }
     return HitResult::Hit;

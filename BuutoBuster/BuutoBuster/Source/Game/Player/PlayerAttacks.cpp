@@ -1,6 +1,18 @@
 ﻿#include "PlayerAttacks.h"
 
 namespace {
+    // 反撃にしたときの重さ 元の技の何倍か
+    constexpr float COUNTER_DAMAGE_RATE = 1.5f;
+    constexpr float COUNTER_KNOCKBACK_RATE = 1.5f;
+
+    // 軽い斬りの反撃でも、群れを崩せるだけは飛ばす
+    constexpr float COUNTER_KNOCKBACK_MIN = 900.0f;
+
+    // 反撃の手応えに足す分
+    constexpr float COUNTER_HIT_STOP_ADD = 0.06f;
+    constexpr float COUNTER_SHAKE_ADD = 6.0f;
+    constexpr float COUNTER_ZOOM_ADD = 4.0f;
+
     AttackData CreateSlash1() {
         AttackData attack;
         attack.animationName = "Attack1";
@@ -158,6 +170,40 @@ namespace {
         attack.arcColor = value.arcColor;
         return attack;
     }
+
+    // 空中の斬り 地上の 3 段と同じ振りを使う
+    // 1 2 段目は相手を真上へ浮かせて宙に留め、3 段目はいつもどおり吹き飛ばす
+    // 跳んだ高さからでも地上の敵に届くよう、届く高さを足元より下へ広げる
+    // 宙で前に出すぎると浮かせた相手を追い越すので、前に出る速さは地上より抑える
+    AttackData CreateAirSlash(AttackData attack) {
+        attack.heightMin = -150.0f;
+        attack.lunge = 120.0f;
+
+        // 空中では地面を叩かないので、足元の衝撃波は出さない
+        attack.shockwaveRadius = 0.0f;
+
+        if (attack.reaction == HitReaction::Flinch) {
+            attack.knockback = 60.0f;
+            attack.lift = 500.0f;
+        }
+        return attack;
+    }
+
+    // 空中の△ 真下へ叩きつけ、着地した場所から衝撃波で周りの敵を吹き飛ばす
+    // 振りかぶりはヘビーアタックと同じ大振りを使う
+    AttackData CreateAirSlam() {
+        AttackData attack;
+        attack.animationName = "Attack3";
+        attack.damage = 30;
+        attack.reaction = HitReaction::Blow;
+        attack.knockback = 1100.0f;
+        attack.hitStop = 0.12f;
+        attack.shake = 14.0f;
+        attack.zoomPunch = 6.0f;
+        attack.arcColor = GetColorU8(255, 190, 110, 255);
+        attack.shockwaveRadius = PlayerAttacks::AIR_SLAM_RADIUS;
+        return attack;
+    }
 }
 
 const AttackData& PlayerAttacks::GetSlash(int index) {
@@ -184,4 +230,37 @@ const AttackData& PlayerAttacks::GetHeavy(int level) {
 
     static const AttackData charged[CHARGE_LEVEL_MAX] = { CreateCharged(1), CreateCharged(2), CreateCharged(3) };
     return charged[level - 1];
+}
+
+const AttackData& PlayerAttacks::GetAirSlash(int index) {
+    static const AttackData slashes[SLASH_COUNT] = {
+        CreateAirSlash(CreateSlash1()), CreateAirSlash(CreateSlash2()), CreateAirSlash(CreateSlash3()),
+    };
+    if (index < 0) index = 0;
+    if (index >= SLASH_COUNT) index = SLASH_COUNT - 1;
+    return slashes[index];
+}
+
+const AttackData& PlayerAttacks::GetAirSlam() {
+    static const AttackData slam = CreateAirSlam();
+    return slam;
+}
+
+AttackData PlayerAttacks::CreateCounter(const AttackData& base) {
+    AttackData attack = base;
+
+    // どの技でも吹き飛ばす 吹き飛ばすなら、浮かせて留める必要は無い
+    attack.reaction = HitReaction::Blow;
+    attack.lift = 0.0f;
+
+    attack.damage = static_cast<int>(base.damage * COUNTER_DAMAGE_RATE);
+    float knockback = base.knockback * COUNTER_KNOCKBACK_RATE;
+    attack.knockback = (knockback > COUNTER_KNOCKBACK_MIN) ? knockback : COUNTER_KNOCKBACK_MIN;
+
+    // 手応えも重くし、ジャスト回避と同じ水色の弧で反撃だと分かるようにする
+    attack.hitStop = base.hitStop + COUNTER_HIT_STOP_ADD;
+    attack.shake = base.shake + COUNTER_SHAKE_ADD;
+    attack.zoomPunch = base.zoomPunch + COUNTER_ZOOM_ADD;
+    attack.arcColor = GetColorU8(120, 230, 255, 255);
+    return attack;
 }

@@ -5,6 +5,8 @@
 #include "ChargeEffectObserver.h"
 #include "ChainSoundObserver.h"
 #include "ChainEffectObserver.h"
+#include "JustDodgeSoundObserver.h"
+#include "JustDodgeEffectObserver.h"
 #include "CharacterBuilder.h"
 #include "SlashTrail.h"
 #include "ColliderGizmo.h"
@@ -95,6 +97,10 @@ Player* PlayerFactory::Create(VECTOR position) {
     // 連鎖ぶっ飛ばしの音と揺れも同じ形でつなぐ
     player->GetChainEvents().AddObserver(root->AddComponent<ChainSoundObserver>());
     player->GetChainEvents().AddObserver(root->AddComponent<ChainEffectObserver>());
+
+    // ジャスト回避の音とスローも同じ形でつなぐ
+    player->GetJustDodgeEvents().AddObserver(root->AddComponent<JustDodgeSoundObserver>());
+    player->GetJustDodgeEvents().AddObserver(root->AddComponent<JustDodgeEffectObserver>());
 
     auto* model = root->AddChild("PlayerModel");
 

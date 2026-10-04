@@ -4,6 +4,7 @@
 #include "Observer.h"
 #include "PlayerChargeEvent.h"
 #include "ChainEvent.h"
+#include "JustDodgeEvent.h"
 
 class SlashTrail;
 
@@ -25,6 +26,18 @@ public:
     // コンボが途切れるまでの時間
     static constexpr float COMBO_KEEP_TIME = 2.5f;
 
+    // 回避を始めてからこの秒数のうちに攻撃が来たら、ジャスト回避になる
+    static constexpr float JUST_DODGE_WINDOW = 0.15f;
+
+    // ジャスト回避が決まったあとの無敵 スローの間に続けて来た攻撃も受けない
+    static constexpr float JUST_DODGE_INVINCIBLE_TIME = 0.6f;
+
+    // ジャスト回避のあと、次の攻撃が反撃になる時間
+    static constexpr float COUNTER_TIME = 1.5f;
+
+    // 着地までに空中で浮き直せる回数 空中の斬り 1 回分
+    static constexpr int AIR_HANG_COUNT = 3;
+
     // デバッグの無敵
     bool isCheatInvincible = false;
 
@@ -43,6 +56,7 @@ private:
 
     Subject<PlayerChargeEvent> _chargeEvents;
     Subject<ChainEvent> _chainEvents;
+    Subject<JustDodgeEvent> _justDodgeEvents;
 
     bool _isGuarding = false;
     bool _isGuardImpact = false;
@@ -50,6 +64,13 @@ private:
     int _combo = 0;
     float _comboTimer = 0.0f;
     int _maxCombo = 0;
+
+    // ジャスト回避になる残りの時間と、次の攻撃が反撃になる残りの時間
+    float _justDodgeTimer = 0.0f;
+    float _counterTimer = 0.0f;
+
+    // 着地までに、あと何回空中で浮き直せるか
+    int _airHangLeft = AIR_HANG_COUNT;
 
     VECTOR _spawnPosition = VGet(0.0f, 0.0f, 0.0f);
 
@@ -69,6 +90,19 @@ public:
 
     // 自分の振りから始まった連鎖ぶっ飛ばしを知らせる先 画面の表示 音 エフェクトが登録する
     Subject<ChainEvent>& GetChainEvents() { return _chainEvents; }
+
+    // ジャスト回避が決まったことを知らせる先 スロー 音 画面の文字が登録する
+    Subject<JustDodgeEvent>& GetJustDodgeEvents() { return _justDodgeEvents; }
+
+    // 回避を始めたときに呼ぶ ここから少しのうちに来た攻撃はジャスト回避になる
+    void OpenJustDodgeWindow() { _justDodgeTimer = JUST_DODGE_WINDOW; }
+
+    // ジャスト回避のあとの反撃を使う 使えたら true 技を始めるときに呼び、使えたらその技を反撃にする
+    bool ConsumeCounter();
+    bool HasCounter() const { return _counterTimer > 0.0f; }
+
+    // 空中で浮き直す 着地までの回数が残っていれば 1 回使って true
+    bool TryUseAirHang();
 
     void SetGuarding(bool isGuarding) { _isGuarding = isGuarding; }
     bool IsGuarding() const { return _isGuarding; }
@@ -92,5 +126,7 @@ public:
 
 private:
     void UpdateCombo(float deltaTime);
+    void UpdateJustDodge(float deltaTime);
+    void SucceedJustDodge();
     void KeepInsideArena();
 };

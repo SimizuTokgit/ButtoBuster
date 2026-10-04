@@ -33,6 +33,7 @@ namespace {
         info.damage = attack.damage;
         info.reaction = attack.reaction;
         info.knockback = VScale(direction, attack.knockback);
+        info.lift = attack.lift;
         info.canGuard = attack.canGuard;
         info.hitSound = attack.hitSound;
         info.chain = chain;
@@ -71,7 +72,8 @@ int CombatSystem::ApplyMelee(Character& attacker, const AttackData& attack, std:
     return count;
 }
 
-int CombatSystem::ApplyArea(Character& attacker, float radius, const AttackData& attack, std::vector<Character*>& hitList) {
+int CombatSystem::ApplyArea(Character& attacker, float radius, const AttackData& attack, std::vector<Character*>& hitList,
+    const std::shared_ptr<BlowChain>& chain) {
     VECTOR origin = attacker.GetPosition();
 
     int count = 0;
@@ -84,7 +86,7 @@ int CombatSystem::ApplyArea(Character& attacker, float radius, const AttackData&
         if (!IsInHeightRange(attacker, *target, attack)) continue;
 
         hitList.push_back(target);
-        if (Hit(attacker, *target, attack, toTarget, nullptr)) count++;
+        if (Hit(attacker, *target, attack, toTarget, chain)) count++;
     }
     return count;
 }

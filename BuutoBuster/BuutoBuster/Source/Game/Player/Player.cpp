@@ -19,6 +19,9 @@ namespace {
 
     // 攻撃を吸い付ける相手の範囲 正面から左右 60 度まで
     constexpr float AIM_DOT = 0.5f;
+
+    // 頭の上のどこにジャスト回避の知らせを出すか
+    constexpr float HEAD_OFFSET = 30.0f;
 }
 
 void Player::Start() {
@@ -36,6 +39,10 @@ void Player::Start() {
 void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateTimers(deltaTime);
     UpdateCombo(deltaTime);
+    UpdateJustDodge(deltaTime);
+
+    // 着地したら、空中で浮き直せる回数を戻す
+    if (IsGrounded()) _airHangLeft = AIR_HANG_COUNT;
 
     _states.Update(*this, input, deltaTime);
 
@@ -44,7 +51,16 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
 }
 
 HitResult Player::TakeHit(const HitInfo& info) {
-    if (IsDead() || IsInvincible() || isCheatInvincible) return HitResult::Ignored;
+    if (IsDead()) return HitResult::Ignored;
+
+    // 回避を始めた直後に来た攻撃はジャスト回避
+    // 回避の無敵より先に見る デバッグの無敵中でも試せるように
+    if (_justDodgeTimer > 0.0f) {
+        SucceedJustDodge();
+        return HitResult::Ignored;
+    }
+
+    if (IsInvincible() || isCheatInvincible) return HitResult::Ignored;
 
     auto* effects = EffectManager::Get();
 
@@ -67,6 +83,9 @@ HitResult Player::TakeHit(const HitInfo& info) {
     hp -= info.damage;
     _combo = 0;
     _comboTimer = 0.0f;
+
+    // 食らったら反撃の機会も失う
+    _counterTimer = 0.0f;
     StartFlash();
 
     if (effects) {
@@ -106,6 +125,20 @@ bool Player::ConsumeGuardImpact() {
     bool isImpact = _isGuardImpact;
     _isGuardImpact = false;
     return isImpact;
+}
+
+bool Player::ConsumeCounter() {
+    if (_counterTimer <= 0.0f) return false;
+
+    _counterTimer = 0.0f;
+    return true;
+}
+
+bool Player::TryUseAirHang() {
+    if (_airHangLeft <= 0) return false;
+
+    _airHangLeft--;
+    return true;
 }
 
 void Player::AddCombo(int hits) {
@@ -168,6 +201,25 @@ void Player::UpdateCombo(float deltaTime) {
         _comboTimer = 0.0f;
         _combo = 0;
     }
+}
+
+void Player::UpdateJustDodge(float deltaTime) {
+    if (_justDodgeTimer > 0.0f) _justDodgeTimer -= deltaTime;
+
+    // 溜めている間は反撃の残りを減らさない ジャスト回避から溜めて振っても反撃になるように
+    if (_counterTimer > 0.0f && !_states.IsIn<PlayerChargeState>()) _counterTimer -= deltaTime;
+}
+
+void Player::SucceedJustDodge() {
+    _justDodgeTimer = 0.0f;
+    _counterTimer = COUNTER_TIME;
+    SetInvincible(JUST_DODGE_INVINCIBLE_TIME);
+
+    // スロー 音 画面の文字は、知らせを受け取った側が出す
+    JustDodgeEvent event;
+    event.position = GetPosition();
+    event.headPosition = VAdd(event.position, VGet(0.0f, bodyHeight + HEAD_OFFSET, 0.0f));
+    _justDodgeEvents.Notify(event);
 }
 
 void Player::KeepInsideArena() {

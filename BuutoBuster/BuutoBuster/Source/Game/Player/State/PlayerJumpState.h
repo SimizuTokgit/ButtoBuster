@@ -16,7 +16,7 @@ private:
     float _airTime = 0.0f;
 
 public:
-    // false なら跳ばずに落ちるだけ 対空斬りの後の着地待ちに使う
+    // false なら跳ばずに落ちるだけ 空中で振ったあとの着地待ちに使う
     explicit PlayerJumpState(bool hasImpulse = true) : _hasImpulse(hasImpulse) {}
 
     void Enter(Player& player) override;
