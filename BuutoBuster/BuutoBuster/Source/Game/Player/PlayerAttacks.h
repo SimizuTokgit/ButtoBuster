@@ -10,4 +10,8 @@ namespace PlayerAttacks {
     const AttackData& GetSlash(int index);
     const AttackData& GetStrong();
     const AttackData& GetAntiAir();
+
+    // ヘビーアタックの溜めの段階 0 は溜めずに離したとき
+    constexpr int CHARGE_LEVEL_MAX = 3;
+    const AttackData& GetHeavy(int level);
 }

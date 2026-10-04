@@ -116,6 +116,45 @@ namespace {
         attack.arcColor = GetColorU8(160, 255, 220, 255);
         return attack;
     }
+
+    // 溜めたヘビーアタック 段階が上がるほど重く、遠くまで吹き飛ばす
+    // 振りかぶりは溜めている間に済んでいるので、離したら普段の速さで振り抜く
+    AttackData CreateCharged(int level) {
+        struct LevelValues {
+            int damage;
+            float knockback;
+            float reach;
+            float arcDegree;
+            float lunge;
+            float hitStop;
+            float shake;
+            float zoomPunch;
+            float shockwaveRadius;
+            COLOR_U8 arcColor;
+        };
+
+        // 色は段階が上がるほど金から赤へ寄せ、どこまで溜めたかが振りで分かるようにする
+        const LevelValues values[PlayerAttacks::CHARGE_LEVEL_MAX] = {
+            { 50, 1050.0f, 250.0f, 115.0f, 240.0f, 0.13f, 11.0f, 6.5f, 460.0f, GetColorU8(255, 215, 130, 255) },
+            { 65, 1250.0f, 270.0f, 120.0f, 280.0f, 0.15f, 13.0f, 7.5f, 540.0f, GetColorU8(255, 185, 90, 255) },
+            { 90, 1550.0f, 300.0f, 130.0f, 320.0f, 0.20f, 18.0f, 9.0f, 680.0f, GetColorU8(255, 130, 70, 255) },
+        };
+        const LevelValues& value = values[level - 1];
+
+        AttackData attack = CreateStrong();
+        attack.animationSpeed = 1.0f;
+        attack.damage = value.damage;
+        attack.knockback = value.knockback;
+        attack.reach = value.reach;
+        attack.arcDegree = value.arcDegree;
+        attack.lunge = value.lunge;
+        attack.hitStop = value.hitStop;
+        attack.shake = value.shake;
+        attack.zoomPunch = value.zoomPunch;
+        attack.shockwaveRadius = value.shockwaveRadius;
+        attack.arcColor = value.arcColor;
+        return attack;
+    }
 }
 
 const AttackData& PlayerAttacks::GetSlash(int index) {
@@ -133,4 +172,13 @@ const AttackData& PlayerAttacks::GetStrong() {
 const AttackData& PlayerAttacks::GetAntiAir() {
     static const AttackData antiAir = CreateAntiAir();
     return antiAir;
+}
+
+const AttackData& PlayerAttacks::GetHeavy(int level) {
+    // 溜めずに離したときは強斬りと同じ振り
+    if (level <= 0) return GetStrong();
+    if (level > CHARGE_LEVEL_MAX) level = CHARGE_LEVEL_MAX;
+
+    static const AttackData charged[CHARGE_LEVEL_MAX] = { CreateCharged(1), CreateCharged(2), CreateCharged(3) };
+    return charged[level - 1];
 }

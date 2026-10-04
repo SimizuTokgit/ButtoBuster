@@ -10,14 +10,16 @@
 
 using std::make_unique;
 
-PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, bool isAntiAir)
+PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, bool isAntiAir, int chargeLevel)
     : _data(data)
     , _comboIndex(comboIndex)
-    , _isAntiAir(isAntiAir) {
+    , _isAntiAir(isAntiAir)
+    , _chargeLevel(chargeLevel) {
 }
 
 void PlayerAttackState::Enter(Player& player) {
-    player.PlayAnimation(_data.animationName, _data.animationSpeed, true);
+    bool isFromCharge = _chargeLevel >= 0;
+    player.PlayAnimation(_data.animationName, _data.animationSpeed, !isFromCharge);
     player.SetTrailEmitting(false);
 
     if (_isAntiAir && player.IsGrounded()) {
@@ -73,6 +75,11 @@ void PlayerAttackState::Exit(Player& player) {
 
 const char* PlayerAttackState::GetName() const {
     if (_isAntiAir) return "AntiAir";
+
+    if (_chargeLevel >= 0) {
+        static const char* heavyNames[] = { "Heavy", "Heavy1", "Heavy2", "Heavy3" };
+        return heavyNames[_chargeLevel];
+    }
     if (_comboIndex < 0) return "Strong";
 
     static const char* names[] = { "Slash1", "Slash2", "Slash3" };

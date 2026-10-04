@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Character.h"
 #include "StateManager.h"
+#include "Observer.h"
+#include "PlayerChargeEvent.h"
 
 class SlashTrail;
 
@@ -33,6 +35,8 @@ private:
     StateManager<Player> _states;
     SlashTrail* _trail = nullptr;
 
+    Subject<PlayerChargeEvent> _chargeEvents;
+
     bool _isGuarding = false;
     bool _isGuardImpact = false;
 
@@ -52,6 +56,9 @@ public:
 
     void SetTrail(SlashTrail* trail) { _trail = trail; }
     void SetTrailEmitting(bool isEmitting);
+
+    // 溜めで起きたことを知らせる先 音やエフェクトはここに Observer として登録する
+    Subject<PlayerChargeEvent>& GetChargeEvents() { return _chargeEvents; }
 
     void SetGuarding(bool isGuarding) { _isGuarding = isGuarding; }
     bool IsGuarding() const { return _isGuarding; }

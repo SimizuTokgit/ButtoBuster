@@ -10,6 +10,7 @@ enum class Technique {
     StrongSlash,    // 攻撃 + ガード
     Dodge,          // ガード + ジャンプ
     Jump,           // ジャンプ
+    HeavyAttack,    // ヘビーアタック 押し続けると溜める
     Shoot,          // 敵だけが使う 飛び道具
 };
 
@@ -25,6 +26,7 @@ struct InputInfo {
 
     // 押している間ずっと true
     bool isGuardHeld = false;
+    bool isHeavyHeld = false;
 
     // 決まった瞬間の1フレームだけ入る
     Technique technique = Technique::None;

@@ -2,6 +2,7 @@
 #include "Player.h"
 #include "PlayerAttacks.h"
 #include "PlayerAttackState.h"
+#include "PlayerChargeState.h"
 #include "PlayerDodgeState.h"
 #include "PlayerGuardState.h"
 #include "PlayerJumpState.h"
@@ -30,6 +31,11 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
 
     case Technique::AntiAir:
         return states.Transition(from, make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, true));
+
+    case Technique::HeavyAttack:
+        // 溜めは地面に足を着けて構える
+        if (!player.IsGrounded()) return false;
+        return states.Transition(from, make_unique<PlayerChargeState>());
 
     case Technique::Dodge: {
         // 倒していなければ後ろへ下がる

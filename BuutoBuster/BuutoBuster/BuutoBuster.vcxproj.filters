@@ -192,6 +192,12 @@
     <ClCompile Include="Source\Game\Phase\SaveData.cpp">
       <Filter>Source\Game\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Player\ChargeEffectObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\ChargeSoundObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Player\Player.cpp">
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
@@ -208,6 +214,9 @@
       <Filter>Source\Game\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Player\State\PlayerBlowState.cpp">
+      <Filter>Source\Game\Player\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\State\PlayerChargeState.cpp">
       <Filter>Source\Game\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Player\State\PlayerDamageState.cpp">
@@ -306,6 +315,9 @@
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\Object.h">
+      <Filter>Source\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Core\Observer.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\Quaternion.h">
@@ -485,10 +497,19 @@
     <ClInclude Include="Source\Game\Phase\SaveData.h">
       <Filter>Source\Game\Phase</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Player\ChargeEffectObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\ChargeSoundObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Player\Player.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\PlayerAttacks.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\PlayerChargeEvent.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\PlayerFactory.h">
@@ -501,6 +522,9 @@
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerBlowState.h">
+      <Filter>Source\Game\Player\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\State\PlayerChargeState.h">
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerDamageState.h">
