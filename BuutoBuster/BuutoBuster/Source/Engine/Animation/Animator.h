@@ -8,6 +8,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <vector>
 
 // 前方宣言
 class SkinnedMeshRenderer;
@@ -30,6 +31,10 @@ public:
 
 private:
     std::unordered_map<std::string, std::unique_ptr<AnimationClip>> _animations;
+
+    // 登録した順の名前 _animations は順番を持たないので別に覚えておく
+    std::vector<std::string> _clipOrder;
+
     std::string _currentAnimName;
     int _attachIndex = -1;
     float _animPlayTime = 0.0f;
@@ -54,6 +59,7 @@ public:
         MV1SetFrameUserLocalMatrix(ModelHandle, RootFrame, MGetIdent());
 
         _animations.clear();
+        _clipOrder.clear();
         _currentAnimName.clear();
         _attachIndex = -1;
         _animPlayTime = 0.0f;
@@ -72,7 +78,10 @@ public:
     /// アニメーションクリップを登録
     /// </summary>
     bool RegisterAnimation(std::unique_ptr<AnimationClip> animationClip) {
-        _animations[animationClip->Name] = std::move(animationClip);
+        const std::string name = animationClip->Name;
+        if (_animations.find(name) == _animations.end()) _clipOrder.push_back(name);
+
+        _animations[name] = std::move(animationClip);
         return true;
     }
 
@@ -155,6 +164,22 @@ public:
     }
 
     /// <summary>
+    /// 今のアニメの再生位置を直接動かす
+    /// 間を再生したことにはしないので、途中のアニメーションイベントは呼ばれない
+    /// </summary>
+    void SetCurrentTime(float time) {
+        auto it = _animations.find(_currentAnimName);
+        if (it == _animations.end() || _attachIndex == -1) return;
+
+        float totalTime = it->second->TotalTime;
+        if (time < 0.0f) time = 0.0f;
+        if (totalTime > 0.0f && time > totalTime) time = totalTime;
+
+        _animPlayTime = time;
+        MV1SetAttachAnimTime(ModelHandle, _attachIndex, _animPlayTime);
+    }
+
+    /// <summary>
     /// 現在のアニメーション名を取得
     /// </summary>
     const std::string& GetCurrentAnimationName() const { return _currentAnimName; }
@@ -185,6 +210,11 @@ public:
         if (it == _animations.end()) return nullptr;
         return it->second.get();
     }
+
+    /// <summary>
+    /// 登録したアニメの名前を、登録した順に返す
+    /// </summary>
+    const std::vector<std::string>& GetClipNames() const { return _clipOrder; }
 };
 
 // SkinnedMeshRendererとの連携用インライン関数
@@ -206,6 +236,7 @@ inline bool Animator::InitFromRenderer(SkinnedMeshRenderer* renderer) {
     }
 
     _animations.clear();
+    _clipOrder.clear();
     _currentAnimName.clear();
     _attachIndex = -1;
     _animPlayTime = 0.0f;

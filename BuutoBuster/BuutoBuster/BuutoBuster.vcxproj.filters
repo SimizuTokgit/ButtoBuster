@@ -129,6 +129,9 @@
     <ClCompile Include="Source\Game\Character\CombatSystem.cpp">
       <Filter>Source\Game\Character</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Debug\ChargePoseDebugger.cpp">
+      <Filter>Source\Game\Debug</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Debug\DebugCheats.cpp">
       <Filter>Source\Game\Debug</Filter>
     </ClCompile>
@@ -424,6 +427,9 @@
     </ClInclude>
     <ClInclude Include="Source\Game\Character\ModelCache.h">
       <Filter>Source\Game\Character</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Debug\ChargePoseDebugger.h">
+      <Filter>Source\Game\Debug</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Debug\ColliderGizmo.h">
       <Filter>Source\Game\Debug</Filter>

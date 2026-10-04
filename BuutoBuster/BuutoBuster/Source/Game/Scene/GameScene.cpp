@@ -18,6 +18,7 @@
 #include "LockOnMarker.h"
 #include "ResultScreen.h"
 #include "DebugCheats.h"
+#include "ChargePoseDebugger.h"
 
 namespace {
     // Bee は最大 3 体 1 体が続けて撃っても足りる数
@@ -93,6 +94,9 @@ bool GameScene::OnLoad() {
     auto* debugObject = scene.CreateGameObject("DebugCheats");
     auto* cheats = debugObject->AddComponent<DebugCheats>();
     cheats->Setup(player, director, hud);
+
+    auto* poseDebugger = debugObject->AddComponent<ChargePoseDebugger>();
+    poseDebugger->Setup(player);
 
     return true;
 }

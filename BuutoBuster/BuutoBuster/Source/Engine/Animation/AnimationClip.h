@@ -50,6 +50,9 @@ public:
         Speed = animSpeed;
         IsLoop = loop;
 
+        // 長さは読み込んだ時点で持っておく まだ一度も再生していないアニメでも長さが分かるように
+        TotalTime = MV1GetAnimTotalTime(Handle, 0);
+
         return true;
     }
 

@@ -31,6 +31,11 @@ public:
     VECTOR arenaCenter = VGet(0.0f, 0.0f, 0.0f);
     float arenaRadius = 2200.0f;
 
+    // 溜めで止める姿勢 アニメの名前と止める時間
+    // 始めは PlayerChargeState に書いた値 デバッグの姿勢探しで、遊びながら書き換えられる
+    std::string chargePoseAnimation;
+    float chargePoseTime = 0.0f;
+
 private:
     StateManager<Player> _states;
     SlashTrail* _trail = nullptr;

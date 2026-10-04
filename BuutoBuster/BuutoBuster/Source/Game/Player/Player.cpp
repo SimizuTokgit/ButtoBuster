@@ -3,6 +3,7 @@
 #include "PlayerDamageState.h"
 #include "PlayerBlowState.h"
 #include "PlayerDeadState.h"
+#include "PlayerChargeState.h"
 #include "CharacterRegistry.h"
 #include "EffectManager.h"
 #include "SlashTrail.h"
@@ -25,6 +26,9 @@ void Player::Start() {
     maxHp = MAX_HP;
     hp = MAX_HP;
     _spawnPosition = GetPosition();
+
+    chargePoseAnimation = PlayerChargeState::DEFAULT_POSE_ANIMATION;
+    chargePoseTime = PlayerChargeState::DEFAULT_POSE_TIME;
 
     _states.Start(*this, std::make_unique<PlayerIdleState>());
 }

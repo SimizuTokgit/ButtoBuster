@@ -63,6 +63,10 @@ float Character::GetAnimationTime() const {
     return _animator ? _animator->GetCurrentTime() : 0.0f;
 }
 
+void Character::SetAnimationTime(float time) {
+    if (_animator) _animator->SetCurrentTime(time);
+}
+
 bool Character::IsAnimationFinished() const {
     return _animator ? _animator->IsFinished() : true;
 }

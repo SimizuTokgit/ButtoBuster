@@ -98,6 +98,7 @@
     <ClCompile Include="Source\Game\Character\Character.cpp" />
     <ClCompile Include="Source\Game\Character\CharacterBuilder.cpp" />
     <ClCompile Include="Source\Game\Character\CombatSystem.cpp" />
+    <ClCompile Include="Source\Game\Debug\ChargePoseDebugger.cpp" />
     <ClCompile Include="Source\Game\Debug\DebugCheats.cpp" />
     <ClCompile Include="Source\Game\Effect\EffectManager.cpp" />
     <ClCompile Include="Source\Game\Effect\ScreenFlash.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="Source\Game\Character\CombatSystem.h" />
     <ClInclude Include="Source\Game\Character\HitInfo.h" />
     <ClInclude Include="Source\Game\Character\ModelCache.h" />
+    <ClInclude Include="Source\Game\Debug\ChargePoseDebugger.h" />
     <ClInclude Include="Source\Game\Debug\ColliderGizmo.h" />
     <ClInclude Include="Source\Game\Debug\DebugCheats.h" />
     <ClInclude Include="Source\Game\Effect\EffectManager.h" />

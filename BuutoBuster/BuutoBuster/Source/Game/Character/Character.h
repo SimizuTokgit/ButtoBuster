@@ -73,6 +73,9 @@ public:
     bool IsAnimationFinished() const;
     void SetAnimationSpeed(float speed) { _animationSpeed = speed; }
 
+    // 今のアニメの再生位置を直接動かす 途中で鳴らす音は鳴らない 姿勢を止めて見せるときに使う
+    void SetAnimationTime(float time);
+
     // ----- 移動 -----
 
     // 水平の速さだけ決める 上下は重力に任せる
@@ -117,6 +120,7 @@ public:
     bool IsTouchingSphere(VECTOR center, float radius) const;
 
     SkinnedMeshRenderer* GetRenderer() const { return _renderer; }
+    Animator* GetAnimator() const { return _animator; }
 
 protected:
     void UpdateTimers(float deltaTime);
