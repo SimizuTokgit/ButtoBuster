@@ -41,7 +41,9 @@ void PlayerController::Update(float deltaTime) {
         // ガード + ジャンプの回避を押そうとして、一瞬だけ構えるのを防ぐ
         int held = ReadHeldButtons();
         input.isGuardHeld = (held & GUARD_BIT) != 0 && !_isWaiting;
-        input.isHeavyHeld = (held & HEAVY_BIT) != 0;
+
+        // 強攻撃は、攻撃か△を押し続けている間溜める
+        input.isHeavyHeld = (held & (ATTACK_BIT | HEAVY_BIT)) != 0;
     }
 
     _player->Execute(input, deltaTime);
@@ -86,7 +88,7 @@ int PlayerController::ReadPressedButtons() const {
     if (input.KeyPressed(KEY_INPUT_SPACE) || input.PadPressed(XINPUT_BUTTON_A)) {
         buttons |= JUMP_BIT;
     }
-    if (input.KeyPressed(KEY_INPUT_I) || input.PadPressed(XINPUT_BUTTON_Y)) {
+    if (input.PadPressed(XINPUT_BUTTON_Y)) {
         buttons |= HEAVY_BIT;
     }
     return buttons;
@@ -105,7 +107,7 @@ int PlayerController::ReadHeldButtons() const {
     if (input.KeyHeld(KEY_INPUT_SPACE) || input.PadHeld(XINPUT_BUTTON_A)) {
         buttons |= JUMP_BIT;
     }
-    if (input.KeyHeld(KEY_INPUT_I) || input.PadHeld(XINPUT_BUTTON_Y)) {
+    if (input.PadHeld(XINPUT_BUTTON_Y)) {
         buttons |= HEAVY_BIT;
     }
     return buttons;
@@ -250,8 +252,7 @@ Technique PlayerController::Resolve(int buttons) {
     // 3つ同時は守りを優先する 危ない場面で慌てて全部押しがちなので
     if (isGuard && isJump) return Technique::Dodge;
     if (isAttack && isJump) return Technique::AntiAir;
-    if (isAttack && isGuard) return Technique::StrongSlash;
-    if (isHeavy) return Technique::HeavyAttack;
+    if ((isAttack && isGuard) || isHeavy) return Technique::StrongSlash;
     if (isAttack) return Technique::Slash;
     if (isJump) return Technique::Jump;
 

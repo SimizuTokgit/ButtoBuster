@@ -25,6 +25,8 @@ private:
     static constexpr int ATTACK_BIT = 1 << 0;
     static constexpr int GUARD_BIT = 1 << 1;
     static constexpr int JUMP_BIT = 1 << 2;
+
+    // パッドの△ これだけで強攻撃になる キーボードとマウスは攻撃 + ガードのまま
     static constexpr int HEAVY_BIT = 1 << 3;
 
     // 視点を回す速さ 度/秒 マウスは 1 ドット動かしたときの度

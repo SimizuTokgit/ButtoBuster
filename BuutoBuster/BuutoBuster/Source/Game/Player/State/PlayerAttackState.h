@@ -6,7 +6,7 @@
 class Player;
 class Character;
 
-// 斬り 強斬り 対空斬り ヘビーアタック はすべてこの形で、数値だけが違う
+// 斬り 強斬り 対空斬り はすべてこの形で、数値だけが違う
 class PlayerAttackState : public ICharacterState<Player> {
 private:
     // 攻撃の向きを吸い付ける範囲

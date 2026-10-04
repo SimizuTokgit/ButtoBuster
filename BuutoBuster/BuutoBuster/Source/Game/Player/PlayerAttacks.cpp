@@ -175,7 +175,7 @@ const AttackData& PlayerAttacks::GetAntiAir() {
 }
 
 const AttackData& PlayerAttacks::GetHeavy(int level) {
-    // 溜めずに離したときは強斬りと同じ振り
+    // 溜めずに離したときは、溜めのない強斬りの数値で振る
     if (level <= 0) return GetStrong();
     if (level > CHARGE_LEVEL_MAX) level = CHARGE_LEVEL_MAX;
 

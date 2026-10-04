@@ -7,10 +7,9 @@ enum class Technique {
     None,
     Slash,          // 攻撃
     AntiAir,        // 攻撃 + ジャンプ
-    StrongSlash,    // 攻撃 + ガード
+    StrongSlash,    // 攻撃 + ガード パッドは△ プレイヤーは押し続けると溜める
     Dodge,          // ガード + ジャンプ
     Jump,           // ジャンプ
-    HeavyAttack,    // ヘビーアタック 押し続けると溜める
     Shoot,          // 敵だけが使う 飛び道具
 };
 
@@ -26,6 +25,8 @@ struct InputInfo {
 
     // 押している間ずっと true
     bool isGuardHeld = false;
+
+    // 強攻撃の溜めを続けるボタンを押している間 true
     bool isHeavyHeld = false;
 
     // 決まった瞬間の1フレームだけ入る

@@ -26,16 +26,12 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
     case Technique::Slash:
         return states.Transition(from, make_unique<PlayerAttackState>(PlayerAttacks::GetSlash(0), 0, false));
 
+    // 強攻撃はヘビーアタック 押し続けると溜まり、すぐ離せば溜めずに振る
     case Technique::StrongSlash:
-        return states.Transition(from, make_unique<PlayerAttackState>(PlayerAttacks::GetStrong(), -1, false));
+        return states.Transition(from, make_unique<PlayerChargeState>());
 
     case Technique::AntiAir:
         return states.Transition(from, make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, true));
-
-    case Technique::HeavyAttack:
-        // 溜めは地面に足を着けて構える
-        if (!player.IsGrounded()) return false;
-        return states.Transition(from, make_unique<PlayerChargeState>());
 
     case Technique::Dodge: {
         // 倒していなければ後ろへ下がる
