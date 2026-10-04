@@ -22,7 +22,7 @@ private:
     static constexpr float WALL_BELOW = 200.0f;
     static constexpr float WALL_ABOVE = 450.0f;
 
-    // ぶつかった所を光らせる 同時に覚えておく数と、消えるまでの秒数と、左右に広げる角度 (度)
+    // ぶつかった所を光らせる 同時に覚えておく数と、ふつうの消えるまでの秒数と、左右に広げる角度 (度)
     static constexpr int IMPACT_COUNT = 8;
     static constexpr float IMPACT_TIME = 0.5f;
     static constexpr float IMPACT_SPREAD = 8.0f;
@@ -34,6 +34,10 @@ private:
 
         // 0 なら使っていない
         float strength = 0.0f;
+
+        // 消えるまでの秒数と、左右に広げる角度 ラジアン
+        float life = IMPACT_TIME;
+        float spread = 0.0f;
 
         // 光らせ始めた時刻 ミリ秒 ヒットストップ中も消えていくよう実時間で数える
         int startTime = 0;
@@ -57,8 +61,9 @@ public:
     // 誰に近いところを光らせるか ふつうはプレイヤー
     void SetViewer(Transform* viewer) { _viewer = viewer; }
 
-    // ぶつかった所の幕を一瞬光らせる strength は 0〜1
-    void Flash(VECTOR position, float strength);
+    // ぶつかった所の幕を光らせる strength は 0〜1
+    // 壁が割れたときのように大きく長く光らせたいときは、秒数と左右に広げる角度 (度) を渡す
+    void Flash(VECTOR position, float strength, float seconds = IMPACT_TIME, float spreadDegree = IMPACT_SPREAD);
 
     void Render() override;
 

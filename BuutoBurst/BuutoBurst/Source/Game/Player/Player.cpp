@@ -23,8 +23,6 @@ namespace {
 
 void Player::Start() {
     team = Team::Player;
-    maxHp = data.maxHp;
-    hp = data.maxHp;
     _airHangLeft = data.airHangCount;
     _spawnPosition = GetPosition();
 
@@ -77,7 +75,6 @@ HitResult Player::TakeHit(const HitInfo& info) {
         return HitResult::Guarded;
     }
 
-    hp -= info.damage;
     _combo = 0;
     _comboTimer = 0.0f;
 
@@ -92,22 +89,18 @@ HitResult Player::TakeHit(const HitInfo& info) {
     if (effects) {
         effects->PlayHit(GetCenter(), knockback);
         effects->Shake(4.0f, 0.2f);
-        // 体力を見ていなくても食らったと分かるよう、画面を赤くする
+        // 自分を見ていなくても食らったと分かるよう、画面を赤くする
         effects->FlashScreen(0xC02020, 0.3f, 0.25f);
     }
     if (info.hitSound && info.hitSound[0] != '\0') {
         SoundManager::Instance().PlaySE(info.hitSound);
     }
 
-    if (hp <= 0) {
-        hp = 0;
-        SoundManager::Instance().PlaySE("Player/VO_J_dmg_blow");
-        _states.ForceTransition(std::make_unique<PlayerDeadState>(knockback));
-        return HitResult::Killed;
-    }
+    // 吹っ飛ばされ値が許容値に届いていれば、弱い攻撃でも吹き飛ぶ 壁際で殴られると壁を割られて負ける
+    bool isBlowHit = info.reaction == HitReaction::Blow || GetBlowRatio() >= 1.0f;
 
     auto* current = _states.GetCurrent();
-    if (info.reaction == HitReaction::Blow) {
+    if (isBlowHit) {
         SoundManager::Instance().PlaySE("Player/blow_B");
         _states.Transition(current, std::make_unique<PlayerBlowState>(knockback));
     }
@@ -116,6 +109,14 @@ HitResult Player::TakeHit(const HitInfo& info) {
         _states.Transition(current, std::make_unique<PlayerDamageState>(knockback));
     }
     return HitResult::Hit;
+}
+
+void Player::Defeat(VECTOR knockback) {
+    if (IsDead()) return;
+
+    MarkDefeated();
+    SoundManager::Instance().PlaySE("Player/VO_J_dmg_blow");
+    _states.ForceTransition(std::make_unique<PlayerDeadState>(knockback));
 }
 
 void Player::SetTrailEmitting(bool isEmitting) {
@@ -149,7 +150,6 @@ void Player::AddCombo(int hits) {
 }
 
 void Player::HealFull() {
-    hp = maxHp;
     ResetBlow();
 
     if (auto* effects = EffectManager::Get()) {
@@ -225,6 +225,9 @@ void Player::SucceedJustDodge() {
 }
 
 void Player::ReturnIfFallen() {
+    // 場外へ飛ばされたあとは戻さない
+    if (IsDead()) return;
+
     VECTOR position = transform->localPosition;
     if (position.y >= FALL_LIMIT_Y) return;
 

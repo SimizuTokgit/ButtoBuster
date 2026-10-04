@@ -7,7 +7,7 @@
 #include <cmath>
 
 namespace {
-    // 体力の表示より手前に描く
+    // ほかの表示より手前に描く
     constexpr int SORTING_ORDER = 1;
 
     constexpr unsigned int MARKER_COLOR = 0xFF7A30;
@@ -25,9 +25,8 @@ namespace {
     // 回る速さ 度/秒
     constexpr float SPIN_SPEED = 90.0f;
 
-    constexpr int GAUGE_WIDTH = 360;
-    constexpr int GAUGE_HEIGHT = 12;
-    constexpr int GAUGE_TOP = 44;
+    // 相手の名前を出す高さ 画面の上の真ん中
+    constexpr int NAME_TOP = 44;
 }
 
 void LockOnMarker::Setup(const PlayerController* controller) {
@@ -64,13 +63,13 @@ void LockOnMarker::Render() {
     int screenHeight = 0;
     GetDrawScreenSize(&screenWidth, &screenHeight);
 
-    // カメラの後ろにいるときは印を出さない 上の体力だけ出す
+    // カメラの後ろにいるときは印を出さない 上の名前だけ出す
     VECTOR screen = ConvWorldPosToScreenPos(target->GetCenter());
     if (screen.z > 0.0f && screen.z < 1.0f) {
         DrawReticle(screen.x, screen.y);
     }
 
-    DrawTargetGauge(*target, screenWidth);
+    DrawTargetName(*target, screenWidth);
 }
 
 void LockOnMarker::DrawReticle(float x, float y) const {
@@ -99,21 +98,11 @@ void LockOnMarker::DrawReticle(float x, float y) const {
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
-void LockOnMarker::DrawTargetGauge(const Character& target, int screenWidth) const {
-    int centerX = screenWidth / 2;
-    int left = centerX - GAUGE_WIDTH / 2;
-
+void LockOnMarker::DrawTargetName(const Character& target, int screenWidth) const {
     // 敵なら名前を出す Golem のような強い敵を狙っていると分かるように
-    if (const auto* enemy = dynamic_cast<const Enemy*>(&target)) {
-        int nameTop = GAUGE_TOP - GameFont::GetHeight(GameFont::Size::Small) - 4;
-        GameFont::DrawCentered(centerX, nameTop, enemy->GetData().displayName, 0xFFFFFF, GameFont::Size::Small);
-    }
+    // 体力はなく、吹っ飛ばされ値も数字では出さないので、名前だけにしてある
+    const auto* enemy = dynamic_cast<const Enemy*>(&target);
+    if (!enemy) return;
 
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-    DrawBox(left - 3, GAUGE_TOP - 3, left + GAUGE_WIDTH + 3, GAUGE_TOP + GAUGE_HEIGHT + 3, 0x000000, TRUE);
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-
-    int filled = static_cast<int>(GAUGE_WIDTH * target.GetHpRatio());
-    DrawBox(left, GAUGE_TOP, left + filled, GAUGE_TOP + GAUGE_HEIGHT, 0xE04848, TRUE);
-    DrawBox(left, GAUGE_TOP, left + GAUGE_WIDTH, GAUGE_TOP + GAUGE_HEIGHT, MARKER_COLOR, FALSE);
+    GameFont::DrawCentered(screenWidth / 2, NAME_TOP, enemy->GetData().displayName, 0xFFFFFF, GameFont::Size::Small);
 }

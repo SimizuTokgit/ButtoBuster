@@ -15,9 +15,7 @@
 struct PlayerData {
     // ----- 体 -----
 
-    int maxHp = 100;
-
-    // 被弾してから次に食らうまでの猶予 囲まれて起き上がれないまま削り切られるのを防ぐ
+    // 被弾してから次に食らうまでの猶予 囲まれて起き上がれないまま殴られ続けるのを防ぐ
     float hurtInvincibleTime = 0.6f;
 
     // 吹き飛ばされたときに上へ跳ねる速さと、倒れている時間 秒
@@ -28,6 +26,7 @@ struct PlayerData {
     float getUpInvincibleTime = 0.4f;
 
     // 吹っ飛ばされ値の許容値 溜まり方 減り方 中身は BlowSettings.h
+    // 体力はない 許容値に届いた状態で壁にぶつかると、壁を割られて負け
     BlowSettings blow;
 
     // ----- 移動 -----

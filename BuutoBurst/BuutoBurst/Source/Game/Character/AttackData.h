@@ -17,6 +17,7 @@ struct AttackData {
     // これ以降は次の行動を受け付ける 0 ならアニメが終わるまで待つ
     float cancelTime = 0.0f;
 
+    // 当たった相手の吹っ飛ばされ値に足す量 体力はないので、これで倒れはしない
     int damage = 10;
     HitReaction reaction = HitReaction::Flinch;
     float knockback = 200.0f;

@@ -1,44 +1,34 @@
 ﻿#pragma once
 #include "ICharacterState.h"
 #include "DxLib.h"
-#include <memory>
 
 class Enemy;
-class BlowChain;
 
-// 倒れて、しばらく横たわってから地面に沈む
-// 倒れながら飛ばされている間も砲弾になり、触れた敵を巻き込む 壁にぶつかったら跳ね返る
+// 壁を割って場外へ飛んでいき、透けて消える
+// 倒された体はもう壁に止められず、誰にも当たらない
 class EnemyDeadState : public ICharacterState<Enemy> {
 private:
-    // 重い敵が飛ばされながら倒れるときの上向きの速さ
-    static constexpr float HEAVY_JUMP_SPEED = 250.0f;
+    // 割った勢いで上へ跳ねる速さ 場外へ大きく飛んでいくのが見えるように
+    static constexpr float JUMP_SPEED = 700.0f;
+
+    // 飛んでいく時間と、そのあと透けて消えるまでの時間 秒
+    static constexpr float FLY_TIME = 1.0f;
+    static constexpr float FADE_TIME = 0.5f;
 
     enum class Phase {
-        Fall,
-        Lie,
-        Sink,
+        Fly,
+        Fade,
     };
 
     VECTOR _knockback;
-    std::shared_ptr<BlowChain> _chain;
-
-    // 飛ばされながら倒れるか 剣では止まらない重い敵は、飛んできた敵に倒されたときだけ飛ぶ
-    bool _isBlown;
-
-    Phase _phase = Phase::Fall;
+    Phase _phase = Phase::Fly;
     float _timer = 0.0f;
 
 public:
-    EnemyDeadState(VECTOR knockback, std::shared_ptr<BlowChain> chain, bool isBlown)
-        : _knockback(knockback)
-        , _chain(std::move(chain))
-        , _isBlown(isBlown) {
-    }
+    // knockback は場外へ飛んでいく向きと速さ
+    explicit EnemyDeadState(VECTOR knockback) : _knockback(knockback) {}
 
     void Enter(Enemy& enemy) override;
     void Execute(Enemy& enemy, const InputInfo& input, float deltaTime) override;
     const char* GetName() const override { return "Dead"; }
-
-private:
-    void LeaveChain(Enemy& enemy);
 };

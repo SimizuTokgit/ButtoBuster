@@ -25,7 +25,6 @@ struct EnemyData {
     float scale = 1.0f;
 
     // ----- 体 -----
-    int maxHp = 40;
     float bodyRadius = 30.0f;
     float bodyHeight = 160.0f;
     float bodyCenterY = 80.0f;

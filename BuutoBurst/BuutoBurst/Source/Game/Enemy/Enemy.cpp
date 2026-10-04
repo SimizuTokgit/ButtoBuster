@@ -32,8 +32,6 @@ void Enemy::Initialize(const EnemyData& data, int id, Character* target) {
     _target = target;
 
     team = Team::Enemy;
-    maxHp = data.maxHp;
-    hp = data.maxHp;
     weight = data.weight;
 }
 
@@ -46,24 +44,30 @@ void Enemy::Execute(const InputInfo& input, float deltaTime) {
     UpdateTimers(deltaTime);
     UpdateBlow(deltaTime);
     UpdateWall();
-    if (_hpBarTimer > 0.0f) _hpBarTimer -= deltaTime;
 
     _states.Update(*this, input, deltaTime);
 
     if (_isHovering) KeepHovering(deltaTime);
     UpdateAnimation(deltaTime);
 
+    // 地形の穴や場外の下へ落ちたら、倒されたことにして片付ける
     if (GetPosition().y < FALL_LIMIT_Y) {
-        hp = 0;
+        MarkDefeated();
         MarkReadyToRemove();
     }
+}
+
+void Enemy::Defeat(VECTOR knockback) {
+    if (IsDead()) return;
+
+    MarkDefeated();
+    SoundManager::Instance().PlaySE(_data->soundDead);
+    _states.ForceTransition(std::make_unique<EnemyDeadState>(knockback));
 }
 
 HitResult Enemy::TakeHit(const HitInfo& info) {
     if (IsDead()) return HitResult::Ignored;
 
-    hp -= info.damage;
-    _hpBarTimer = HP_BAR_TIME;
     StartFlash();
 
     // 当たった技のダメージの分だけ吹っ飛ばされ値が溜まり、溜まっているほど遠くへ飛ぶ
@@ -77,22 +81,18 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     // 飛んできた敵がぶつかった音は、連鎖の知らせを受けた側が鳴らす 斬られた音とは違うので
     if (!info.isFromProjectile) SoundManager::Instance().PlaySE(_data->soundHit, 0.8f);
 
-    // 飛んできた敵に当たったときは、重くて剣では止まらない敵も吹き飛ぶ
-    bool isBlown = _data->canBlow || info.isFromProjectile;
+    // 吹っ飛ばされ値が許容値に届いていれば、弱い技でも吹き飛ぶ 壁まで運べば割れる
+    bool isOverLimit = GetBlowRatio() >= 1.0f;
+    bool isBlowHit = info.reaction == HitReaction::Blow || isOverLimit;
 
-    if (hp <= 0) {
-        hp = 0;
-        if (effects) effects->PlayKill(GetCenter(), knockback);
-        SoundManager::Instance().PlaySE(_data->soundDead);
-        _states.ForceTransition(std::make_unique<EnemyDeadState>(knockback, info.chain, isBlown));
-        return HitResult::Killed;
-    }
+    // 飛んできた敵に当たったときと、許容値に届いているときは、重くて剣では止まらない敵も吹き飛ぶ
+    bool isBlown = _data->canBlow || info.isFromProjectile || isOverLimit;
 
-    // Golem は殴っても止まらない
-    if (!_data->canFlinch && !info.isFromProjectile) return HitResult::Hit;
+    // Golem は殴っても止まらない 許容値に届けば吹き飛ぶ
+    if (!_data->canFlinch && !info.isFromProjectile && !isOverLimit) return HitResult::Hit;
 
     auto* current = _states.GetCurrent();
-    if (info.reaction == HitReaction::Blow && isBlown) {
+    if (isBlowHit && isBlown) {
         SoundManager::Instance().PlaySE(_data->soundBlow);
         _states.Transition(current, std::make_unique<EnemyBlowState>(knockback, info.chain));
     }

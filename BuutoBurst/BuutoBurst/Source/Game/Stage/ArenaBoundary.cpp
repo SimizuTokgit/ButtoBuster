@@ -25,7 +25,9 @@ void ArenaBoundary::Setup(VECTOR center, float radius) {
     Register();
 }
 
-void ArenaBoundary::Flash(VECTOR position, float strength) {
+void ArenaBoundary::Flash(VECTOR position, float strength, float seconds, float spreadDegree) {
+    if (seconds <= 0.0f) return;
+
     // いちばん古いものから上書きする
     Impact& impact = _impacts[_nextImpact];
     _nextImpact = (_nextImpact + 1) % IMPACT_COUNT;
@@ -33,6 +35,8 @@ void ArenaBoundary::Flash(VECTOR position, float strength) {
     impact.angle = atan2f(position.z - _center.z, position.x - _center.x);
     impact.height = position.y;
     impact.strength = strength;
+    impact.life = seconds;
+    impact.spread = spreadDegree * DX_PI_F / 180.0f;
     impact.startTime = GetNowCount();
 }
 
@@ -47,7 +51,7 @@ void ArenaBoundary::Render() {
     for (const Impact& impact : _impacts) {
         if (impact.strength <= 0.0f) continue;
 
-        float fade = 1.0f - (now - impact.startTime) / 1000.0f / IMPACT_TIME;
+        float fade = 1.0f - (now - impact.startTime) / 1000.0f / impact.life;
         if (fade > 0.0f) AddImpactGlow(impact, fade);
     }
 
@@ -102,7 +106,7 @@ void ArenaBoundary::AddImpactGlow(const Impact& impact, float fade) {
     // 近づいたときの幕より白に寄せて、ぶつかった瞬間を目立たせる
     COLOR_U8 color = GetColorU8(170, 230, 255, 255);
 
-    float spread = IMPACT_SPREAD * DX_PI_F / 180.0f;
+    float spread = impact.spread;
     float bottom = impact.height - BELOW;
     float top = impact.height + ABOVE;
     float peak = impact.strength * fade;

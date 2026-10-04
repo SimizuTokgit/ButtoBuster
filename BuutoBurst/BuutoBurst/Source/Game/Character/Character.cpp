@@ -287,6 +287,11 @@ void Character::UpdateAnimation(float deltaTime) {
 }
 
 void Character::UpdateWall() {
+    // 壁を割った体は、そのまま場外へ飛んでいく
+    if (IsDead()) {
+        _hasWallHit = false;
+        return;
+    }
     _hasWallHit = ArenaWall::KeepInside(*this, _wallHit);
 }
 
@@ -299,9 +304,16 @@ void Character::UpdateBodyColor() {
 
     // 吹っ飛ばされ値が溜まるほど赤くする 許容値に届いたらいちばん赤い
     float heat = GetBlowRatio();
+    bool isBreakable = heat >= 1.0f;
     if (heat > 1.0f) heat = 1.0f;
 
     float red = scale + heat * HEAT_RED;
     float other = scale * (1.0f - heat * HEAT_FADE);
+
+    // 許容値に届いたら脈打たせる 倒された体は脈打たない
+    if (isBreakable && !IsDead()) {
+        float pulse = (sinf(GetNowCount() / 1000.0f * HEAT_PULSE_SPEED) + 1.0f) * 0.5f;
+        red += pulse * HEAT_PULSE;
+    }
     MV1SetDifColorScale(_renderer->ModelHandle, GetColorF(red, other, other, 1.0f));
 }

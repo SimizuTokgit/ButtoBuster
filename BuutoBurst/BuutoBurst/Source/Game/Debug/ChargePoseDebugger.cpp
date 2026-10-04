@@ -9,7 +9,7 @@
 #include <cstdio>
 
 namespace {
-    // 体力やコンボの表示と重ならない、画面の左の中ほどに出す
+    // コンボの表示と重ならない、画面の左の中ほどに出す
     constexpr int LEFT = 40;
     constexpr int PADDING = 10;
 

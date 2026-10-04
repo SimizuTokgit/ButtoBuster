@@ -4,7 +4,7 @@
 class PlayerController;
 class Character;
 
-// ロックオンしている相手に重ねる印と、画面の上に出す相手の体力
+// ロックオンしている相手に重ねる印と、画面の上に出す相手の名前
 // 印は相手の周りを 4 つの三角で囲んでゆっくり回す 付けた瞬間は外から縮んで収まる
 class LockOnMarker : public UIImage {
 private:
@@ -25,5 +25,5 @@ public:
 
 private:
     void DrawReticle(float x, float y) const;
-    void DrawTargetGauge(const Character& target, int screenWidth) const;
+    void DrawTargetName(const Character& target, int screenWidth) const;
 };
