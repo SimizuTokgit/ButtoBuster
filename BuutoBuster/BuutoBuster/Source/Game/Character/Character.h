@@ -28,6 +28,9 @@ public:
     float bodyRadius = 30.0f;
     float bodyHeight = 160.0f;
 
+    // 重さ 飛んできた敵とぶつかったとき、どれだけ飛ぶか、どれだけ飛ばすかに使う
+    float weight = 1.0f;
+
 protected:
     Animator* _animator = nullptr;
     SkinnedMeshRenderer* _renderer = nullptr;

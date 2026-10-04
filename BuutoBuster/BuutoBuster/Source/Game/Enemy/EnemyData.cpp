@@ -64,6 +64,7 @@ namespace {
         data.walkSpeed = 180.0f;
         data.runSpeed = 470.0f;
         data.turnSpeed = 420.0f;
+        data.weight = 1.3f;
 
         data.slash.animationName = "Attack1";
         data.slash.hitStart = 24.0f;
@@ -115,6 +116,7 @@ namespace {
         data.turnSpeed = 300.0f;
         data.isFlying = true;
         data.hoverHeight = 240.0f;
+        data.weight = 0.6f;
 
         data.slash.animationName = "Attack2";
         data.slash.hitStart = 16.5f;
@@ -171,6 +173,9 @@ namespace {
 
         data.canFlinch = false;
         data.canBlow = false;
+
+        // 剣では止まらないが、飛んできた敵に当たると吹き飛ぶ 重いので飛ぶ距離は短く、飛べば周りを大きく巻き込む
+        data.weight = 3.0f;
 
         data.slash.animationName = "Attack1";
         data.slash.hitStart = 25.5f;

@@ -5,6 +5,7 @@
 #include "PlayerIdleState.h"
 #include "PlayerJumpState.h"
 #include "CombatSystem.h"
+#include "BlowChain.h"
 #include "EffectManager.h"
 #include <memory>
 
@@ -21,6 +22,8 @@ void PlayerAttackState::Enter(Player& player) {
     bool isFromCharge = _chargeLevel >= 0;
     player.PlayAnimation(_data.animationName, _data.animationSpeed, !isFromCharge);
     player.SetTrailEmitting(false);
+
+    _chain = BlowChain::Create(&player.GetChainEvents());
 
     if (_isAntiAir && player.IsGrounded()) {
         player.SetVerticalVelocity(ANTI_AIR_JUMP_SPEED);
@@ -141,7 +144,7 @@ void PlayerAttackState::ApplyHit(Player& player) {
     if (!isFirstWindow && !isSecondWindow) return;
 
     bool isFirstHit = _hitList.empty();
-    int hits = CombatSystem::ApplyMelee(player, _data, _hitList);
+    int hits = CombatSystem::ApplyMelee(player, _data, _hitList, _chain);
     if (hits <= 0) return;
 
     player.AddCombo(hits);

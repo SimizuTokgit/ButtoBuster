@@ -34,6 +34,7 @@ void Enemy::Initialize(const EnemyData& data, int id, Character* target) {
     team = Team::Enemy;
     maxHp = data.maxHp;
     hp = data.maxHp;
+    weight = data.weight;
 }
 
 void Enemy::Start() {
@@ -65,23 +66,28 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
 
     auto* effects = EffectManager::Get();
     if (effects) effects->PlayHit(GetCenter(), info.knockback);
-    SoundManager::Instance().PlaySE(_data->soundHit, 0.8f);
+
+    // 飛んできた敵がぶつかった音は、連鎖の知らせを受けた側が鳴らす 斬られた音とは違うので
+    if (!info.isFromProjectile) SoundManager::Instance().PlaySE(_data->soundHit, 0.8f);
+
+    // 飛んできた敵に当たったときは、重くて剣では止まらない敵も吹き飛ぶ
+    bool isBlown = _data->canBlow || info.isFromProjectile;
 
     if (hp <= 0) {
         hp = 0;
         if (effects) effects->PlayKill(GetCenter(), info.knockback);
         SoundManager::Instance().PlaySE(_data->soundDead);
-        _states.ForceTransition(std::make_unique<EnemyDeadState>(info.knockback));
+        _states.ForceTransition(std::make_unique<EnemyDeadState>(info.knockback, info.chain, isBlown));
         return HitResult::Killed;
     }
 
     // Golem は殴っても止まらない
-    if (!_data->canFlinch) return HitResult::Hit;
+    if (!_data->canFlinch && !info.isFromProjectile) return HitResult::Hit;
 
     auto* current = _states.GetCurrent();
-    if (info.reaction == HitReaction::Blow && _data->canBlow) {
+    if (info.reaction == HitReaction::Blow && isBlown) {
         SoundManager::Instance().PlaySE(_data->soundBlow);
-        _states.Transition(current, std::make_unique<EnemyBlowState>(info.knockback));
+        _states.Transition(current, std::make_unique<EnemyBlowState>(info.knockback, info.chain));
     }
     else {
         SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);

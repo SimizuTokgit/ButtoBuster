@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include "DxLib.h"
+#include <memory>
 
 class Character;
+class BlowChain;
 
 // 攻撃を受けたときの崩れ方
 enum class HitReaction {
@@ -27,6 +29,13 @@ struct HitInfo {
 
     // 当たったときに鳴らす音 武器によって変わる
     const char* hitSound = "";
+
+    // 吹き飛ばした相手を入れる連鎖 プレイヤーの振りと、飛んでいる敵が持っている
+    // 敵が敵に当てたときも同じものを渡すので、1 回の振りから広がった分をまとめて数えられる
+    std::shared_ptr<BlowChain> chain;
+
+    // 飛んできた敵に当たったか 重くて殴っても止まらない敵も、これなら吹き飛ぶ
+    bool isFromProjectile = false;
 };
 
 // 当てた結果

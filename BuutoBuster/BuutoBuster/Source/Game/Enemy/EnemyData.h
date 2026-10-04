@@ -38,7 +38,8 @@ struct EnemyData {
 
     // ----- 崩れ方 -----
     bool canFlinch = true;              // 殴られたらのけぞるか
-    bool canBlow = true;                // 吹き飛ぶか
+    bool canBlow = true;                // 吹き飛ぶか 吹き飛ぶアニメを持っているか
+    float weight = 1.0f;                // 重さ 飛んできた敵とぶつかったときの飛び方に使う
 
     // ----- 攻撃 -----
     AttackData slash;                   // Technique::Slash で出す

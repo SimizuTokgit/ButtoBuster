@@ -3,6 +3,7 @@
 #include "StateManager.h"
 #include "Observer.h"
 #include "PlayerChargeEvent.h"
+#include "ChainEvent.h"
 
 class SlashTrail;
 
@@ -41,6 +42,7 @@ private:
     SlashTrail* _trail = nullptr;
 
     Subject<PlayerChargeEvent> _chargeEvents;
+    Subject<ChainEvent> _chainEvents;
 
     bool _isGuarding = false;
     bool _isGuardImpact = false;
@@ -64,6 +66,9 @@ public:
 
     // 溜めで起きたことを知らせる先 音やエフェクトはここに Observer として登録する
     Subject<PlayerChargeEvent>& GetChargeEvents() { return _chargeEvents; }
+
+    // 自分の振りから始まった連鎖ぶっ飛ばしを知らせる先 画面の表示 音 エフェクトが登録する
+    Subject<ChainEvent>& GetChainEvents() { return _chainEvents; }
 
     void SetGuarding(bool isGuarding) { _isGuarding = isGuarding; }
     bool IsGuarding() const { return _isGuarding; }

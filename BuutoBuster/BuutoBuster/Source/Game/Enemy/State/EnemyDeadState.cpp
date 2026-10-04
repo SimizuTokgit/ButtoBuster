@@ -1,5 +1,6 @@
 ﻿#include "EnemyDeadState.h"
 #include "Enemy.h"
+#include "BlowChain.h"
 #include "EffectManager.h"
 #include "Transform.h"
 
@@ -22,9 +23,15 @@ void EnemyDeadState::Enter(Enemy& enemy) {
     }
     else {
         enemy.PlayAnimation("Down", 1.0f, true);
-        enemy.StopHorizontal();
+        if (_isBlown) {
+            enemy.SetVerticalVelocity(HEAVY_JUMP_SPEED);
+        }
+        else {
+            enemy.StopHorizontal();
+        }
     }
 
+    if (_chain && _isBlown) _chain->BeginFlight(enemy);
     _phase = Phase::Fall;
     _timer = 0.0f;
 }
@@ -41,9 +48,13 @@ void EnemyDeadState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
     case Phase::Fall: {
         enemy.DampHorizontal(2.0f, deltaTime);
 
+        // 倒れた敵も、速いうちは砲弾として触れた敵を巻き込む
+        if (_chain && !_chain->Sweep(enemy, deltaTime)) LeaveChain(enemy);
+
         bool hasLanded = enemy.IsGrounded() && enemy.GetVelocity().y <= 0.0f;
         bool isAnimationDone = data.isFlying || enemy.IsAnimationFinished();
         if ((hasLanded && isAnimationDone) || _timer > FALL_TIME_LIMIT) {
+            LeaveChain(enemy);
             enemy.StopHorizontal();
             if (data.canBlow && !data.isFlying) enemy.PlayAnimation("DownLoop");
             if (auto* effects = EffectManager::Get()) {
@@ -73,4 +84,11 @@ void EnemyDeadState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
         break;
     }
     }
+}
+
+void EnemyDeadState::LeaveChain(Enemy& enemy) {
+    if (!_chain) return;
+
+    _chain->EndFlight(enemy.GetPosition());
+    _chain.reset();
 }

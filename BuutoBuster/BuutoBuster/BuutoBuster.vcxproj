@@ -95,6 +95,7 @@
     <ClCompile Include="Source\Engine\Render\RenderManager.cpp" />
     <ClCompile Include="Source\Engine\UI\UIManager.cpp" />
     <ClCompile Include="Source\Game\Camera\CameraFollow.cpp" />
+    <ClCompile Include="Source\Game\Character\BlowChain.cpp" />
     <ClCompile Include="Source\Game\Character\Character.cpp" />
     <ClCompile Include="Source\Game\Character\CharacterBuilder.cpp" />
     <ClCompile Include="Source\Game\Character\CombatSystem.cpp" />
@@ -120,6 +121,8 @@
     <ClCompile Include="Source\Game\Input\TargetLock.cpp" />
     <ClCompile Include="Source\Game\Phase\PhaseDirector.cpp" />
     <ClCompile Include="Source\Game\Phase\SaveData.cpp" />
+    <ClCompile Include="Source\Game\Player\ChainEffectObserver.cpp" />
+    <ClCompile Include="Source\Game\Player\ChainSoundObserver.cpp" />
     <ClCompile Include="Source\Game\Player\ChargeEffectObserver.cpp" />
     <ClCompile Include="Source\Game\Player\ChargeSoundObserver.cpp" />
     <ClCompile Include="Source\Game\Player\Player.cpp" />
@@ -141,6 +144,7 @@
     <ClCompile Include="Source\Game\Scene\GameScene.cpp" />
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp" />
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp" />
+    <ClCompile Include="Source\Game\UI\ChainCounter.cpp" />
     <ClCompile Include="Source\Game\UI\GameFont.cpp" />
     <ClCompile Include="Source\Game\UI\Hud.cpp" />
     <ClCompile Include="Source\Game\UI\LockOnMarker.cpp" />
@@ -193,6 +197,8 @@
     <ClInclude Include="Source\Engine\UI\UIManager.h" />
     <ClInclude Include="Source\Game\Camera\CameraFollow.h" />
     <ClInclude Include="Source\Game\Character\AttackData.h" />
+    <ClInclude Include="Source\Game\Character\BlowChain.h" />
+    <ClInclude Include="Source\Game\Character\ChainEvent.h" />
     <ClInclude Include="Source\Game\Character\Character.h" />
     <ClInclude Include="Source\Game\Character\CharacterBuilder.h" />
     <ClInclude Include="Source\Game\Character\CharacterRegistry.h" />
@@ -224,6 +230,8 @@
     <ClInclude Include="Source\Game\Input\TargetLock.h" />
     <ClInclude Include="Source\Game\Phase\PhaseDirector.h" />
     <ClInclude Include="Source\Game\Phase\SaveData.h" />
+    <ClInclude Include="Source\Game\Player\ChainEffectObserver.h" />
+    <ClInclude Include="Source\Game\Player\ChainSoundObserver.h" />
     <ClInclude Include="Source\Game\Player\ChargeEffectObserver.h" />
     <ClInclude Include="Source\Game\Player\ChargeSoundObserver.h" />
     <ClInclude Include="Source\Game\Player\Player.h" />
@@ -249,6 +257,7 @@
     <ClInclude Include="Source\Game\Stage\StageBuilder.h" />
     <ClInclude Include="Source\Game\State\ICharacterState.h" />
     <ClInclude Include="Source\Game\State\StateManager.h" />
+    <ClInclude Include="Source\Game\UI\ChainCounter.h" />
     <ClInclude Include="Source\Game\UI\GameFont.h" />
     <ClInclude Include="Source\Game\UI\Hud.h" />
     <ClInclude Include="Source\Game\UI\LockOnMarker.h" />

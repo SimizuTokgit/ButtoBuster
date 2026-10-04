@@ -1,8 +1,10 @@
 ﻿#pragma once
 #include "AttackData.h"
+#include <memory>
 #include <vector>
 
 class Character;
+class BlowChain;
 
 // 近接攻撃の当たり判定
 //
@@ -12,7 +14,9 @@ class Character;
 namespace CombatSystem {
 
     // 今回新しく当てた数を返す
-    int ApplyMelee(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList);
+    // chain を渡すと、吹き飛ばした相手はその連鎖の砲弾になる
+    int ApplyMelee(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList,
+        const std::shared_ptr<BlowChain>& chain = nullptr);
 
     // 自分を中心にした円 Golem の踏みつけに使う
     int ApplyArea(Character& attacker, float radius, const AttackData& attack, std::vector<Character*>& hitList);

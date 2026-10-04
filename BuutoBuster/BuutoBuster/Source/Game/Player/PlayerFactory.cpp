@@ -3,6 +3,8 @@
 #include "PlayerController.h"
 #include "ChargeSoundObserver.h"
 #include "ChargeEffectObserver.h"
+#include "ChainSoundObserver.h"
+#include "ChainEffectObserver.h"
 #include "CharacterBuilder.h"
 #include "SlashTrail.h"
 #include "ColliderGizmo.h"
@@ -89,6 +91,10 @@ Player* PlayerFactory::Create(VECTOR position) {
     // 演出を足すときも Player と溜めの状態は書き換えずに済む
     player->GetChargeEvents().AddObserver(root->AddComponent<ChargeSoundObserver>());
     player->GetChargeEvents().AddObserver(root->AddComponent<ChargeEffectObserver>());
+
+    // 連鎖ぶっ飛ばしの音と揺れも同じ形でつなぐ
+    player->GetChainEvents().AddObserver(root->AddComponent<ChainSoundObserver>());
+    player->GetChainEvents().AddObserver(root->AddComponent<ChainEffectObserver>());
 
     auto* model = root->AddChild("PlayerModel");
 

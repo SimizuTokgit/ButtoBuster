@@ -120,6 +120,9 @@
     <ClCompile Include="Source\Game\Camera\CameraFollow.cpp">
       <Filter>Source\Game\Camera</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Character\BlowChain.cpp">
+      <Filter>Source\Game\Character</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Character\Character.cpp">
       <Filter>Source\Game\Character</Filter>
     </ClCompile>
@@ -195,6 +198,12 @@
     <ClCompile Include="Source\Game\Phase\SaveData.cpp">
       <Filter>Source\Game\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Player\ChainEffectObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\ChainSoundObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Player\ChargeEffectObserver.cpp">
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
@@ -257,6 +266,9 @@
     </ClCompile>
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp">
       <Filter>Source\Game\Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\UI\ChainCounter.cpp">
+      <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\GameFont.cpp">
       <Filter>Source\Game\UI</Filter>
@@ -410,6 +422,12 @@
     <ClInclude Include="Source\Game\Character\AttackData.h">
       <Filter>Source\Game\Character</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Character\BlowChain.h">
+      <Filter>Source\Game\Character</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Character\ChainEvent.h">
+      <Filter>Source\Game\Character</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Character\Character.h">
       <Filter>Source\Game\Character</Filter>
     </ClInclude>
@@ -503,6 +521,12 @@
     <ClInclude Include="Source\Game\Phase\SaveData.h">
       <Filter>Source\Game\Phase</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Player\ChainEffectObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\ChainSoundObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Player\ChargeEffectObserver.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
@@ -577,6 +601,9 @@
     </ClInclude>
     <ClInclude Include="Source\Game\State\StateManager.h">
       <Filter>Source\Game\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\ChainCounter.h">
+      <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\GameFont.h">
       <Filter>Source\Game\UI</Filter>

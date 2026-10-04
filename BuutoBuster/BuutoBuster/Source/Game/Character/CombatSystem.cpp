@@ -21,7 +21,8 @@ namespace {
         return top >= baseY + attack.heightMin && bottom <= baseY + attack.heightMax;
     }
 
-    bool Hit(Character& attacker, Character& target, const AttackData& attack, VECTOR toTarget) {
+    bool Hit(Character& attacker, Character& target, const AttackData& attack, VECTOR toTarget,
+        const std::shared_ptr<BlowChain>& chain) {
         toTarget.y = 0.0f;
         float length = VSize(toTarget);
         VECTOR direction = (length > 0.001f) ? VScale(toTarget, 1.0f / length) : attacker.GetForward();
@@ -34,12 +35,14 @@ namespace {
         info.knockback = VScale(direction, attack.knockback);
         info.canGuard = attack.canGuard;
         info.hitSound = attack.hitSound;
+        info.chain = chain;
 
         return target.TakeHit(info) != HitResult::Ignored;
     }
 }
 
-int CombatSystem::ApplyMelee(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList) {
+int CombatSystem::ApplyMelee(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList,
+    const std::shared_ptr<BlowChain>& chain) {
     VECTOR origin = attacker.GetPosition();
     VECTOR forward = attacker.GetForward();
     float cosArc = cosf(Transform::Deg2Rad(attack.arcDegree));
@@ -63,7 +66,7 @@ int CombatSystem::ApplyMelee(Character& attacker, const AttackData& attack, std:
         if (!IsInHeightRange(attacker, *target, attack)) continue;
 
         hitList.push_back(target);
-        if (Hit(attacker, *target, attack, toTarget)) count++;
+        if (Hit(attacker, *target, attack, toTarget, chain)) count++;
     }
     return count;
 }
@@ -81,7 +84,7 @@ int CombatSystem::ApplyArea(Character& attacker, float radius, const AttackData&
         if (!IsInHeightRange(attacker, *target, attack)) continue;
 
         hitList.push_back(target);
-        if (Hit(attacker, *target, attack, toTarget)) count++;
+        if (Hit(attacker, *target, attack, toTarget, nullptr)) count++;
     }
     return count;
 }

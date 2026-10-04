@@ -17,6 +17,7 @@
 #include "PhaseBanner.h"
 #include "LockOnMarker.h"
 #include "ResultScreen.h"
+#include "ChainCounter.h"
 #include "DebugCheats.h"
 #include "ChargePoseDebugger.h"
 
@@ -90,6 +91,11 @@ bool GameScene::OnLoad() {
 
     auto* result = uiObject->AddChild("ResultScreen")->AddComponent<ResultScreen>();
     result->Setup(player, director);
+
+    // 連鎖の数は、プレイヤーの連鎖の知らせを受けて出す
+    auto* chainCounter = uiObject->AddChild("ChainCounter")->AddComponent<ChainCounter>();
+    chainCounter->Setup();
+    player->GetChainEvents().AddObserver(chainCounter);
 
     auto* debugObject = scene.CreateGameObject("DebugCheats");
     auto* cheats = debugObject->AddComponent<DebugCheats>();

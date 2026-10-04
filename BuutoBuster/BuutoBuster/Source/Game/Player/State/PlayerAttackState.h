@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "ICharacterState.h"
 #include "AttackData.h"
+#include <memory>
 #include <vector>
 
 class Player;
 class Character;
+class BlowChain;
 
 // 斬り 強斬り 対空斬り はすべてこの形で、数値だけが違う
 class PlayerAttackState : public ICharacterState<Player> {
@@ -26,6 +28,10 @@ private:
     int _chargeLevel;
 
     std::vector<Character*> _hitList;
+
+    // この振りで吹き飛ばした敵が入る連鎖 振るたびに新しく作る
+    std::shared_ptr<BlowChain> _chain;
+
     bool _isFirstFrame = true;
     bool _hasEnteredSecondHit = false;
     bool _hasPlayedSwing = false;
