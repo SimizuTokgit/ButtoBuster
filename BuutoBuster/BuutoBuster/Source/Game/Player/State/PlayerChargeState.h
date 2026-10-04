@@ -6,6 +6,7 @@ class Player;
 
 // 強攻撃 (ヘビーアタック) の溜め
 // 振りかぶった姿勢でアニメを止め、押している長さで段階を上げる
+// 溜めている間はその場から動けず、向きだけ変えられる
 // 離したら、溜まった段階のヘビーアタックを止めた姿勢の続きから振る
 //
 // 段階が変わったことは Player の Subject で知らせる
@@ -13,10 +14,7 @@ class Player;
 class PlayerChargeState : public ICharacterState<Player> {
 private:
     // 振りかぶりきった姿勢のアニメの時間 ここで止めて溜める
-    static constexpr float HOLD_POSE_TIME = 3.5f;
-
-    // 溜めながら歩く速さ 普段の何倍か
-    static constexpr float WALK_RATE = 0.25f;
+    static constexpr float HOLD_POSE_TIME = 2.5f;
 
     float _chargeTime = 0.0f;
     int _level = 0;
