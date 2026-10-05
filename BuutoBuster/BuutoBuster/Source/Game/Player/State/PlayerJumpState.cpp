@@ -44,7 +44,7 @@ void PlayerJumpState::Execute(Player& player, const InputInfo& input, float delt
         _isRising = false;
     }
 
-    // 空中で攻撃を押したら空中の技 □ は空中の斬り、△ は真下への叩きつけ
+    // 空中で攻撃を押したら空中の技 攻撃は空中の斬り、攻撃 + ガードは真下への叩きつけ
     if (PlayerActions::TryStartAir(player, this, input)) return;
 
     if (_airTime > MIN_AIR_TIME && player.IsGrounded()) {

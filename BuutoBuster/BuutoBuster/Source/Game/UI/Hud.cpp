@@ -148,7 +148,7 @@ void Hud::DrawCombo(int screenWidth, int screenHeight) {
 void Hud::DrawControls(int screenWidth, int screenHeight) {
     const char* lines[] = {
         "移動 WASD / 左スティック    視点 マウス / Q E / 右スティック    ロックオン L / ホイール押し / LT",
-        "攻撃 左クリック / X    ガード 右クリック / B    ジャンプ SPACE / A",
+        "攻撃 左クリック / RT    ガード 右クリック / RB    ジャンプ SPACE / A",
         "ガードを握ったまま 攻撃で強斬り ジャンプで回避    攻撃+ジャンプ 対空斬り",
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);

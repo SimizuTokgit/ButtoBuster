@@ -12,6 +12,6 @@ namespace PlayerActions {
     bool TryStart(Player& player, const ICharacterState<Player>* from, const InputInfo& input);
 
     // 空中で技を始める 始めたら true
-    // □ は空中の斬り、△ は真下への叩きつけ、攻撃 + ジャンプは斬り上げ
+    // 攻撃は空中の斬り、攻撃 + ガードは真下への叩きつけ、攻撃 + ジャンプは斬り上げ
     bool TryStartAir(Player& player, const ICharacterState<Player>* from, const InputInfo& input);
 }

@@ -7,7 +7,7 @@ enum class Technique {
     None,
     Slash,          // 攻撃
     AntiAir,        // 攻撃 + ジャンプ
-    StrongSlash,    // 攻撃 + ガード パッドは△ プレイヤーは押し続けると溜める
+    StrongSlash,    // 攻撃 + ガード プレイヤーは攻撃を押し続けると溜める
     Dodge,          // ガード + ジャンプ
     Jump,           // ジャンプ
     Shoot,          // 敵だけが使う 飛び道具

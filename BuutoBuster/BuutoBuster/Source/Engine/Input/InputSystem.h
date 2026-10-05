@@ -13,8 +13,10 @@ private:
     // スティックの遊び 20%までは倒していない扱い
     static constexpr float DEAD_ZONE = 0.2f;
 
-    // トリガーは 0 から 255 半分より深く引いたら押したことにする
-    static constexpr int TRIGGER_THRESHOLD = 128;
+    // トリガーは 0 から 255 半分より深く引いたら押した、4 分の 1 より戻したら離したことにする
+    // 押すと離すの間を空けておくと、半分あたりで指が止まっても、押した離したが細かく繰り返されない
+    static constexpr int TRIGGER_PRESS = 128;
+    static constexpr int TRIGGER_RELEASE = 64;
 
     char _keys[256] = {};
     char _prevKeys[256] = {};
@@ -22,6 +24,12 @@ private:
     XINPUT_STATE _pad = {};
     XINPUT_STATE _prevPad = {};
     bool _padConnected = false;
+
+    // トリガーを押しているか 押した離したの深さが違うので、値からではなくここに覚えておく
+    bool _leftTrigger = false;
+    bool _prevLeftTrigger = false;
+    bool _rightTrigger = false;
+    bool _prevRightTrigger = false;
 
     int _mouse = 0;
     int _prevMouse = 0;
@@ -49,6 +57,8 @@ public:
         memcpy(_prevKeys, _keys, sizeof(_keys));
         _prevPad = _pad;
         _prevMouse = _mouse;
+        _prevLeftTrigger = _leftTrigger;
+        _prevRightTrigger = _rightTrigger;
 
         // 非アクティブの間は何も押していない扱いにする
         if (!GetActiveFlag()) {
@@ -56,6 +66,8 @@ public:
             memset(&_pad, 0, sizeof(_pad));
             _mouse = 0;
             _padConnected = false;
+            _leftTrigger = false;
+            _rightTrigger = false;
 
             // ほかのウィンドウを触っている間はカーソルを戻さない
             // 戻ってきた最初のフレームは、離れていた間の動きを拾わないよう捨てる
@@ -69,6 +81,9 @@ public:
 
         _padConnected = (GetJoypadXInputState(DX_INPUT_PAD1, &_pad) == 0);
         if (!_padConnected) memset(&_pad, 0, sizeof(_pad));
+
+        _leftTrigger = IsTriggerHeld(_leftTrigger, _pad.LeftTrigger);
+        _rightTrigger = IsTriggerHeld(_rightTrigger, _pad.RightTrigger);
 
         _mouse = GetMouseInput();
 
@@ -98,18 +113,12 @@ public:
     }
 
     // 左のトリガー 無双のロックオン (ZL) に当てる
-    bool PadLeftTriggerHeld() const { return _pad.LeftTrigger >= TRIGGER_THRESHOLD; }
-
-    bool PadLeftTriggerPressed() const {
-        return _pad.LeftTrigger >= TRIGGER_THRESHOLD && _prevPad.LeftTrigger < TRIGGER_THRESHOLD;
-    }
+    bool PadLeftTriggerHeld() const { return _leftTrigger; }
+    bool PadLeftTriggerPressed() const { return _leftTrigger && !_prevLeftTrigger; }
 
     // 右のトリガー 通常攻撃に当てる
-    bool PadRightTriggerHeld() const { return _pad.RightTrigger >= TRIGGER_THRESHOLD; }
-
-    bool PadRightTriggerPressed() const {
-        return _pad.RightTrigger >= TRIGGER_THRESHOLD && _prevPad.RightTrigger < TRIGGER_THRESHOLD;
-    }
+    bool PadRightTriggerHeld() const { return _rightTrigger; }
+    bool PadRightTriggerPressed() const { return _rightTrigger && !_prevRightTrigger; }
 
     // ----- マウス -----
 
@@ -179,6 +188,11 @@ public:
 private:
     InputSystem() = default;
     ~InputSystem() = default;
+
+    // 押していなければ TRIGGER_PRESS まで引いたら押した、押していれば TRIGGER_RELEASE より戻したら離した
+    static bool IsTriggerHeld(bool wasHeld, int value) {
+        return wasHeld ? (value >= TRIGGER_RELEASE) : (value >= TRIGGER_PRESS);
+    }
 
     void UpdateMouseLook() {
         _mouseDeltaX = 0.0f;

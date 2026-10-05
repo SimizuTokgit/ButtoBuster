@@ -4,7 +4,7 @@
 
 class Player;
 
-// 空中の△ 真下へ叩きつける
+// 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつける
 // 宙で一瞬振りかぶってから一気に落ち、着地した場所から衝撃波を広げて周りの敵を吹き飛ばす
 // 吹き飛ばした敵は連鎖の砲弾になり、群れの外へも広がっていく
 class PlayerAirSlamState : public ICharacterState<Player> {

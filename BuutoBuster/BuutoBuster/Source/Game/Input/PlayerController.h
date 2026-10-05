@@ -11,23 +11,25 @@ class CameraFollow;
 // 同時押しの判定はここで行い、決まった技だけを渡す
 // 敵も同じ InputInfo を受け取るので、技の処理は人と AI で共通になる
 //
+// キーボード マウス パッドは、まず「攻撃 ガード ジャンプ」の印にそろえてから同時押しを見る
+// どの機械から押しても同じ判定を通るので、パッドだけ同時押しが効かない、ということが起きない
+// 機械のボタンと印の割り当ては ReadHeldButtons の 1 か所だけにある
+//
 // 視点を回す操作とロックオンもここで読む 人の操作を読むのはこのクラスだけにしておく
 class PlayerController : public MonoBehaviour {
 private:
     // 最初のボタンから何フレーム待って技を決めるか
     // 押した瞬間に決めると、指のずれで単発技が暴発する
-    // 3 では短すぎて、クリックとキーの組み合わせが揃わなかった
+    // 3 では短すぎて、クリックとキーの組み合わせが揃わなかった パッドの RT と RB も指が別なので少しずれる
     static constexpr int COMBINE_WAIT_FRAMES = 6;
 
     // 倒した向きがこれより変わったら、進む向きをカメラの今の向きで決め直す 度
     static constexpr float MOVE_REBASE_DEGREE = 30.0f;
 
+    // 操作の印 どの機械のボタンでも、押したらこの印になる
     static constexpr int ATTACK_BIT = 1 << 0;
     static constexpr int GUARD_BIT = 1 << 1;
     static constexpr int JUMP_BIT = 1 << 2;
-
-    // パッドの△ これだけで強攻撃になる キーボードとマウスは攻撃 + ガードのまま
-    static constexpr int HEAVY_BIT = 1 << 3;
 
     // 視点を回す速さ 度/秒 マウスは 1 ドット動かしたときの度
     static constexpr float STICK_YAW_SPEED = 180.0f;
@@ -51,6 +53,9 @@ private:
     bool _isWaiting = false;
     int _waitedFrames = 0;
     int _collectedButtons = 0;
+
+    // 前のフレームに押していた印 押した瞬間は、これと今を比べて決める
+    int _prevHeldButtons = 0;
 
     bool _wasStickFlicked = false;
     float _mouseSwitchAmount = 0.0f;
@@ -82,8 +87,7 @@ public:
     const Character* GetLockOnTarget() const { return _targetLock.GetTarget(); }
 
 private:
-    Technique UpdateCombination();
-    int ReadPressedButtons() const;
+    Technique UpdateCombination(int pressed, int held);
     int ReadHeldButtons() const;
     VECTOR ReadMove();
 

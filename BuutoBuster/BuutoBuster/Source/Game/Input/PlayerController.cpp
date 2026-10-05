@@ -23,6 +23,12 @@ void PlayerController::Update(float deltaTime) {
     // 戦っている間だけマウスで視点を回す 倒れたらカーソルを返す
     InputSystem::Instance().SetMouseLook(!isInputLocked);
 
+    // 押している印を 1 回だけ読み、押した瞬間はそこから決める
+    // 受け付けない間も読んでおく 握ったまま受け付けが戻ったときに、押した瞬間として出ないように
+    int held = ReadHeldButtons();
+    int pressed = held & ~_prevHeldButtons;
+    _prevHeldButtons = held;
+
     if (isInputLocked) {
         _isWaiting = false;
         _collectedButtons = 0;
@@ -35,23 +41,20 @@ void PlayerController::Update(float deltaTime) {
 
         input.move = ReadMove();
         input.look = GetLockOnDirection();
-        input.technique = UpdateCombination();
+        input.technique = UpdateCombination(pressed, held);
 
         // 同時押しを待っている間はガードを出さない
         // ガード + ジャンプの回避を押そうとして、一瞬だけ構えるのを防ぐ
-        int held = ReadHeldButtons();
         input.isGuardHeld = (held & GUARD_BIT) != 0 && !_isWaiting;
 
-        // 強攻撃は、攻撃か△を押し続けている間溜める
-        input.isHeavyHeld = (held & (ATTACK_BIT | HEAVY_BIT)) != 0;
+        // 強攻撃は、攻撃を押し続けている間溜める
+        input.isHeavyHeld = (held & ATTACK_BIT) != 0;
     }
 
     _player->Execute(input, deltaTime);
 }
 
-Technique PlayerController::UpdateCombination() {
-    int pressed = ReadPressedButtons();
-
+Technique PlayerController::UpdateCombination(int pressed, int held) {
     if (!_isWaiting) {
         if (pressed == 0) return Technique::None;
 
@@ -63,52 +66,31 @@ Technique PlayerController::UpdateCombination() {
     _collectedButtons |= pressed;
     _waitedFrames++;
 
-    // 2つ揃ったらそれ以上は待たない
-    bool isPair = CountBits(_collectedButtons) >= 2;
+    // ガードは押しっぱなしで使うので、先に押して握ったままでも組み合わせに入れる
+    // RB や右クリックを握ったまま攻撃で強斬り、ジャンプで回避
+    int combined = _collectedButtons | (held & GUARD_BIT);
+
+    // 2つ揃ったらそれ以上は待たない 先にガードを握っていれば、押した瞬間に揃う
+    bool isPair = CountBits(combined) >= 2;
     if (!isPair && _waitedFrames < COMBINE_WAIT_FRAMES) return Technique::None;
 
     _isWaiting = false;
-
-    // ガードは押しっぱなしで使うので、先に押して握ったままでも組み合わせに入れる
-    // 右クリックを握ったまま左クリックで強斬り SPACE で回避
-    int held = ReadHeldButtons() & GUARD_BIT;
-    return Resolve(_collectedButtons | held);
-}
-
-int PlayerController::ReadPressedButtons() const {
-    const auto& input = InputSystem::Instance();
-    int buttons = 0;
-
-    if (input.KeyPressed(KEY_INPUT_J) || input.PadPressed(XINPUT_BUTTON_X) || input.MousePressed(MOUSE_INPUT_LEFT)) {
-        buttons |= ATTACK_BIT;
-    }
-    if (input.KeyPressed(KEY_INPUT_K) || input.PadPressed(XINPUT_BUTTON_B) || input.MousePressed(MOUSE_INPUT_RIGHT)) {
-        buttons |= GUARD_BIT;
-    }
-    if (input.KeyPressed(KEY_INPUT_SPACE) || input.PadPressed(XINPUT_BUTTON_A)) {
-        buttons |= JUMP_BIT;
-    }
-    if (input.PadPressed(XINPUT_BUTTON_Y)) {
-        buttons |= HEAVY_BIT;
-    }
-    return buttons;
+    return Resolve(combined);
 }
 
 int PlayerController::ReadHeldButtons() const {
     const auto& input = InputSystem::Instance();
     int buttons = 0;
 
-    if (input.KeyHeld(KEY_INPUT_J) || input.PadHeld(XINPUT_BUTTON_X) || input.MouseHeld(MOUSE_INPUT_LEFT)) {
+    // パッドは RT で攻撃、RB でガード、A でジャンプ 強攻撃はキーボードと同じく攻撃 + ガード
+    if (input.KeyHeld(KEY_INPUT_J) || input.MouseHeld(MOUSE_INPUT_LEFT) || input.PadRightTriggerHeld()) {
         buttons |= ATTACK_BIT;
     }
-    if (input.KeyHeld(KEY_INPUT_K) || input.PadHeld(XINPUT_BUTTON_B) || input.MouseHeld(MOUSE_INPUT_RIGHT)) {
+    if (input.KeyHeld(KEY_INPUT_K) || input.MouseHeld(MOUSE_INPUT_RIGHT) || input.PadHeld(XINPUT_BUTTON_RIGHT_SHOULDER)) {
         buttons |= GUARD_BIT;
     }
     if (input.KeyHeld(KEY_INPUT_SPACE) || input.PadHeld(XINPUT_BUTTON_A)) {
         buttons |= JUMP_BIT;
-    }
-    if (input.PadHeld(XINPUT_BUTTON_Y)) {
-        buttons |= HEAVY_BIT;
     }
     return buttons;
 }
@@ -247,12 +229,11 @@ Technique PlayerController::Resolve(int buttons) {
     bool isAttack = (buttons & ATTACK_BIT) != 0;
     bool isGuard = (buttons & GUARD_BIT) != 0;
     bool isJump = (buttons & JUMP_BIT) != 0;
-    bool isHeavy = (buttons & HEAVY_BIT) != 0;
 
     // 3つ同時は守りを優先する 危ない場面で慌てて全部押しがちなので
     if (isGuard && isJump) return Technique::Dodge;
     if (isAttack && isJump) return Technique::AntiAir;
-    if ((isAttack && isGuard) || isHeavy) return Technique::StrongSlash;
+    if (isAttack && isGuard) return Technique::StrongSlash;
     if (isAttack) return Technique::Slash;
     if (isJump) return Technique::Jump;
 

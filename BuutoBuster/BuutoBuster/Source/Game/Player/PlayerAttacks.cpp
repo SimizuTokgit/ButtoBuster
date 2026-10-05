@@ -191,7 +191,7 @@ namespace {
         return attack;
     }
 
-    // 空中の△ 真下へ叩きつけ、着地した場所から衝撃波で周りの敵を吹き飛ばす
+    // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつけ、着地した場所から衝撃波で周りの敵を吹き飛ばす
     // 振りかぶりはヘビーアタックと同じ大振りを使う
     AttackData CreateAirSlam() {
         AttackData attack;
