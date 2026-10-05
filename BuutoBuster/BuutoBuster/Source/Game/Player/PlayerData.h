@@ -64,7 +64,7 @@ struct PlayerData {
     int dodgeCount = 2;
 
     // 1 回分が戻るまでの秒数 回避している間 (走り抜けて止まるまで) は戻らない
-    float dodgeRechargeTime = 0.5f;
+    float dodgeRechargeTime = 2.0f;
 
     // ----- ジャスト回避 -----
 
