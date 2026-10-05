@@ -82,7 +82,7 @@ namespace {
         attack.hitStart = 5.5f;
         attack.hitEnd = 11.5f;
         attack.cancelTime = 18.0f;
-        attack.recovery = 7.0f;
+        attack.recovery = 16.0f;
         attack.damage = 40;
         attack.reaction = HitReaction::Blow;
         attack.knockback = 900.0f;
@@ -109,7 +109,7 @@ namespace {
         attack.hitStart = 4.0f;
         attack.hitEnd = 8.5f;
         attack.cancelTime = 0.0f;
-        attack.recovery = 6.0f;
+        attack.recovery = 24.0f;
         attack.damage = 28;
         attack.reaction = HitReaction::Blow;
         attack.knockback = 300.0f;

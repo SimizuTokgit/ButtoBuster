@@ -3,7 +3,7 @@
 
 namespace {
     // 見切った瞬間に全体を止める秒数 プレイヤーは寄って反撃するので、長くは止めない
-    constexpr float STOP_TIME = 0.1f;
+    constexpr float STOP_TIME = 0.4f;
 
     // 寄る角度と、寄っている長さ 秒
     constexpr float ZOOM_DEGREE = 6.0f;

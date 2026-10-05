@@ -54,15 +54,15 @@ struct PlayerData {
 
     // 走り抜ける時間と、そのあと次の行動を受け付けるまで 秒
     float dodgeTime = 0.26f;
-    float dodgeRecoveryTime = 0.1f;
+    float dodgeRecoveryTime = 0.13f;
 
     // 回避の無敵 秒 走り抜けている間は全部かわせる
-    float dodgeInvincibleTime = 0.3f;
+    float dodgeInvincibleTime = 0.2f;
 
     // ----- ジャスト回避 -----
 
     // 回避を始めてからこの秒数のうちに攻撃が来たら、ジャスト回避になる
-    float justDodgeWindow = 0.15f;
+    float justDodgeWindow = 0.18f;
 
     // 決まったあとの無敵 秒 寄っている間と、続けて来た攻撃も受けない
     float justDodgeInvincibleTime = 0.6f;
