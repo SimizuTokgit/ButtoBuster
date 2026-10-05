@@ -58,6 +58,9 @@ HitResult Player::TakeHit(const HitInfo& info) {
 
     if (IsInvincible() || isCheatInvincible) return HitResult::Ignored;
 
+    // 敵をゆっくりにしている反撃の間も受けない かわした攻撃の続き (2 回目の判定など) がゆっくり来ても当たらないように
+    if (_slowTimer > 0.0f) return HitResult::Ignored;
+
     auto* effects = EffectManager::Get();
 
     // 正面から来た攻撃はガードで止める
@@ -85,6 +88,7 @@ HitResult Player::TakeHit(const HitInfo& info) {
 
     // 食らったら反撃の機会も失う
     _counterTimer = 0.0f;
+    _slowTimer = 0.0f;
     StartFlash();
 
     if (effects) {

@@ -270,6 +270,7 @@ AttackData PlayerAttacks::CreateCounterCombo(const AttackData& base, const Playe
     AttackData attack = base;
 
     // のけぞりと浮かせはそのまま残し、締めまでつなげられるようにする 弧の色で反撃の続きだと分かるように
+    // 重くした分で許容値に届けば、のけぞりの技でも吹き飛ぶ (Enemy::TakeHit)
     attack.damage = static_cast<int>(base.damage * playerData.counterDamageRate);
     attack.arcColor = GetCounterArcColor();
     return attack;

@@ -2,7 +2,9 @@
 #include "Player.h"
 #include "PlayerActions.h"
 #include "PlayerIdleState.h"
+#include "PlayerJumpState.h"
 #include "EffectManager.h"
+#include "Time.h"
 #include <memory>
 
 using std::make_unique;
@@ -43,20 +45,29 @@ void PlayerRushState::Execute(Player& player, const InputInfo& input, float delt
 
     bool hasArrived = distance <= ARRIVE_DISTANCE || _timer >= player.data.counterRushMaxTime;
     if (!hasArrived) {
-        // 行き過ぎないよう、このフレームで詰めきれる距離なら速さを落とす
+        // 行き過ぎないよう、次のフレームで詰めきれる距離なら速さを落とす
+        // 動くのは次のフレームの物理なので、止めた時間に左右されない実時間で見る ヒットストップ明けに飛び出さないように
         float speed = player.data.counterRushSpeed;
-        if (deltaTime > 0.0f && distance / deltaTime < speed) speed = distance / deltaTime;
+        float frameTime = Time::UnscaledDeltaTime();
+        if (frameTime > 0.0f && distance / frameTime < speed) speed = distance / frameTime;
         player.SetHorizontalVelocity(VScale(toDestination, 1.0f / distance), speed);
         return;
     }
 
     player.StopHorizontal();
 
-    // 寄っている間に押してあった技を出す 押していなければ構えて待つ
+    // 寄っている間に押してあった技を出す 宙で着いたら空中の技にする
+    // 押していなければ、地上なら構えて待ち、宙なら落ちる
     InputInfo queuedInput = input;
     queuedInput.technique = _queued;
-    if (PlayerActions::TryStart(player, this, queuedInput)) return;
-    player.GetStates().Transition(this, make_unique<PlayerIdleState>());
+    auto& states = player.GetStates();
+    if (player.IsGrounded()) {
+        if (PlayerActions::TryStart(player, this, queuedInput)) return;
+        states.Transition(this, make_unique<PlayerIdleState>());
+        return;
+    }
+    if (PlayerActions::TryStartAir(player, this, queuedInput)) return;
+    states.Transition(this, make_unique<PlayerJumpState>(false));
 }
 
 void PlayerRushState::Exit(Player& player) {
