@@ -105,6 +105,7 @@
     <ClCompile Include="Source\Game\Effect\ScreenFlash.cpp" />
     <ClCompile Include="Source\Game\Effect\ShapeEffectRenderer.cpp" />
     <ClCompile Include="Source\Game\Effect\SlashTrail.cpp" />
+    <ClCompile Include="Source\Game\Effect\SlowShade.cpp" />
     <ClCompile Include="Source\Game\Enemy\Enemy.cpp" />
     <ClCompile Include="Source\Game\Enemy\EnemyAI.cpp" />
     <ClCompile Include="Source\Game\Enemy\EnemyData.cpp" />
@@ -222,6 +223,7 @@
     <ClInclude Include="Source\Game\Effect\ScreenFlash.h" />
     <ClInclude Include="Source\Game\Effect\ShapeEffectRenderer.h" />
     <ClInclude Include="Source\Game\Effect\SlashTrail.h" />
+    <ClInclude Include="Source\Game\Effect\SlowShade.h" />
     <ClInclude Include="Source\Game\Enemy\AttackTokenPool.h" />
     <ClInclude Include="Source\Game\Enemy\Enemy.h" />
     <ClInclude Include="Source\Game\Enemy\EnemyAI.h" />

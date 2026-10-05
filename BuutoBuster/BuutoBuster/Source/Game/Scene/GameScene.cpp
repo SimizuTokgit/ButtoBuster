@@ -22,6 +22,7 @@
 #include "ResultScreen.h"
 #include "ChainCounter.h"
 #include "JustDodgeBanner.h"
+#include "SlowShade.h"
 #include "DebugCheats.h"
 #include "ChargePoseDebugger.h"
 
@@ -108,6 +109,10 @@ bool GameScene::OnLoad() {
     auto* justDodgeBanner = uiObject->AddChild("JustDodgeBanner")->AddComponent<JustDodgeBanner>();
     justDodgeBanner->Setup();
     player->GetJustDodgeEvents().AddObserver(justDodgeBanner);
+
+    // ジャスト回避のあとの反撃で敵がゆっくりになっている間、画面を暗くする
+    auto* slowShade = uiObject->AddChild("SlowShade")->AddComponent<SlowShade>();
+    slowShade->Setup(player);
 
     auto* debugObject = scene.CreateGameObject("DebugCheats");
     auto* cheats = debugObject->AddComponent<DebugCheats>();

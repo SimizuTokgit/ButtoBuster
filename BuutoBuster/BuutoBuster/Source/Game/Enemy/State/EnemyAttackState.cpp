@@ -68,6 +68,7 @@ void EnemyAttackState::PlayWarning(Enemy& enemy) {
     effects->PlayWarning(head, isHeavy);
 
     // 踏みつけは当たる範囲を先に地面へ出す 赤が満ちきったときに当たる
+    // 輪は普段の時間で満ちるので、反撃の間に敵がゆっくりになっていると、満ちたあと少ししてから当たる
     if (isArea) {
         float seconds = _data.hitStart / (ANIMATION_FPS * _data.animationSpeed);
         effects->PlayAreaWarning(enemy.GetPosition(), _areaRadius, seconds);

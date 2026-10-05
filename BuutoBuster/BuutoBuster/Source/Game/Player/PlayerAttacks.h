@@ -30,6 +30,7 @@ namespace PlayerAttacks {
     // ジャスト回避のあとの反撃の締め 元の技を、必ず吹き飛ばす重い一撃にする どれだけ重くするかは PlayerData
     AttackData CreateCounter(const AttackData& base, const PlayerData& playerData);
 
-    // ジャスト回避のあとの反撃のうち、締めの前の斬り 吹き飛ばさずにのけぞらせたまま、ダメージだけ重くする
+    // ジャスト回避のあとの反撃のうち、締めの前の斬り のけぞりと浮かせはそのままで、ダメージだけ重くする
+    // 吹き飛ばしの技にはしない ただし重くした分で許容値に届いた相手は、いつもどおり吹き飛ぶ
     AttackData CreateCounterCombo(const AttackData& base, const PlayerData& playerData);
 }

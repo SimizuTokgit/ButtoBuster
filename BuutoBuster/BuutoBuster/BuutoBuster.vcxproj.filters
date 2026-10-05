@@ -150,6 +150,9 @@
     <ClCompile Include="Source\Game\Effect\SlashTrail.cpp">
       <Filter>Source\Game\Effect</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Effect\SlowShade.cpp">
+      <Filter>Source\Game\Effect</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Enemy\Enemy.cpp">
       <Filter>Source\Game\Enemy</Filter>
     </ClCompile>
@@ -495,6 +498,9 @@
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Effect\SlashTrail.h">
+      <Filter>Source\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Effect\SlowShade.h">
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Enemy\AttackTokenPool.h">
