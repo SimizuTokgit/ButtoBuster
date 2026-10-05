@@ -39,6 +39,7 @@ public:
     void Execute(Player& player, const InputInfo& input, float deltaTime) override;
     void Exit(Player& player) override;
     const char* GetName() const override { return "AirSlam"; }
+    float GetOpeningTime(const Player& player) const override;
 
 private:
     void StartDive(Player& player);

@@ -16,7 +16,7 @@ private:
     int _shownCombo = 0;
 
 public:
-    // 制作用 キャラの頭上に今の状態と吹っ飛ばされ値を出す
+    // 制作用 キャラの頭上に今の状態と吹っ飛ばされ値、隙があればその残りを出す
     bool isStateVisible = false;
 
     void Setup(Player* player, PhaseDirector* director);

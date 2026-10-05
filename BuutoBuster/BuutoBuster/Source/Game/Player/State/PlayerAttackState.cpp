@@ -206,12 +206,26 @@ void PlayerAttackState::ApplyHit(Player& player) {
 
 bool PlayerAttackState::UpdateRecovery(Player& player, float deltaTime) {
     // まだ振っている途中 最後の判定が消えるまでは、あと隙を数えない
-    float lastHitEnd = (_data.hitStart2 >= 0.0f) ? _data.hitEnd2 : _data.hitEnd;
-    if (player.GetAnimationTime() <= lastHitEnd && !player.IsAnimationFinished()) return false;
+    if (player.GetAnimationTime() <= GetLastHitEnd() && !player.IsAnimationFinished()) return false;
 
     // アニメが先に終わっても数え続けられるよう、経った時間をアニメのフレームに直して数える
     _recoveryCount += deltaTime * ANIMATION_FPS * _data.animationSpeed;
     return _recoveryCount >= _data.recovery;
+}
+
+float PlayerAttackState::GetOpeningTime(const Player& player) const {
+    // 最後の判定が消えるまでの残りと、あと隙の残りを足す どちらもアニメのフレームで数える
+    float swingLeft = GetLastHitEnd() - player.GetAnimationTime();
+    if (swingLeft < 0.0f) swingLeft = 0.0f;
+
+    float recoveryLeft = _data.recovery - _recoveryCount;
+    if (recoveryLeft < 0.0f) recoveryLeft = 0.0f;
+
+    return (swingLeft + recoveryLeft) / (ANIMATION_FPS * _data.animationSpeed);
+}
+
+float PlayerAttackState::GetLastHitEnd() const {
+    return (_data.hitStart2 >= 0.0f) ? _data.hitEnd2 : _data.hitEnd;
 }
 
 bool PlayerAttackState::TryContinue(Player& player, const InputInfo& input) {

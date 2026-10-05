@@ -66,6 +66,9 @@ public:
     // ジャスト回避のあとの反撃の間は、敵全員をゆっくりにする
     float GetOpponentTimeScale() const override;
 
+    // あと何秒、回避もできないか 今の状態に聞く
+    float GetOpeningTime() const override;
+
     void SetTrail(SlashTrail* trail) { _trail = trail; }
     void SetTrailEmitting(bool isEmitting);
 

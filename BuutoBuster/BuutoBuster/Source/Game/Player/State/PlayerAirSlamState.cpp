@@ -68,6 +68,14 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
     }
 }
 
+float PlayerAirSlamState::GetOpeningTime(const Player& player) const {
+    // 着地してから動けるまでの残り 宙にいる間は地上の敵の振りが届かないので数えない
+    if (_phase != Phase::Land) return 0.0f;
+
+    float left = player.data.airSlamRecoveryTime - _timer;
+    return (left > 0.0f) ? left : 0.0f;
+}
+
 void PlayerAirSlamState::Exit(Player& player) {
     // 被弾して途中で抜けても、重力と止めたアニメを元に戻す
     player.SetGravityEnabled(true);

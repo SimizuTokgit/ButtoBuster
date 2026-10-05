@@ -58,6 +58,12 @@ void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float del
     player.GetStates().Transition(this, make_unique<PlayerIdleState>());
 }
 
+float PlayerDodgeState::GetOpeningTime(const Player& player) const {
+    // 走り抜けて止まり、次の行動を受け付けるまでの残り
+    float left = player.data.dodgeTime + player.data.dodgeRecoveryTime - _timer;
+    return (left > 0.0f) ? left : 0.0f;
+}
+
 void PlayerDodgeState::Exit(Player& player) {
     player.SetOpacity(1.0f);
     player.StopHorizontal();

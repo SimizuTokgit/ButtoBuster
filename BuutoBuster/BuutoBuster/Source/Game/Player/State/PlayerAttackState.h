@@ -55,6 +55,7 @@ public:
     void Execute(Player& player, const InputInfo& input, float deltaTime) override;
     void Exit(Player& player) override;
     const char* GetName() const override;
+    float GetOpeningTime(const Player& player) const override;
 
 private:
     void PlaySwingEffects(Player& player, float time);
@@ -63,4 +64,7 @@ private:
 
     // あと隙が明けたら true 明けるまでは回避も次の技も受け付けない
     bool UpdateRecovery(Player& player, float deltaTime);
+
+    // 最後の判定が消えるフレーム 二回斬りなら二回目の終わり あと隙はここから数える
+    float GetLastHitEnd() const;
 };

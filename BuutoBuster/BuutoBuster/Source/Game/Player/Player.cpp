@@ -155,6 +155,11 @@ float Player::GetOpponentTimeScale() const {
     return (_slowTimer > 0.0f) ? data.counterSlowScale : 1.0f;
 }
 
+float Player::GetOpeningTime() const {
+    const auto* current = _states.GetCurrent();
+    return current ? current->GetOpeningTime(*this) : 0.0f;
+}
+
 bool Player::TryUseAirHang() {
     if (_airHangLeft <= 0) return false;
 

@@ -177,9 +177,17 @@ void Hud::DrawStates() {
         }
 
         // 吹っ飛ばされ値は普段は数字で出さないので、調整するときはここで見る
-        char label[64];
-        snprintf(label, sizeof(label), "%s  %.0f / %.0f", character->GetStateName(),
-            character->GetBlowValue(), character->GetBlowLimit());
+        // 隙があるときは、あと何秒動けないかも出す 敵が隙を狙う AI を作るときに見る
+        char label[96];
+        float opening = character->GetOpeningTime();
+        if (opening > 0.0f) {
+            snprintf(label, sizeof(label), "%s  %.0f / %.0f  隙 %.2f", character->GetStateName(),
+                character->GetBlowValue(), character->GetBlowLimit(), opening);
+        }
+        else {
+            snprintf(label, sizeof(label), "%s  %.0f / %.0f", character->GetStateName(),
+                character->GetBlowValue(), character->GetBlowLimit());
+        }
         GameFont::DrawCentered(static_cast<int>(screen.x), static_cast<int>(screen.y) - 26,
             label, color, GameFont::Size::Small);
     }

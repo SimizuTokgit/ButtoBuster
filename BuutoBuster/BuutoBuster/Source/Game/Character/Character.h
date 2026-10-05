@@ -89,6 +89,9 @@ public:
     // プレイヤーはジャスト回避のあとの反撃の間、敵全員をゆっくりにする
     virtual float GetOpponentTimeScale() const { return 1.0f; }
 
+    // あと何秒、回避もできないか 敵の AI が隙を狙うときに読む 隙が無ければ 0
+    virtual float GetOpeningTime() const { return 0.0f; }
+
     // この体の物理の時間の進み方 1 で普段どおり 状態や AI に渡す時間は、呼ぶ側が同じだけ縮めておく
     void SetTimeScale(float scale);
 

@@ -17,4 +17,5 @@ public:
     void Execute(Player& player, const InputInfo& input, float deltaTime) override;
     void Exit(Player& player) override;
     const char* GetName() const override { return "Dodge"; }
+    float GetOpeningTime(const Player& player) const override;
 };
