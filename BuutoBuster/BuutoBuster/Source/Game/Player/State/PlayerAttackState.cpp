@@ -11,6 +11,11 @@
 
 using std::make_unique;
 
+namespace {
+    // 技の時間はアニメのフレーム 30fps で数える (AttackData と同じ)
+    constexpr float ANIMATION_FPS = 30.0f;
+}
+
 PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, Kind kind, int chargeLevel)
     : _data(data)
     , _comboIndex(comboIndex)
@@ -88,6 +93,9 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
     ApplyHit(player);
 
     if (input.technique != Technique::None) _queued = input.technique;
+
+    // あと隙の間は、回避もガードも次の技も出せない 押された技は覚えておき、明けたら出す
+    if (!UpdateRecovery(player, deltaTime)) return;
 
     if (TryContinue(player, input)) return;
 
@@ -194,6 +202,16 @@ void PlayerAttackState::ApplyHit(Player& player) {
         effects->ZoomPunch(_data.zoomPunch, 0.35f);
         effects->FlashScreen(0xFFFFFF, _data.zoomPunch * 0.04f, 0.12f);
     }
+}
+
+bool PlayerAttackState::UpdateRecovery(Player& player, float deltaTime) {
+    // まだ振っている途中 最後の判定が消えるまでは、あと隙を数えない
+    float lastHitEnd = (_data.hitStart2 >= 0.0f) ? _data.hitEnd2 : _data.hitEnd;
+    if (player.GetAnimationTime() <= lastHitEnd && !player.IsAnimationFinished()) return false;
+
+    // アニメが先に終わっても数え続けられるよう、経った時間をアニメのフレームに直して数える
+    _recoveryCount += deltaTime * ANIMATION_FPS * _data.animationSpeed;
+    return _recoveryCount >= _data.recovery;
 }
 
 bool PlayerAttackState::TryContinue(Player& player, const InputInfo& input) {

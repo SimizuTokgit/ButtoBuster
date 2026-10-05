@@ -45,6 +45,9 @@ private:
     // 振っている最中に押された次の技 振り終わったら出す
     Technique _queued = Technique::None;
 
+    // 最後の判定が消えてから経った時間 アニメのフレームで数える あと隙が明けたかを見る
+    float _recoveryCount = 0.0f;
+
 public:
     PlayerAttackState(const AttackData& data, int comboIndex, Kind kind, int chargeLevel = -1);
 
@@ -57,4 +60,7 @@ private:
     void PlaySwingEffects(Player& player, float time);
     void ApplyHit(Player& player);
     bool TryContinue(Player& player, const InputInfo& input);
+
+    // あと隙が明けたら true 明けるまでは回避も次の技も受け付けない
+    bool UpdateRecovery(Player& player, float deltaTime);
 };
