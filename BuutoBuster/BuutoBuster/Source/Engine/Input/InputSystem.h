@@ -104,6 +104,13 @@ public:
         return _pad.LeftTrigger >= TRIGGER_THRESHOLD && _prevPad.LeftTrigger < TRIGGER_THRESHOLD;
     }
 
+    // 右のトリガー 通常攻撃に当てる
+    bool PadRightTriggerHeld() const { return _pad.RightTrigger >= TRIGGER_THRESHOLD; }
+
+    bool PadRightTriggerPressed() const {
+        return _pad.RightTrigger >= TRIGGER_THRESHOLD && _prevPad.RightTrigger < TRIGGER_THRESHOLD;
+    }
+
     // ----- マウス -----
 
     bool MouseHeld(int button) const { return (_mouse & button) != 0; }
