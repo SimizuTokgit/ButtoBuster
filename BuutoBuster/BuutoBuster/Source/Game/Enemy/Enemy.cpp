@@ -91,8 +91,15 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     // Golem は殴っても止まらない 許容値に届けば吹き飛ぶ
     if (!_data->canFlinch && !info.isFromProjectile && !isOverLimit) return HitResult::Hit;
 
+    // 吹き飛ばすとき以外は、怯み値が上限に届くまでのけぞらない
+    bool isBlowing = isBlowHit && isBlown;
+    if (!isBlowing && !AddFlinch(static_cast<float>(info.damage))) return HitResult::Hit;
+
     auto* current = _states.GetCurrent();
-    if (isBlowHit && isBlown) {
+    if (isBlowing) {
+        // 吹き飛んだら、怯み値も 0 から溜め直す
+        _flinchValue = 0.0f;
+
         SoundManager::Instance().PlaySE(_data->soundBlow);
         _states.Transition(current, std::make_unique<EnemyBlowState>(knockback, info.chain));
     }
@@ -150,4 +157,13 @@ void Enemy::KeepHovering(float deltaTime) {
     if (speed > HOVER_MAX_SPEED) speed = HOVER_MAX_SPEED;
     if (speed < -HOVER_MAX_SPEED) speed = -HOVER_MAX_SPEED;
     SetVerticalVelocity(speed);
+}
+
+bool Enemy::AddFlinch(float damage) {
+    _flinchValue += damage;
+    if (_flinchValue < _data->flinchLimit) return false;
+
+    // のけぞったら 0 から溜め直す
+    _flinchValue = 0.0f;
+    return true;
 }

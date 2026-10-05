@@ -18,6 +18,9 @@ private:
     bool _isReadyToRemove = false;
     bool _isCounted = false;
 
+    // 怯み値 当たった技のダメージが溜まり、EnemyData の flinchLimit に届いたらのけぞる
+    float _flinchValue = 0.0f;
+
 public:
     void Initialize(const EnemyData& data, int id, Character* target);
 
@@ -58,4 +61,7 @@ protected:
 
 private:
     void KeepHovering(float deltaTime);
+
+    // 怯み値を溜める 上限に届いたら 0 に戻して true を返す
+    bool AddFlinch(float damage);
 };

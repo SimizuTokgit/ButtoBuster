@@ -15,6 +15,7 @@ namespace {
         data.weaponModel = "Data/Character/Weapon/Axe/Axe.mv1";
 
         // 吹っ飛ばされ値の許容値 体力があったころの体力と同じ量にしてある
+        data.flinchLimit = 36.0f;
         data.blow.limit = 40.0f;
         data.walkSpeed = 150.0f;
         data.runSpeed = 380.0f;
@@ -61,6 +62,7 @@ namespace {
         data.weaponModel = "Data/Character/Weapon/Sword/sword.mv1";
         data.scale = 1.05f;
 
+        data.flinchLimit = 72.0f;
         data.blow.limit = 100.0f;
         data.walkSpeed = 180.0f;
         data.runSpeed = 470.0f;
@@ -108,6 +110,7 @@ namespace {
         data.folder = "Data/Character/Bee/";
         data.modelFile = "Bee.mv1";
 
+        data.flinchLimit = 20.0f;
         data.blow.limit = 35.0f;
         data.bodyRadius = 40.0f;
         data.bodyHeight = 110.0f;
@@ -164,6 +167,7 @@ namespace {
         data.folder = "Data/Character/Golem/";
         data.modelFile = "golem.mv1";
 
+        data.flinchLimit = 120.0f;
         data.blow.limit = 420.0f;
         data.bodyRadius = 70.0f;
         data.bodyHeight = 240.0f;
