@@ -33,4 +33,7 @@ public:
 
 private:
     bool TryHitPlayer(VECTOR position);
+
+    // 針の時間の進み方 撃った敵と同じく、プレイヤーに時間を遅くされている間はゆっくり飛ぶ
+    float GetTimeScale() const;
 };

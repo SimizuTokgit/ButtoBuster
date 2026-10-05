@@ -2,9 +2,12 @@
 #include "EffectManager.h"
 
 namespace {
-    // 全体の速さと、ゆっくりにする長さ 長さは実時間の秒
-    constexpr float SLOW_SCALE = 0.25f;
-    constexpr float SLOW_TIME = 1.0f;
+    // 見切った瞬間に全体を止める秒数 プレイヤーは寄って反撃するので、長くは止めない
+    constexpr float STOP_TIME = 0.1f;
+
+    // 寄る角度と、寄っている長さ 秒
+    constexpr float ZOOM_DEGREE = 6.0f;
+    constexpr float ZOOM_TIME = 0.5f;
 
     // かわしたと分かる水色 反撃の弧と同じ色にする
     constexpr unsigned int FLASH_COLOR = 0x60D0FF;
@@ -17,10 +20,10 @@ void JustDodgeEffectObserver::OnNotify(const JustDodgeEvent& event) {
     auto* effects = EffectManager::Get();
     if (!effects) return;
 
-    effects->SlowMotion(SLOW_SCALE, SLOW_TIME);
+    effects->HitStop(STOP_TIME);
     effects->FlashScreen(FLASH_COLOR, 0.3f, 0.25f);
 
-    // ゆっくりになっている間だけ寄り、見切った瞬間を大きく見せる
-    effects->ZoomPunch(6.0f, SLOW_TIME);
+    // 見切った瞬間を大きく見せる
+    effects->ZoomPunch(ZOOM_DEGREE, ZOOM_TIME);
     effects->PlayShockwave(event.position, RING_RADIUS, GetColorU8(120, 230, 255, 255));
 }

@@ -19,8 +19,14 @@ void EnemyAI::Start() {
 void EnemyAI::Update(float deltaTime) {
     if (!_enemy) return;
 
-    InputInfo input = Think(deltaTime);
-    _enemy->Execute(input, deltaTime);
+    // 相手 (プレイヤー) に時間を遅くされている間は、考えるのも動くのもゆっくりにする ジャスト回避のあとの反撃の間
+    const Character* target = _enemy->GetTarget();
+    float timeScale = target ? target->GetOpponentTimeScale() : 1.0f;
+    _enemy->SetTimeScale(timeScale);
+    float scaledDeltaTime = deltaTime * timeScale;
+
+    InputInfo input = Think(scaledDeltaTime);
+    _enemy->Execute(input, scaledDeltaTime);
 }
 
 InputInfo EnemyAI::Think(float deltaTime) {

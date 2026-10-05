@@ -2,6 +2,11 @@
 #include "PlayerData.h"
 
 namespace {
+    // 反撃の弧の色 ジャスト回避と同じ水色にして、反撃だと分かるようにする
+    COLOR_U8 GetCounterArcColor() {
+        return GetColorU8(120, 230, 255, 255);
+    }
+
     AttackData CreateSlash1() {
         AttackData attack;
         attack.animationName = "Attack1";
@@ -257,6 +262,15 @@ AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerData
     attack.hitStop = base.hitStop + playerData.counterHitStopAdd;
     attack.shake = base.shake + playerData.counterShakeAdd;
     attack.zoomPunch = base.zoomPunch + playerData.counterZoomAdd;
-    attack.arcColor = GetColorU8(120, 230, 255, 255);
+    attack.arcColor = GetCounterArcColor();
+    return attack;
+}
+
+AttackData PlayerAttacks::CreateCounterCombo(const AttackData& base, const PlayerData& playerData) {
+    AttackData attack = base;
+
+    // のけぞりと浮かせはそのまま残し、締めまでつなげられるようにする 弧の色で反撃の続きだと分かるように
+    attack.damage = static_cast<int>(base.damage * playerData.counterDamageRate);
+    attack.arcColor = GetCounterArcColor();
     return attack;
 }

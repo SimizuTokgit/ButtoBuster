@@ -36,7 +36,7 @@ void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float del
     _timer += deltaTime;
 
     // ジャスト回避が決まったら、走り抜けるのを待たずに反撃へ移れる
-    // 全体がゆっくりになるので、待っているとスローが終わるまで振れない
+    // ふつうは決まった瞬間に相手へ寄るのでここは通らない 針をかわしたときのように、寄る相手がいないときに使う
     bool canCounter = player.HasCounter() && input.technique != Technique::None;
     if (canCounter && PlayerActions::TryStart(player, this, input)) return;
 

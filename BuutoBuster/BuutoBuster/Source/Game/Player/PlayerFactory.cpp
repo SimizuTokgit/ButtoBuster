@@ -98,7 +98,7 @@ Player* PlayerFactory::Create(VECTOR position) {
     player->GetChainEvents().AddObserver(root->AddComponent<ChainSoundObserver>());
     player->GetChainEvents().AddObserver(root->AddComponent<ChainEffectObserver>());
 
-    // ジャスト回避の音とスローも同じ形でつなぐ
+    // ジャスト回避の音と画面の演出も同じ形でつなぐ
     player->GetJustDodgeEvents().AddObserver(root->AddComponent<JustDodgeSoundObserver>());
     player->GetJustDodgeEvents().AddObserver(root->AddComponent<JustDodgeEffectObserver>());
 

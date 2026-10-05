@@ -179,7 +179,7 @@ bool PhysicsManager::Linecast(VECTOR from, VECTOR to, VECTOR& outHitPosition) co
 void PhysicsManager::UpdateRigidbodies(float deltaTime) {
     for (auto* rb : _rigidbodies) {
         if (rb && !rb->isKinematic) {
-            rb->PhysicsUpdate(deltaTime);
+            rb->PhysicsUpdate(deltaTime * rb->timeScale);
         }
     }
 }

@@ -4,6 +4,7 @@
 #include "PlayerBlowState.h"
 #include "PlayerDeadState.h"
 #include "PlayerChargeState.h"
+#include "PlayerRushState.h"
 #include "CharacterRegistry.h"
 #include "EffectManager.h"
 #include "SlashTrail.h"
@@ -51,7 +52,7 @@ HitResult Player::TakeHit(const HitInfo& info) {
     // 回避を始めた直後に来た攻撃はジャスト回避
     // 回避の無敵より先に見る デバッグの無敵中でも試せるように
     if (_justDodgeTimer > 0.0f) {
-        SucceedJustDodge();
+        SucceedJustDodge(info.attacker);
         return HitResult::Ignored;
     }
 
@@ -132,8 +133,14 @@ bool Player::ConsumeGuardImpact() {
 bool Player::ConsumeCounter() {
     if (_counterTimer <= 0.0f) return false;
 
+    // 締めを出したら敵の時間も元に戻す 吹き飛ぶところは普段の速さで見せる
     _counterTimer = 0.0f;
+    _slowTimer = 0.0f;
     return true;
+}
+
+float Player::GetOpponentTimeScale() const {
+    return (_slowTimer > 0.0f) ? data.counterSlowScale : 1.0f;
 }
 
 bool Player::TryUseAirHang() {
@@ -210,14 +217,24 @@ void Player::UpdateJustDodge(float deltaTime) {
 
     // 溜めている間は反撃の残りを減らさない ジャスト回避から溜めて振っても反撃になるように
     if (_counterTimer > 0.0f && !_states.IsIn<PlayerChargeState>()) _counterTimer -= deltaTime;
+
+    // 敵をゆっくりにしておく時間は溜めている間も減らす 溜め続けて敵を止めておけないように
+    if (_slowTimer > 0.0f) _slowTimer -= deltaTime;
 }
 
-void Player::SucceedJustDodge() {
+void Player::SucceedJustDodge(const Character* attacker) {
     _justDodgeTimer = 0.0f;
     _counterTimer = data.counterTime;
+    _slowTimer = data.counterTime;
     SetInvincible(data.justDodgeInvincibleTime);
 
-    // スロー 音 画面の文字は、知らせを受け取った側が出す
+    // かわした相手の目の前まで自動で寄る 針のように、誰の攻撃か分からないときは寄らない
+    if (attacker && !attacker->IsDead()) {
+        _states.Transition(_states.GetCurrent(),
+            std::make_unique<PlayerRushState>(attacker->GetPosition(), attacker->bodyRadius));
+    }
+
+    // 画面の演出 音 画面の文字は、知らせを受け取った側が出す
     JustDodgeEvent event;
     event.position = GetPosition();
     event.headPosition = VAdd(event.position, VGet(0.0f, bodyHeight + HEAD_OFFSET, 0.0f));

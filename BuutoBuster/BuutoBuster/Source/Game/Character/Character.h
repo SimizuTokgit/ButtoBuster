@@ -85,6 +85,13 @@ public:
     // 壁を割って倒されてよいか false なら、許容値に届いていても壁で跳ね返る デバッグの無敵に使う
     virtual bool CanBeDefeated() const { return true; }
 
+    // この体が、相手 (反対のチーム) の時間をどれだけ遅くしているか 1 で普段どおり
+    // プレイヤーはジャスト回避のあとの反撃の間、敵全員をゆっくりにする
+    virtual float GetOpponentTimeScale() const { return 1.0f; }
+
+    // この体の物理の時間の進み方 1 で普段どおり 状態や AI に渡す時間は、呼ぶ側が同じだけ縮めておく
+    void SetTimeScale(float scale);
+
     bool IsInvincible() const { return _invincibleTimer > 0.0f; }
     // 無敵の残りを延ばす 短くはしない 別々の理由の無敵が重なったとき長いほうを残す
     void SetInvincible(float seconds);

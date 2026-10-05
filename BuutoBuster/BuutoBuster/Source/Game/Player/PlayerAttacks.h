@@ -27,6 +27,9 @@ namespace PlayerAttacks {
     // PlayerData の倍率 (強化で上がる分) を掛けた技にする 技を振り始めるときに通す
     AttackData ApplyRates(const AttackData& base, const PlayerData& playerData);
 
-    // ジャスト回避のあとの反撃 元の技を、必ず吹き飛ばす重い一撃にする どれだけ重くするかは PlayerData
+    // ジャスト回避のあとの反撃の締め 元の技を、必ず吹き飛ばす重い一撃にする どれだけ重くするかは PlayerData
     AttackData CreateCounter(const AttackData& base, const PlayerData& playerData);
+
+    // ジャスト回避のあとの反撃のうち、締めの前の斬り 吹き飛ばさずにのけぞらせたまま、ダメージだけ重くする
+    AttackData CreateCounterCombo(const AttackData& base, const PlayerData& playerData);
 }

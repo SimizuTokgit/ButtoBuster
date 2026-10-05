@@ -64,13 +64,22 @@ struct PlayerData {
     // 回避を始めてからこの秒数のうちに攻撃が来たら、ジャスト回避になる
     float justDodgeWindow = 0.15f;
 
-    // 決まったあとの無敵 秒 スローの間に続けて来た攻撃も受けない
+    // 決まったあとの無敵 秒 寄っている間と、続けて来た攻撃も受けない
     float justDodgeInvincibleTime = 0.6f;
 
-    // 次の攻撃が反撃になる時間 秒
+    // 決まったら、かわした敵の目の前まで自動で寄る 寄る速さと、寄りきるまでの長さの上限 秒
+    // 止まるのは、敵の体の手前からさらにこの距離だけ空けた所
+    float counterRushSpeed = 3000.0f;
+    float counterRushMaxTime = 0.3f;
+    float counterRushGap = 40.0f;
+
+    // 反撃できる時間 秒 この間の斬りは反撃になり、締めの一振り (3 段目か、段のない技) で吹き飛ばして使い切る
     float counterTime = 1.5f;
 
-    // 反撃にしたときの重さ ダメージと吹っ飛ばしは元の技の何倍か
+    // 反撃できる間、敵全員の時間の進み方をこれにする プレイヤーは普段どおり 締めの一振りを出すと戻る
+    float counterSlowScale = 0.3f;
+
+    // 反撃にしたときの重さ ダメージと吹っ飛ばしは元の技の何倍か 締めの前の斬りは、ダメージだけ重くなる
     float counterDamageRate = 1.5f;
     float counterKnockbackRate = 1.5f;
 

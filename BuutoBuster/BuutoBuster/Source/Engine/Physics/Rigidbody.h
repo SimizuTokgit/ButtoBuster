@@ -41,6 +41,12 @@ public:
     /// <summary>現在の速度（cm/s）</summary>
     VECTOR linearVelocity = VGet(0, 0, 0);
 
+    /// <summary>
+    /// この物体だけの時間の進み方 1 で普段どおり
+    /// 小さいほど、速度はそのままでゆっくり動き、ゆっくり落ちる
+    /// </summary>
+    float timeScale = 1.0f;
+
     bool isGrounded = false; // 地面に接地しているか
 
 private:

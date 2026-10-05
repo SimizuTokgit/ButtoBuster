@@ -33,6 +33,8 @@ void Needle::Deactivate() {
 void Needle::Update(float deltaTime) {
     if (!_isFlying) return;
 
+    deltaTime *= GetTimeScale();
+
     _life -= deltaTime;
     if (_life <= 0.0f) {
         Deactivate();
@@ -74,4 +76,11 @@ bool Needle::TryHitPlayer(VECTOR position) {
         return true;
     }
     return false;
+}
+
+float Needle::GetTimeScale() const {
+    for (const Character* character : CharacterRegistry::GetAll()) {
+        if (character && character->team == Team::Player) return character->GetOpponentTimeScale();
+    }
+    return 1.0f;
 }

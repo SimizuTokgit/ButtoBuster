@@ -34,9 +34,12 @@ private:
     float _comboTimer = 0.0f;
     int _maxCombo = 0;
 
-    // ジャスト回避になる残りの時間と、次の攻撃が反撃になる残りの時間
+    // ジャスト回避になる残りの時間と、攻撃が反撃になる残りの時間
     float _justDodgeTimer = 0.0f;
     float _counterTimer = 0.0f;
+
+    // 反撃の間、敵全員をゆっくりにしている残りの時間 溜めている間も減る
+    float _slowTimer = 0.0f;
 
     // 着地までに、あと何回空中で浮き直せるか
     int _airHangLeft = 0;
@@ -57,6 +60,9 @@ public:
     // デバッグの無敵中は、壁を割られずに跳ね返る
     bool CanBeDefeated() const override { return !isCheatInvincible; }
 
+    // ジャスト回避のあとの反撃の間は、敵全員をゆっくりにする
+    float GetOpponentTimeScale() const override;
+
     void SetTrail(SlashTrail* trail) { _trail = trail; }
     void SetTrailEmitting(bool isEmitting);
 
@@ -66,14 +72,17 @@ public:
     // 自分の振りから始まった連鎖ぶっ飛ばしを知らせる先 画面の表示 音 エフェクトが登録する
     Subject<ChainEvent>& GetChainEvents() { return _chainEvents; }
 
-    // ジャスト回避が決まったことを知らせる先 スロー 音 画面の文字が登録する
+    // ジャスト回避が決まったことを知らせる先 画面の演出 音 画面の文字が登録する
     Subject<JustDodgeEvent>& GetJustDodgeEvents() { return _justDodgeEvents; }
 
     // 回避を始めたときに呼ぶ ここから少しのうちに来た攻撃はジャスト回避になる
     void OpenJustDodgeWindow() { _justDodgeTimer = data.justDodgeWindow; }
 
-    // ジャスト回避のあとの反撃を使う 使えたら true 技を始めるときに呼び、使えたらその技を反撃にする
+    // ジャスト回避のあとの反撃を使い切る 使えたら true
+    // 締めの一振りを始めるときに呼び、使えたらその技を反撃の吹き飛ばしにする 敵の時間も元に戻る
     bool ConsumeCounter();
+
+    // 反撃できる間か 締めの前の斬りは、これを見て反撃の重さにする
     bool HasCounter() const { return _counterTimer > 0.0f; }
 
     // 空中で浮き直す 着地までの回数が残っていれば 1 回使って true
@@ -106,7 +115,9 @@ protected:
 private:
     void UpdateCombo(float deltaTime);
     void UpdateJustDodge(float deltaTime);
-    void SucceedJustDodge();
+
+    // attacker はかわした攻撃を振った相手 その目の前まで寄る 分からなければ寄らない
+    void SucceedJustDodge(const Character* attacker);
 
     // 地形の穴に落ちたら、最初の場所へ戻す
     void ReturnIfFallen();

@@ -22,8 +22,18 @@ void PlayerAttackState::Enter(Player& player) {
     const PlayerData& playerData = player.data;
 
     // 強化で上がった倍率を掛ける ジャスト回避のあとなら、さらにこの振りが反撃になる
+    // 反撃は締めまでのコンボ全体 締めの前の斬りはのけぞらせたまま重くし、締めの一振りで吹き飛ばして使い切る
+    // 段のない技 (強斬り 溜め 対空斬り) は、それだけで締めになる
     _data = PlayerAttacks::ApplyRates(_data, playerData);
-    if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, playerData);
+    if (player.HasCounter()) {
+        bool isFinisher = _comboIndex < 0 || _comboIndex >= PlayerAttacks::SLASH_COUNT - 1;
+        if (!isFinisher) {
+            _data = PlayerAttacks::CreateCounterCombo(_data, playerData);
+        }
+        else if (player.ConsumeCounter()) {
+            _data = PlayerAttacks::CreateCounter(_data, playerData);
+        }
+    }
 
     bool isFromCharge = _chargeLevel >= 0;
     player.PlayAnimation(_data.animationName, _data.animationSpeed, !isFromCharge);

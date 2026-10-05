@@ -190,6 +190,10 @@ void Character::SetGravityEnabled(bool isEnabled) {
     _rigidbody->useGravity = isEnabled;
 }
 
+void Character::SetTimeScale(float scale) {
+    if (_rigidbody) _rigidbody->timeScale = scale;
+}
+
 void Character::SetBodySolid(bool isSolid) {
     if (_body) _body->isTrigger = !isSolid;
 }
