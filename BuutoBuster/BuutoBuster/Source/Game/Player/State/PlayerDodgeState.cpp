@@ -17,6 +17,9 @@ void PlayerDodgeState::Enter(Player& player) {
         player.FaceImmediately(_direction);
     }
 
+    // 回避の残りを 1 回分使う 回避している間は戻らない
+    player.UseDodge();
+
     player.SetInvincible(player.data.dodgeInvincibleTime);
     player.SetOpacity(0.45f);
 

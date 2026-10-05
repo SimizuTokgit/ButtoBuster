@@ -37,6 +37,9 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
             make_unique<PlayerAttackState>(PlayerAttacks::GetAntiAir(), -1, PlayerAttackState::Kind::AntiAir));
 
     case Technique::Dodge: {
+        // 回避の残りが無ければ出さない ガードを握っていれば、そのままガードになる
+        if (!player.CanDodge()) return false;
+
         // 倒していなければ後ろへ下がる
         VECTOR direction = HasMoveInput(input) ? input.move : VScale(player.GetForward(), -1.0f);
         return states.Transition(from, make_unique<PlayerDodgeState>(direction));

@@ -4,6 +4,7 @@
 #include "PlayerBlowState.h"
 #include "PlayerDeadState.h"
 #include "PlayerChargeState.h"
+#include "PlayerDodgeState.h"
 #include "PlayerRushState.h"
 #include "CharacterRegistry.h"
 #include "EffectManager.h"
@@ -25,6 +26,7 @@ namespace {
 void Player::Start() {
     team = Team::Player;
     _airHangLeft = data.airHangCount;
+    _dodgeStock = static_cast<float>(data.dodgeCount);
     _spawnPosition = GetPosition();
 
     _states.Start(*this, std::make_unique<PlayerIdleState>());
@@ -36,11 +38,17 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateWall();
     UpdateCombo(deltaTime);
     UpdateJustDodge(deltaTime);
+    UpdateDodgeStock(deltaTime);
 
     // 着地したら、空中で浮き直せる回数を戻す
     if (IsGrounded()) _airHangLeft = data.airHangCount;
 
-    _states.Update(*this, input, deltaTime);
+    // 回避の残りが無い間に押した回避は、押さなかったことにする
+    // 振っている途中に押した回避を覚えておき、残りが戻ったときに出てしまわないように
+    InputInfo playerInput = input;
+    if (playerInput.technique == Technique::Dodge && !CanDodge()) playerInput.technique = Technique::None;
+
+    _states.Update(*this, playerInput, deltaTime);
 
     UpdateAnimation(deltaTime);
     ReturnIfFallen();
@@ -154,6 +162,11 @@ bool Player::TryUseAirHang() {
     return true;
 }
 
+void Player::UseDodge() {
+    _dodgeStock -= 1.0f;
+    if (_dodgeStock < 0.0f) _dodgeStock = 0.0f;
+}
+
 void Player::AddCombo(int hits) {
     _combo += hits;
     _comboTimer = data.comboKeepTime;
@@ -224,6 +237,22 @@ void Player::UpdateJustDodge(float deltaTime) {
 
     // 敵をゆっくりにしておく時間は溜めている間も減らす 溜め続けて敵を止めておけないように
     if (_slowTimer > 0.0f) _slowTimer -= deltaTime;
+}
+
+void Player::UpdateDodgeStock(float deltaTime) {
+    // 回避している間は戻さない 続けて使い切ったら、止まってから戻り始める
+    if (_states.IsIn<PlayerDodgeState>()) return;
+
+    float fullStock = static_cast<float>(data.dodgeCount);
+
+    // 戻る時間を 0 にしたら、すぐ戻る
+    if (data.dodgeRechargeTime <= 0.0f) {
+        _dodgeStock = fullStock;
+        return;
+    }
+
+    _dodgeStock += deltaTime / data.dodgeRechargeTime;
+    if (_dodgeStock > fullStock) _dodgeStock = fullStock;
 }
 
 void Player::SucceedJustDodge(const Character* attacker) {

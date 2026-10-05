@@ -4,7 +4,7 @@
 
 class Player;
 
-// 回避 速さ 長さ 無敵の時間は PlayerData
+// 回避 速さ 長さ 無敵の時間 続けて使える回数は PlayerData
 class PlayerDodgeState : public ICharacterState<Player> {
 private:
     VECTOR _direction;
