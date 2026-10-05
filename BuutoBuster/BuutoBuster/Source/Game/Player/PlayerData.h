@@ -28,7 +28,7 @@ struct PlayerData {
 
     // 吹っ飛ばされ値の許容値 溜まり方 減り方 中身は BlowSettings.h
     // 体力はない 許容値に届いた状態で壁にぶつかると、壁を割られて負け
-    BlowSettings blow;
+    BlowSettings blow{30.0f,3.8f};
 
     // ----- 移動 -----
 
