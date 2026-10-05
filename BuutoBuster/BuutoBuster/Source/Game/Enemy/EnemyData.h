@@ -37,6 +37,7 @@ struct EnemyData {
     float hoverHeight = 0.0f;           // 地面からどれだけ浮いているか
 
     // ----- 崩れ方 -----
+    float frinctHp = 10.0f;//のけぞるまでに食らわないといけないダメージ
     bool canFlinch = true;              // 殴られたらのけぞるか
     bool canBlow = true;                // 吹き飛ぶか 吹き飛ぶアニメを持っているか
     float weight = 1.0f;                // 重さ 飛んできた敵とぶつかったときの飛び方に使う
