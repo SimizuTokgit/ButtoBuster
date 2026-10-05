@@ -35,6 +35,17 @@ namespace {
         data.slash.arcTilt = 30.0f;
         data.slash.arcColor = GetColorU8(255, 90, 60, 255);
 
+        // ときどき出す大振り 斬りを遅く振り、当たれば吹き飛ばす
+        // ガードできない技にすると、頭の上の合図が赤く大きくなる 見たら避ける
+        data.hasHeavy = true;
+        data.heavy = data.slash;
+        data.heavy.animationSpeed = 0.7f;
+        data.heavy.reaction = HitReaction::Blow;
+        data.heavy.damage = 10;
+        data.heavy.knockback = 600.0f;
+        data.heavy.canGuard = false;
+        data.heavy.arcColor = GetColorU8(255, 40, 30, 255);
+
         data.attackRange = 150.0f;
         data.surroundRadius = 320.0f;
         data.cooldownMin = 1.2f;
@@ -84,6 +95,16 @@ namespace {
         data.slash.hasArc = true;
         data.slash.arcTilt = 20.0f;
         data.slash.arcColor = GetColorU8(255, 70, 50, 255);
+
+        // ときどき出す大振り 斬りを遅く振り、当たれば吹き飛ばす
+        data.hasHeavy = true;
+        data.heavy = data.slash;
+        data.heavy.animationSpeed = 0.7f;
+        data.heavy.reaction = HitReaction::Blow;
+        data.heavy.damage = 10;
+        data.heavy.knockback = 600.0f;
+        data.heavy.canGuard = false;
+        data.heavy.arcColor = GetColorU8(255, 40, 30, 255);
 
         data.attackRange = 170.0f;
         data.surroundRadius = 340.0f;
