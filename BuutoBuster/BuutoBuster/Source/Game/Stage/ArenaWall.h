@@ -7,7 +7,8 @@ class Character;
 
 // 戦える範囲の端にある壁
 // プレイヤーも敵も、この円の外へは出られない
-// 吹き飛んだ勢いのままぶつかると跳ね返る (壁バウンド) 飛ばした側へ戻ってくるので、追い打ちにつながる
+// 吹き飛んだ勢いのままぶつかると、一瞬壁に張り付いてから跳ね返る (壁バウンド)
+// 張り付いている間は止まっていて、飛ばした側へ戻ってくるので、どちらでも追い打ちにつながる
 // 速くぶつかった敵は、戻ってくる間も連鎖の砲弾のまま 戻る速さが砲弾の速さを下回れば、ただ跳ね返るだけ
 //
 // 吹っ飛ばされ値が許容値に届いていれば、跳ね返らずに壁を割って場外へ飛ぶ (壁割り) 敵なら撃破、プレイヤーなら負け
@@ -25,8 +26,12 @@ namespace ArenaWall {
     // 跳ね返るときに上へ跳ねる速さ 壁の足元に落ちず、宙を戻ってくるのが見えるように
     constexpr float BOUNCE_JUMP_SPEED = 400.0f;
 
-    // この速さでぶつかったときに、揺れ 火花 光をいちばん強くする
+    // この速さでぶつかったときに、揺れ 火花 光をいちばん強くし、張り付く時間をいちばん長くする
     constexpr float FULL_IMPACT_SPEED = 1200.0f;
+
+    // 跳ね返る前に壁に張り付いている秒数 速くぶつかるほど長く、FULL_IMPACT_SPEED で STICK_TIME_MAX
+    constexpr float STICK_TIME_MIN = 0.15f;
+    constexpr float STICK_TIME_MAX = 0.4f;
 
     // 割ったときに場外へ飛んでいく速さ = 壁へ向かっていた速さ × これ 遅くても下の速さでは飛ばす
     constexpr float BREAK_FLY_RATE = 1.2f;
@@ -42,6 +47,9 @@ namespace ArenaWall {
 
         // 壁へ向かっていた水平の速さ
         float speed = 0.0f;
+
+        // 壁に沿う水平の速さ 跳ね返ったあとも残す
+        VECTOR along = VGet(0.0f, 0.0f, 0.0f);
     };
 
     // 吹き飛んでぶつかった結果
@@ -59,8 +67,15 @@ namespace ArenaWall {
     // 勢いが足りれば、吹っ飛ばされ値が許容値に届いているときは壁を割り、届いていなければ跳ね返す
     // 倒されない体 (Character::CanBeDefeated が false、デバッグの無敵中) は、届いていても跳ね返す
     // 割ったときは、体を Defeat で場外へ飛ばしてから知らせを出す 演出はその知らせを受けた Observer が出す
-    // 跳ね返ったときの速さと手応え (火花 揺れ 音 光の幕) はここで出す 向きやアニメは呼んだ状態が決める
+    // 跳ね返すときは、ぶつかった手応え (火花 揺れ 音 光の幕) だけをここで出す
+    // 呼んだ状態は、体を GetStickTime の秒数だけ壁に止めておいてから Bounce を呼ぶ
     Reaction React(Character& character, const Hit& hit);
+
+    // 跳ね返る前に壁に張り付いている秒数
+    float GetStickTime(const Hit& hit);
+
+    // 壁に張り付いていた体を跳ね返す hit は React に渡したもの 向きやアニメは呼んだ状態が決める
+    void Bounce(Character& character, const Hit& hit);
 
     // 壁が割れたことを知らせる先 演出を出す Observer はここに登録する
     Subject<WallBreakEvent>& GetBreakEvents();

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "ICharacterState.h"
+#include "ArenaWall.h"
 #include "DxLib.h"
 #include <memory>
 
@@ -11,7 +12,7 @@ class BlowChain;
 // 吹き飛ぶアニメを持たない重い敵は、構えたまま押し飛ばされ、着地したら少しして動き出す
 //
 // 連鎖を持って飛んでいる間は砲弾になり、触れた敵を巻き込む
-// 戦える範囲の壁にぶつかったら跳ね返る 速くぶつかれば、戻ってくる間も砲弾のまま
+// 戦える範囲の壁にぶつかったら、一瞬張り付いてから跳ね返る 速くぶつかれば、戻ってくる間も砲弾のまま
 // 吹っ飛ばされ値が許容値に届いていれば、跳ね返らずに壁を割って場外へ飛ぶ (撃破)
 class EnemyBlowState : public ICharacterState<Enemy> {
 private:
@@ -26,6 +27,7 @@ private:
 
     enum class Phase {
         Fly,
+        Stick,      // 壁に張り付いている 時間が来たら跳ね返って Fly に戻る
         Down,
         GetUp,
     };
@@ -34,6 +36,10 @@ private:
     std::shared_ptr<BlowChain> _chain;
     Phase _phase = Phase::Fly;
     float _timer = 0.0f;
+
+    // 張り付いた壁の様子と、張り付いている秒数 跳ね返すときに使う
+    ArenaWall::Hit _wallHit;
+    float _stickTime = 0.0f;
 
 public:
     EnemyBlowState(VECTOR knockback, std::shared_ptr<BlowChain> chain)

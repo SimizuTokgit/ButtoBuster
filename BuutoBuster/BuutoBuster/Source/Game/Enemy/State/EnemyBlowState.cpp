@@ -44,8 +44,7 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
         // 飛んでいる間は吹っ飛ばされ値を減らさない
         enemy.HoldBlow();
 
-        // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割り、届いていなければ跳ね返る
-        // 速くぶつかれば戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
+        // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割り、届いていなければ張り付いてから跳ね返る
         ArenaWall::Hit wallHit;
         if (enemy.ConsumeWallHit(wallHit)) {
             ArenaWall::Reaction reaction = ArenaWall::React(enemy, wallHit);
@@ -53,10 +52,16 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
             // 割ったときは場外へ飛んでいく状態に移るので、ここから先はいらない
             if (reaction == ArenaWall::Reaction::Break) break;
 
-            if (reaction == ArenaWall::Reaction::Bounce && !isFlying && data.canBlow) {
-                // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
-                enemy.PlayAnimation("BlowIn", 1.0f, true);
-                enemy.FaceImmediately(VScale(enemy.GetVelocity(), -1.0f));
+            if (reaction == ArenaWall::Reaction::Bounce) {
+                // ぶつかった姿のまま壁に止める 砲弾はやめずにおき、跳ね返ったあとも連鎖を続ける
+                _wallHit = wallHit;
+                _stickTime = ArenaWall::GetStickTime(wallHit);
+                _timer = 0.0f;
+                enemy.StopHorizontal();
+                enemy.SetVerticalVelocity(0.0f);
+                enemy.SetAnimationSpeed(0.0f);
+                _phase = Phase::Stick;
+                break;
             }
         }
 
@@ -75,6 +80,30 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
             _phase = Phase::Down;
             _timer = 0.0f;
         }
+        break;
+    }
+
+    case Phase::Stick: {
+        enemy.HoldBlow();
+
+        // 張り付いている間は壁に止めておく ここで追い打ちを当てられる
+        enemy.StopHorizontal();
+        enemy.SetVerticalVelocity(0.0f);
+
+        _timer += deltaTime;
+        if (_timer < _stickTime) break;
+
+        // 速く跳ね返れば、戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
+        ArenaWall::Bounce(enemy, _wallHit);
+        if (!isFlying && data.canBlow) {
+            // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+            enemy.PlayAnimation("BlowIn", 1.0f, true);
+            enemy.FaceImmediately(VScale(enemy.GetVelocity(), -1.0f));
+        }
+        else {
+            enemy.SetAnimationSpeed(1.0f);
+        }
+        _phase = Phase::Fly;
         break;
     }
 

@@ -29,7 +29,7 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
         // 飛んでいる間は吹っ飛ばされ値を減らさない
         player.HoldBlow();
 
-        // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割られて負け、届いていなければ跳ね返る
+        // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割られて負け、届いていなければ張り付いてから跳ね返る
         ArenaWall::Hit wallHit;
         if (player.ConsumeWallHit(wallHit)) {
             ArenaWall::Reaction reaction = ArenaWall::React(player, wallHit);
@@ -38,9 +38,15 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
             if (reaction == ArenaWall::Reaction::Break) break;
 
             if (reaction == ArenaWall::Reaction::Bounce) {
-                // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
-                player.PlayAnimation("BlowIn", 1.0f, true);
-                player.FaceImmediately(VScale(player.GetVelocity(), -1.0f));
+                // ぶつかった姿のまま壁に止める
+                _wallHit = wallHit;
+                _stickTime = ArenaWall::GetStickTime(wallHit);
+                _timer = 0.0f;
+                player.StopHorizontal();
+                player.SetVerticalVelocity(0.0f);
+                player.SetAnimationSpeed(0.0f);
+                _phase = Phase::Stick;
+                break;
             }
         }
 
@@ -54,6 +60,23 @@ void PlayerBlowState::Execute(Player& player, const InputInfo& input, float delt
         }
         break;
     }
+
+    case Phase::Stick:
+        player.HoldBlow();
+
+        // 張り付いている間は壁に止めておく
+        player.StopHorizontal();
+        player.SetVerticalVelocity(0.0f);
+
+        _timer += deltaTime;
+        if (_timer < _stickTime) break;
+
+        // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+        ArenaWall::Bounce(player, _wallHit);
+        player.PlayAnimation("BlowIn", 1.0f, true);
+        player.FaceImmediately(VScale(player.GetVelocity(), -1.0f));
+        _phase = Phase::Fly;
+        break;
 
     case Phase::Down:
         _timer += deltaTime;

@@ -5,6 +5,14 @@
 #include "SoundManager.h"
 #include "Transform.h"
 
+namespace {
+    // ぶつかった強さ 0〜1 FULL_IMPACT_SPEED で 1
+    float ImpactPower(const ArenaWall::Hit& hit) {
+        float power = hit.speed / ArenaWall::FULL_IMPACT_SPEED;
+        return (power > 1.0f) ? 1.0f : power;
+    }
+}
+
 bool ArenaWall::KeepInside(Character& character, Hit& outHit) {
     VECTOR center = StageBuilder::GetArenaCenter();
     VECTOR position = character.transform->localPosition;
@@ -27,7 +35,8 @@ bool ArenaWall::KeepInside(Character& character, Hit& outHit) {
     if (speed <= 0.0f) return false;
 
     // 壁へ向かう分の速さだけ消す 壁に沿う分は残すので、斜めにぶつかると壁沿いに滑る
-    character.SetKnockback(VGet(velocity.x - outward.x * speed, 0.0f, velocity.z - outward.z * speed));
+    VECTOR along = VGet(velocity.x - outward.x * speed, 0.0f, velocity.z - outward.z * speed);
+    character.SetKnockback(along);
 
     outHit.point = VGet(
         center.x + outward.x * StageBuilder::ARENA_RADIUS,
@@ -35,6 +44,7 @@ bool ArenaWall::KeepInside(Character& character, Hit& outHit) {
         center.z + outward.z * StageBuilder::ARENA_RADIUS);
     outHit.normal = VScale(outward, -1.0f);
     outHit.speed = speed;
+    outHit.along = along;
     return true;
 }
 
@@ -62,17 +72,21 @@ ArenaWall::Reaction ArenaWall::React(Character& character, const Hit& hit) {
         return Reaction::Break;
     }
 
-    // 壁へ向かう分は KeepInside で消してあるので、内側への速さを足せば跳ね返る
-    VECTOR velocity = VAdd(character.GetVelocity(), VScale(hit.normal, hit.speed * BOUNCE_RATE));
-    character.SetKnockback(velocity);
-    if (velocity.y < BOUNCE_JUMP_SPEED) character.SetVerticalVelocity(BOUNCE_JUMP_SPEED);
-
-    float power = hit.speed / FULL_IMPACT_SPEED;
-    if (power > 1.0f) power = 1.0f;
-
+    // 跳ね返す速さは、張り付いたあとに Bounce で入れる ここではぶつかった手応えだけ出す
+    float power = ImpactPower(hit);
     if (auto* effects = EffectManager::Get()) effects->PlayWallHit(impact, hit.normal, power);
     SoundManager::Instance().PlaySE("Golem/downing", 0.5f + 0.5f * power);
     return Reaction::Bounce;
+}
+
+float ArenaWall::GetStickTime(const Hit& hit) {
+    return STICK_TIME_MIN + (STICK_TIME_MAX - STICK_TIME_MIN) * ImpactPower(hit);
+}
+
+void ArenaWall::Bounce(Character& character, const Hit& hit) {
+    // 壁に沿う速さは残し、内側への速さを足す 斜めにぶつかれば斜めに跳ね返る
+    character.SetKnockback(VAdd(hit.along, VScale(hit.normal, hit.speed * BOUNCE_RATE)));
+    character.SetVerticalVelocity(BOUNCE_JUMP_SPEED);
 }
 
 Subject<WallBreakEvent>& ArenaWall::GetBreakEvents() {
