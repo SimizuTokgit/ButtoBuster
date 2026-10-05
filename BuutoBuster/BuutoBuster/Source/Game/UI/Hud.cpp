@@ -11,6 +11,26 @@
 namespace {
     constexpr unsigned int WHITE = 0xFFFFFF;
 
+    // ----- 回避の残りのバー (左上) -----
+    // 前の体力バーと同じ場所と大きさ 続けて回避できる回数 (PlayerData の dodgeCount) に分け、1 つが 1 回分
+    constexpr int DODGE_BAR_X = 40;
+    constexpr int DODGE_BAR_Y = 34;
+    constexpr int DODGE_BAR_WIDTH = 380;
+    constexpr int DODGE_BAR_HEIGHT = 22;
+
+    // 分けたバーの間の隙間
+    constexpr int DODGE_BAR_GAP = 8;
+
+    // 使える分の色と、戻っている途中の色 溜まりきると使える色に変わる
+    constexpr unsigned int DODGE_READY_COLOR = 0x78E6FF;
+    constexpr unsigned int DODGE_CHARGING_COLOR = 0x3A7088;
+
+    // バーの後ろに敷く黒の濃さ 0〜255 3D の上でも読みやすくする
+    constexpr int DODGE_BAR_SHADE_ALPHA = 170;
+
+    // バーの下に出す名前
+    constexpr const char* DODGE_BAR_LABEL = "回避";
+
     // 頭の上の画面の位置 カメラの後ろにあるなら false
     bool GetHeadScreenPosition(const Character& character, VECTOR& outScreen) {
         VECTOR head = VAdd(character.GetCenter(), VGet(0.0f, character.bodyHeight * 0.5f + 40.0f, 0.0f));
@@ -34,6 +54,7 @@ void Hud::Render() {
     if (isStateVisible) DrawStates();
 
     DrawDanger(screenWidth, screenHeight);
+    DrawDodgeStock();
     DrawPhaseInfo(screenWidth, screenHeight);
     DrawCombo(screenWidth, screenHeight);
     DrawControls(screenWidth, screenHeight);
@@ -51,6 +72,34 @@ void Hud::DrawDanger(int screenWidth, int screenHeight) {
     DrawBox(0, 0, EDGE, screenHeight, 0xC02020, TRUE);
     DrawBox(screenWidth - EDGE, 0, screenWidth, screenHeight, 0xC02020, TRUE);
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+void Hud::DrawDodgeStock() {
+    int count = _player->data.dodgeCount;
+    if (count <= 0) return;
+
+    int segmentWidth = (DODGE_BAR_WIDTH - DODGE_BAR_GAP * (count - 1)) / count;
+    int bottom = DODGE_BAR_Y + DODGE_BAR_HEIGHT;
+
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, DODGE_BAR_SHADE_ALPHA);
+    DrawBox(DODGE_BAR_X - 4, DODGE_BAR_Y - 4, DODGE_BAR_X + DODGE_BAR_WIDTH + 4, bottom + 4, 0x000000, TRUE);
+    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+    // 左から順に溜まる 戻っている途中の 1 つは、溜まった分だけ伸びる
+    float stock = _player->GetDodgeStock();
+    for (int i = 0; i < count; ++i) {
+        int left = DODGE_BAR_X + (segmentWidth + DODGE_BAR_GAP) * i;
+
+        float fill = stock - static_cast<float>(i);
+        if (fill > 1.0f) fill = 1.0f;
+        if (fill > 0.0f) {
+            unsigned int color = (fill >= 1.0f) ? DODGE_READY_COLOR : DODGE_CHARGING_COLOR;
+            DrawBox(left, DODGE_BAR_Y, left + static_cast<int>(segmentWidth * fill), bottom, color, TRUE);
+        }
+        DrawBox(left, DODGE_BAR_Y, left + segmentWidth, bottom, WHITE, FALSE);
+    }
+
+    GameFont::Draw(DODGE_BAR_X, bottom + 6, DODGE_BAR_LABEL, WHITE, GameFont::Size::Small);
 }
 
 void Hud::DrawPhaseInfo(int screenWidth, int screenHeight) {

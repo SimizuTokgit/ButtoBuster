@@ -44,6 +44,9 @@ private:
     // 着地までに、あと何回空中で浮き直せるか
     int _airHangLeft = 0;
 
+    // 回避の残り 1 で 1 回分 端数は戻っている途中の分
+    float _dodgeStock = 0.0f;
+
     VECTOR _spawnPosition = VGet(0.0f, 0.0f, 0.0f);
 
 public:
@@ -77,6 +80,15 @@ public:
 
     // 回避を始めたときに呼ぶ ここから少しのうちに来た攻撃はジャスト回避になる
     void OpenJustDodgeWindow() { _justDodgeTimer = data.justDodgeWindow; }
+
+    // 回避の残りが 1 回分以上あるか 無ければ回避は出ない
+    bool CanDodge() const { return _dodgeStock >= 1.0f; }
+
+    // 回避を始めたときに呼ぶ 残りを 1 回分減らす
+    void UseDodge();
+
+    // 回避の残り 1 で 1 回分 端数は戻っている途中の分 画面のバーが読む
+    float GetDodgeStock() const { return _dodgeStock; }
 
     // ジャスト回避のあとの反撃を使い切る 使えたら true
     // 締めの一振りを始めるときに呼び、使えたらその技を反撃の吹き飛ばしにする 敵の時間も元に戻る
@@ -115,6 +127,7 @@ protected:
 private:
     void UpdateCombo(float deltaTime);
     void UpdateJustDodge(float deltaTime);
+    void UpdateDodgeStock(float deltaTime);
 
     // attacker はかわした攻撃を振った相手 その目の前まで寄る 分からなければ寄らない
     void SucceedJustDodge(const Character* attacker);
