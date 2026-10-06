@@ -38,11 +38,6 @@ private:
     bool _isResetting = false;
     float _resetYaw = 0.0f;
 
-    // ロックオンの相手 外した後も少しの間だけ使い、注視点をなめらかに戻す
-    bool _hasLockPoint = false;
-    VECTOR _lockPoint = VGet(0.0f, 0.0f, 0.0f);
-    float _lockBlend = 0.0f;
-
     // 障害物で縮めた今の距離
     float _currentDistance = 0.0f;
 
@@ -62,12 +57,8 @@ public:
     // 手で回す 度 右回りと見下ろす向きがプラス
     void Rotate(float yawDegrees, float pitchDegrees);
 
-    // 背中側へ回す ロックオンする相手がいないときに ZL を押したのと同じ
+    // 背中側へ回す 視点を戻すボタンで使う
     void ResetBehind(VECTOR facing);
-
-    // この点がプレイヤーの向こうに来るよう回り続ける ロックオンの相手の胴体を毎フレーム渡す
-    void SetLockPoint(VECTOR point);
-    void ClearLockPoint();
 
     // 地面に沿った前と右 移動の入力を、カメラから見た向きに直すのに使う
     VECTOR GetGroundForward() const;
@@ -88,7 +79,6 @@ private:
     void UpdateFocus(float deltaTime);
     void UpdateAngles(float deltaTime);
     VECTOR GetLookAt() const;
-    float GetDesiredDistance() const;
     float ResolveObstacle(VECTOR lookAt, VECTOR back, float desiredDistance, float deltaTime);
     VECTOR GetShakeOffset();
     void UpdateZoomPunch();

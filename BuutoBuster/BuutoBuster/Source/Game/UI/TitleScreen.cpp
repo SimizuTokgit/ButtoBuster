@@ -60,13 +60,13 @@ void TitleScreen::Render() {
 
     const char* controls[] = {
         "移動              WASD / 左スティック",
-        "攻撃              J,左クリック / RT  3 段まで繋がる",
-        "ガード            K / RB       押している間 正面を守る",
+        "攻撃              J,左クリック / X  3 段まで繋がる",
+        "ガード            K / L2       押している間 正面を守る",
         "ジャンプ          SPACE / A",
         "",
 		"攻撃 + ジャンプ   対空斬り   ",
-        "攻撃 + ガード     強斬り       出は遅いが重い",
-        "ガード + ジャンプ 回避         一瞬だけ無敵",
+        "攻撃 + ガード     溜め斬り     R2  押し続けて溜める",
+        "ガード + ジャンプ 回避         L1  一瞬だけ無敵",
     };
 
     int lineHeight = GameFont::GetHeight(GameFont::Size::Small) + 8;

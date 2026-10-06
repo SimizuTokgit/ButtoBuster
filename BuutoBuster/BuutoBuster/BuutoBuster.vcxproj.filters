@@ -192,9 +192,6 @@
     <ClCompile Include="Source\Game\Input\PlayerController.cpp">
       <Filter>Source\Game\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\Input\TargetLock.cpp">
-      <Filter>Source\Game\Input</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Game\Phase\PhaseDirector.cpp">
       <Filter>Source\Game\Phase</Filter>
     </ClCompile>
@@ -301,9 +298,6 @@
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\JustDodgeBanner.cpp">
-      <Filter>Source\Game\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Game\UI\LockOnMarker.cpp">
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\PhaseBanner.cpp">
@@ -548,9 +542,6 @@
     <ClInclude Include="Source\Game\Input\PlayerController.h">
       <Filter>Source\Game\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\Input\TargetLock.h">
-      <Filter>Source\Game\Input</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Game\Phase\PhaseData.h">
       <Filter>Source\Game\Phase</Filter>
     </ClInclude>
@@ -681,9 +672,6 @@
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\JustDodgeBanner.h">
-      <Filter>Source\Game\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Game\UI\LockOnMarker.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\PhaseBanner.h">

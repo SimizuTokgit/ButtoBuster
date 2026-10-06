@@ -28,11 +28,10 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
     HoldPose(player);
 
     // その場で踏ん張って動かない 走りながら溜め始めても滑らないよう毎フレーム止める
-    // 向きだけは変えて狙える ロックオン中は相手を向き続ける
+    // 向きだけは変えて狙える
     player.StopHorizontal();
     const PlayerData& data = player.data;
-    bool isLockedOn = VSquareSize(input.look) > 0.0001f;
-    player.FaceTowards(isLockedOn ? input.look : input.move, data.turnSpeed * data.holdTurnRate, deltaTime);
+    player.FaceTowards(input.move, data.turnSpeed * data.holdTurnRate, deltaTime);
 
     if (!input.isHeavyHeld) {
         Release(player);

@@ -119,7 +119,6 @@
     <ClCompile Include="Source\Game\Enemy\State\EnemyMoveState.cpp" />
     <ClCompile Include="Source\Game\Enemy\State\EnemyShootState.cpp" />
     <ClCompile Include="Source\Game\Input\PlayerController.cpp" />
-    <ClCompile Include="Source\Game\Input\TargetLock.cpp" />
     <ClCompile Include="Source\Game\Phase\PhaseDirector.cpp" />
     <ClCompile Include="Source\Game\Phase\SaveData.cpp" />
     <ClCompile Include="Source\Game\Player\ChainEffectObserver.cpp" />
@@ -156,7 +155,6 @@
     <ClCompile Include="Source\Game\UI\GameFont.cpp" />
     <ClCompile Include="Source\Game\UI\Hud.cpp" />
     <ClCompile Include="Source\Game\UI\JustDodgeBanner.cpp" />
-    <ClCompile Include="Source\Game\UI\LockOnMarker.cpp" />
     <ClCompile Include="Source\Game\UI\PhaseBanner.cpp" />
     <ClCompile Include="Source\Game\UI\ResultScreen.cpp" />
     <ClCompile Include="Source\Game\UI\TitleScreen.cpp" />
@@ -239,7 +237,6 @@
     <ClInclude Include="Source\Game\Enemy\State\EnemyShootState.h" />
     <ClInclude Include="Source\Game\Input\InputInfo.h" />
     <ClInclude Include="Source\Game\Input\PlayerController.h" />
-    <ClInclude Include="Source\Game\Input\TargetLock.h" />
     <ClInclude Include="Source\Game\Phase\PhaseData.h" />
     <ClInclude Include="Source\Game\Phase\PhaseDirector.h" />
     <ClInclude Include="Source\Game\Phase\SaveData.h" />
@@ -284,7 +281,6 @@
     <ClInclude Include="Source\Game\UI\GameFont.h" />
     <ClInclude Include="Source\Game\UI\Hud.h" />
     <ClInclude Include="Source\Game\UI\JustDodgeBanner.h" />
-    <ClInclude Include="Source\Game\UI\LockOnMarker.h" />
     <ClInclude Include="Source\Game\UI\PhaseBanner.h" />
     <ClInclude Include="Source\Game\UI\ResultScreen.h" />
     <ClInclude Include="Source\Game\UI\TitleScreen.h" />

@@ -112,11 +112,11 @@ public:
         return _pad.Buttons[button] != 0 && _prevPad.Buttons[button] == 0;
     }
 
-    // 左のトリガー 無双のロックオン (ZL) に当てる
+    // 左のトリガー ガードに当てる
     bool PadLeftTriggerHeld() const { return _leftTrigger; }
     bool PadLeftTriggerPressed() const { return _leftTrigger && !_prevLeftTrigger; }
 
-    // 右のトリガー 通常攻撃に当てる
+    // 右のトリガー 溜め斬りに当てる
     bool PadRightTriggerHeld() const { return _rightTrigger; }
     bool PadRightTriggerPressed() const { return _rightTrigger && !_prevRightTrigger; }
 

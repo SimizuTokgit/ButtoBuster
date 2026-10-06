@@ -18,7 +18,6 @@
 #include "PhaseDirector.h"
 #include "Hud.h"
 #include "PhaseBanner.h"
-#include "LockOnMarker.h"
 #include "ResultScreen.h"
 #include "ChainCounter.h"
 #include "JustDodgeBanner.h"
@@ -74,7 +73,7 @@ bool GameScene::OnLoad() {
     if (!player) return false;
     auto* controller = player->GetComponent<PlayerController>();
 
-    // 移動はカメラから見た向き 視点を回す操作とロックオンもコントローラーから渡す
+    // 移動はカメラから見た向き 視点を回す操作もコントローラーから渡す
     cameraFollow->target = player->transform;
     if (controller) controller->SetCamera(cameraFollow);
 
@@ -94,10 +93,7 @@ bool GameScene::OnLoad() {
     auto* banner = uiObject->AddChild("PhaseBanner")->AddComponent<PhaseBanner>();
     banner->Setup(director);
 
-    auto* marker = uiObject->AddChild("LockOnMarker")->AddComponent<LockOnMarker>();
-    marker->Setup(controller);
-
-    auto* result = uiObject->AddChild("ResultScreen")->AddComponent<ResultScreen>();
+    auto* result =uiObject->AddChild("ResultScreen")->AddComponent<ResultScreen>();
     result->Setup(player, director);
 
     // 連鎖の数は、プレイヤーの連鎖の知らせを受けて出す

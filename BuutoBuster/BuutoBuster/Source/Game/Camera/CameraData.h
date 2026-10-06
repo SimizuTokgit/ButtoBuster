@@ -14,7 +14,6 @@ struct CameraData {
     float distance = 430.0f;
 
     // 見る点を右へずらす量 プレイヤーが画面の少し左に来て、右肩越しに前が見える
-    // ロックオン中は相手を真ん中に置きたいので、ずらすのをやめる
     float shoulderOffset = 55.0f;
 
     // 画角 重い一撃で寄るときは、ここから一瞬狭める
@@ -52,26 +51,8 @@ struct CameraData {
     // カメラへ向かって走ってくるときに、画面がぐるりと半周するのを防ぐ
     float followMaxAngle = 150.0f;
 
-    // ロックオンする相手がいないときに、背中側へ戻す速さ
+    // 視点を戻すボタンで、背中側へ戻す速さ
     float resetSharpness = 12.0f;
-
-    // ----- ロックオン -----
-
-    // 相手へ向き直る速さ
-    float lockTurnSharpness = 6.0f;
-
-    // 見る点を相手の方へどれだけ寄せるか 0 でプレイヤー 1 で相手
-    float lockLookWeight = 0.3f;
-
-    // 相手が遠いほど引いて、プレイヤーと相手の両方を画面に入れる 離れた距離に掛ける割合と、引く最大
-    float lockExtraDistanceRate = 0.15f;
-    float lockExtraDistanceMax = 250.0f;
-
-    // 相手がこれより近いと向きが定まらず回り続けるので、向き直らない
-    float lockMinHorizontal = 120.0f;
-
-    // ロックオンを付けたり外したりしたとき、見る点が飛ばないよう混ぜる速さ
-    float lockBlendSharpness = 6.0f;
 
     // ----- 壁際 -----
 

@@ -47,15 +47,14 @@ void CameraFollow::Update(float deltaTime) {
     UpdateAngles(unscaled);
 
     // 肩越しに見るよう、見る点もカメラも右へずらす
-    float shoulder = data.shoulderOffset * (1.0f - _lockBlend);
-    VECTOR lookAt = VAdd(GetLookAt(), VScale(GetGroundRight(), shoulder));
+    VECTOR lookAt = VAdd(GetLookAt(), VScale(GetGroundRight(), data.shoulderOffset));
 
     // 見ている点からカメラへ向かう向き
     float yaw = ToRadian(_yaw);
     float pitch = ToRadian(_pitch);
     VECTOR back = VGet(-sinf(yaw) * cosf(pitch), sinf(pitch), -cosf(yaw) * cosf(pitch));
 
-    float cameraDistance = ResolveObstacle(lookAt, back, GetDesiredDistance(), unscaled);
+    float cameraDistance = ResolveObstacle(lookAt, back, data.distance, unscaled);
 
     VECTOR shake = GetShakeOffset();
     transform->localPosition = VAdd(VAdd(lookAt, VScale(back, cameraDistance)), shake);
@@ -78,16 +77,6 @@ void CameraFollow::ResetBehind(VECTOR facing) {
 
     _resetYaw = YawFromDirection(facing);
     _isResetting = true;
-}
-
-void CameraFollow::SetLockPoint(VECTOR point) {
-    _lockPoint = point;
-    _hasLockPoint = true;
-    _isResetting = false;
-}
-
-void CameraFollow::ClearLockPoint() {
-    _hasLockPoint = false;
 }
 
 VECTOR CameraFollow::GetGroundForward() const {
@@ -173,18 +162,7 @@ void CameraFollow::UpdateAngles(float deltaTime) {
         _idleTime += deltaTime;
     }
 
-    _lockBlend += ((_hasLockPoint ? 1.0f : 0.0f) - _lockBlend) * BlendRate(data.lockBlendSharpness, deltaTime);
-
-    if (_hasLockPoint) {
-        // プレイヤーから相手への向きの後ろに回る 相手がいつも画面の奥に来る
-        VECTOR toLock = VSub(_lockPoint, _focus);
-        toLock.y = 0.0f;
-        if (VSize(toLock) > data.lockMinHorizontal) {
-            float difference = WrapDegree(YawFromDirection(toLock) - _yaw);
-            _yaw += difference * BlendRate(data.lockTurnSharpness, deltaTime);
-        }
-    }
-    else if (_isResetting) {
+    if (_isResetting) {
         float rate = BlendRate(data.resetSharpness, deltaTime);
         float difference = WrapDegree(_resetYaw - _yaw);
         _yaw += difference * rate;
@@ -215,22 +193,7 @@ void CameraFollow::UpdateAngles(float deltaTime) {
 }
 
 VECTOR CameraFollow::GetLookAt() const {
-    VECTOR lookAt = VAdd(_focus, VGet(0.0f, data.lookHeight, 0.0f));
-    if (_lockBlend <= 0.001f) return lookAt;
-
-    // 相手の方へ少し寄せて、プレイヤーと相手の両方を画面に入れる
-    VECTOR toLock = VSub(_lockPoint, lookAt);
-    return VAdd(lookAt, VScale(toLock, data.lockLookWeight * _lockBlend));
-}
-
-float CameraFollow::GetDesiredDistance() const {
-    if (_lockBlend <= 0.001f) return data.distance;
-
-    VECTOR toLock = VSub(_lockPoint, _focus);
-    toLock.y = 0.0f;
-    float extra = VSize(toLock) * data.lockExtraDistanceRate;
-    if (extra > data.lockExtraDistanceMax) extra = data.lockExtraDistanceMax;
-    return data.distance + extra * _lockBlend;
+    return VAdd(_focus, VGet(0.0f, data.lookHeight, 0.0f));
 }
 
 float CameraFollow::ResolveObstacle(VECTOR lookAt, VECTOR back, float desiredDistance, float deltaTime) {

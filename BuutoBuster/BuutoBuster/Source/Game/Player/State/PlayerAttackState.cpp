@@ -62,11 +62,10 @@ void PlayerAttackState::Enter(Player& player) {
 
 void PlayerAttackState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     // 向きは振り始めの1回だけ決める 振っている途中で回ると当たりがぶれる
-    // ロックオン中は狙った相手へ振る そうでなければ、倒した向きの近くの敵へ少しだけ吸い付ける
+    // 倒した向きの近くの敵へ少しだけ吸い付ける
     if (_isFirstFrame) {
         _isFirstFrame = false;
-        bool isLockedOn = VSquareSize(input.look) > 0.0001f;
-        player.FaceImmediately(isLockedOn ? input.look : player.FindAimDirection(input.move, player.data.aimRadius));
+        player.FaceImmediately(player.FindAimDirection(input.move, player.data.aimRadius));
     }
 
     float time = player.GetAnimationTime();

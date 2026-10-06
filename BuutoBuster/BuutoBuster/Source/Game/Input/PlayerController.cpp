@@ -32,23 +32,20 @@ void PlayerController::Update(float deltaTime) {
     if (isInputLocked) {
         _isWaiting = false;
         _collectedButtons = 0;
-        _targetLock.Release();
-        if (_camera) _camera->ClearLockPoint();
     }
     else {
-        UpdateLockOn();
+        UpdateViewReset();
         UpdateView();
 
         input.move = ReadMove();
-        input.look = GetLockOnDirection();
         input.technique = UpdateCombination(pressed, held);
 
         // 同時押しを待っている間はガードを出さない
         // ガード + ジャンプの回避を押そうとして、一瞬だけ構えるのを防ぐ
         input.isGuardHeld = (held & GUARD_BIT) != 0 && !_isWaiting;
 
-        // 強攻撃は、攻撃を押し続けている間溜める
-        input.isHeavyHeld = (held & ATTACK_BIT) != 0;
+        // 強攻撃は、攻撃か溜めのボタン (R2) を押し続けている間溜める
+        input.isHeavyHeld = (held & (ATTACK_BIT | HEAVY_BIT)) != 0;
     }
 
     _player->Execute(input, deltaTime);
@@ -67,12 +64,14 @@ Technique PlayerController::UpdateCombination(int pressed, int held) {
     _waitedFrames++;
 
     // ガードは押しっぱなしで使うので、先に押して握ったままでも組み合わせに入れる
-    // RB や右クリックを握ったまま攻撃で強斬り、ジャンプで回避
+    // L2 や右クリックを握ったまま攻撃で強斬り、ジャンプで回避
     int combined = _collectedButtons | (held & GUARD_BIT);
 
-    // 2つ揃ったらそれ以上は待たない 先にガードを握っていれば、押した瞬間に揃う
+    // 回避と溜めの専用のボタンは組み合わせを待たない
+    // 2つ揃ったときもそれ以上は待たない 先にガードを握っていれば、押した瞬間に揃う
+    bool isDedicated = (combined & (DODGE_BIT | HEAVY_BIT)) != 0;
     bool isPair = CountBits(combined) >= 2;
-    if (!isPair && _waitedFrames < COMBINE_WAIT_FRAMES) return Technique::None;
+    if (!isDedicated && !isPair && _waitedFrames < COMBINE_WAIT_FRAMES) return Technique::None;
 
     _isWaiting = false;
     return Resolve(combined);
@@ -82,15 +81,22 @@ int PlayerController::ReadHeldButtons() const {
     const auto& input = InputSystem::Instance();
     int buttons = 0;
 
-    // パッドは RT で攻撃、RB でガード、A でジャンプ 強攻撃はキーボードと同じく攻撃 + ガード
-    if (input.KeyHeld(KEY_INPUT_J) || input.MouseHeld(MOUSE_INPUT_LEFT) || input.PadRightTriggerHeld()) {
+    // パッドは X で攻撃、L2 でガード、A でジャンプ、L1 で回避、R2 で溜め
+    // キーボードとマウスは攻撃 ガード ジャンプの 3 つで、回避と溜めは組み合わせで出す
+    if (input.KeyHeld(KEY_INPUT_J) || input.MouseHeld(MOUSE_INPUT_LEFT) || input.PadHeld(XINPUT_BUTTON_X)) {
         buttons |= ATTACK_BIT;
     }
-    if (input.KeyHeld(KEY_INPUT_K) || input.MouseHeld(MOUSE_INPUT_RIGHT) || input.PadHeld(XINPUT_BUTTON_RIGHT_SHOULDER)) {
+    if (input.KeyHeld(KEY_INPUT_K) || input.MouseHeld(MOUSE_INPUT_RIGHT) || input.PadLeftTriggerHeld()) {
         buttons |= GUARD_BIT;
     }
     if (input.KeyHeld(KEY_INPUT_SPACE) || input.PadHeld(XINPUT_BUTTON_A)) {
         buttons |= JUMP_BIT;
+    }
+    if (input.PadHeld(XINPUT_BUTTON_LEFT_SHOULDER)) {
+        buttons |= DODGE_BIT;
+    }
+    if (input.PadRightTriggerHeld()) {
+        buttons |= HEAVY_BIT;
     }
     return buttons;
 }
@@ -120,7 +126,7 @@ VECTOR PlayerController::ReadMove() {
     while (change < -180.0f) change += 360.0f;
 
     bool isNewDirection = !_hasMoveBasis || fabsf(change) > MOVE_REBASE_DEGREE;
-    if (!hasInput || isNewDirection || _hasViewInput || _targetLock.HasTarget()) {
+    if (!hasInput || isNewDirection || _hasViewInput) {
         _moveForward = _camera->GetGroundForward();
         _moveRight = _camera->GetGroundRight();
         _moveBasisDegree = degree;
@@ -130,29 +136,14 @@ VECTOR PlayerController::ReadMove() {
     return VAdd(VScale(_moveRight, stick.x), VScale(_moveForward, stick.z));
 }
 
-void PlayerController::UpdateLockOn() {
+void PlayerController::UpdateViewReset() {
     const auto& input = InputSystem::Instance();
 
-    // 倒した相手や、遠くへ離れた相手からは外す
-    _targetLock.Validate(*_player);
-
-    bool isLockPressed = input.KeyPressed(KEY_INPUT_L)
-        || input.MousePressed(MOUSE_INPUT_MIDDLE)
-        || input.PadLeftTriggerPressed();
-
-    if (isLockPressed) {
-        if (_targetLock.HasTarget()) {
-            _targetLock.Release();
-        }
-        else if (!_targetLock.Acquire(*_player, GetViewForward())) {
-            // 狙える敵がいなければ、視点を背中側へ戻す 無双の ZL と同じ
-            if (_camera) _camera->ResetBehind(_player->GetForward());
-        }
-    }
-
-    // 右スティックの押し込みは、ロックオンしていなければいつでも背中側へ戻す
-    bool isResetPressed = input.PadPressed(XINPUT_BUTTON_RIGHT_THUMB);
-    if (isResetPressed && !_targetLock.HasTarget() && _camera) {
+    // 視点を背中側へ戻す 右スティックの押し込み、L キー、ホイールの押し込み
+    bool isResetPressed = input.PadPressed(XINPUT_BUTTON_RIGHT_THUMB)
+        || input.KeyPressed(KEY_INPUT_L)
+        || input.MousePressed(MOUSE_INPUT_MIDDLE);
+    if (isResetPressed && _camera) {
         _camera->ResetBehind(_player->GetForward());
     }
 }
@@ -165,36 +156,7 @@ void PlayerController::UpdateView() {
     VECTOR stick = input.RightStick();
     _hasViewInput = false;
 
-    if (_targetLock.HasTarget()) {
-        // ロックオン中は視点が相手を追うので、回す操作は隣の敵へ移す合図にする
-        int direction = 0;
-
-        // 倒した瞬間だけ移す 倒したままにしても次々に移らないように
-        bool isFlicked = fabsf(stick.x) > FLICK_THRESHOLD;
-        if (isFlicked && !_wasStickFlicked) direction = (stick.x > 0.0f) ? 1 : -1;
-        _wasStickFlicked = isFlicked;
-
-        if (input.KeyPressed(KEY_INPUT_E)) direction = 1;
-        if (input.KeyPressed(KEY_INPUT_Q)) direction = -1;
-
-        _mouseSwitchAmount = _mouseSwitchAmount * expf(-MOUSE_SWITCH_DECAY * deltaTime) + input.MouseDeltaX();
-        if (fabsf(_mouseSwitchAmount) > MOUSE_SWITCH_DISTANCE) {
-            direction = (_mouseSwitchAmount > 0.0f) ? 1 : -1;
-            _mouseSwitchAmount = 0.0f;
-        }
-
-        if (direction != 0) _targetLock.Switch(*_player, direction);
-
-        if (_camera) _camera->SetLockPoint(_targetLock.GetTarget()->GetCenter());
-        return;
-    }
-
-    // ロックオンした瞬間に倒していたスティックで、すぐ隣へ移らないように覚えておく
-    _wasStickFlicked = fabsf(stick.x) > FLICK_THRESHOLD;
-    _mouseSwitchAmount = 0.0f;
-
     if (!_camera) return;
-    _camera->ClearLockPoint();
 
     float keyTurn = 0.0f;
     if (input.KeyHeld(KEY_INPUT_E)) keyTurn += 1.0f;
@@ -211,29 +173,17 @@ void PlayerController::UpdateView() {
     _camera->Rotate(yaw, pitch);
 }
 
-VECTOR PlayerController::GetViewForward() const {
-    if (_camera) return _camera->GetGroundForward();
-    return _player->GetForward();
-}
-
-VECTOR PlayerController::GetLockOnDirection() const {
-    const Character* target = _targetLock.GetTarget();
-    if (!target) return VGet(0.0f, 0.0f, 0.0f);
-
-    VECTOR toTarget = VSub(target->GetPosition(), _player->GetPosition());
-    toTarget.y = 0.0f;
-    return toTarget;
-}
-
 Technique PlayerController::Resolve(int buttons) {
     bool isAttack = (buttons & ATTACK_BIT) != 0;
     bool isGuard = (buttons & GUARD_BIT) != 0;
     bool isJump = (buttons & JUMP_BIT) != 0;
+    bool isDodge = (buttons & DODGE_BIT) != 0;
+    bool isHeavy = (buttons & HEAVY_BIT) != 0;
 
-    // 3つ同時は守りを優先する 危ない場面で慌てて全部押しがちなので
-    if (isGuard && isJump) return Technique::Dodge;
+    // いくつも同時に押されたら守りを優先する 危ない場面で慌てて全部押しがちなので
+    if (isDodge || (isGuard && isJump)) return Technique::Dodge;
     if (isAttack && isJump) return Technique::AntiAir;
-    if (isAttack && isGuard) return Technique::StrongSlash;
+    if (isHeavy || (isAttack && isGuard)) return Technique::StrongSlash;
     if (isAttack) return Technique::Slash;
     if (isJump) return Technique::Jump;
 

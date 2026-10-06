@@ -18,10 +18,8 @@ void PlayerGuardState::Execute(Player& player, const InputInfo& input, float del
     player.DampHorizontal(10.0f, deltaTime);
 
     // 構えたまま向きだけは変えられる 回り込んでくる敵に向き直るため
-    // ロックオン中は相手へ盾を向け続ける
-    bool isLockedOn = VSquareSize(input.look) > 0.0001f;
     float turnSpeed = player.data.turnSpeed * player.data.holdTurnRate;
-    player.FaceTowards(isLockedOn ? input.look : input.move, turnSpeed, deltaTime);
+    player.FaceTowards(input.move, turnSpeed, deltaTime);
 
     if (player.ConsumeGuardImpact() && _phase != Phase::Out) {
         player.PlayAnimation("GuardImpact", 1.0f, true);

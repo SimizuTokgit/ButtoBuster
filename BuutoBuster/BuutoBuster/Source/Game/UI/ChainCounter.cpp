@@ -5,7 +5,7 @@
 #include <cstdio>
 
 namespace {
-    // ロックオンした敵の名前の下 画面の上の真ん中に出す
+    // 画面の上の真ん中に出す
     constexpr int TOP = 84;
 
     // フェーズの表示より奥、結果の画面より奥に描く
