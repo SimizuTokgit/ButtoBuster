@@ -63,6 +63,9 @@ struct EnemyData {
     float surroundRadius = 320.0f;      // 攻撃の番を待つ間に取る間合い
     float cooldownMin = 1.2f;           // 攻撃してから次の番を欲しがるまで
     float cooldownMax = 2.5f;
+    int intelligence = 0;               // 賢さ 1〜3 行動の木で動く 0 の敵は今までの動き (Bee と Golem)
+    float reactionTime = 0.4f;          // 相手の様子 (ガード 溜め 隙) が変わってから気づくまで 秒
+   
 
     // ----- フェーズ -----
     float cost = 1.0f;                  // フェーズの強さの予算をどれだけ使うか
@@ -75,6 +78,8 @@ struct EnemyData {
     const char* soundDamage = "";       // 痛がる声
     const char* soundBlow = "";
     const char* soundDead = "";
+
+
 };
 
 namespace EnemyDatabase {

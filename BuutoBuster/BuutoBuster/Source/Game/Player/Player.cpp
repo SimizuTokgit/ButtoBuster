@@ -289,3 +289,7 @@ void Player::ReturnIfFallen() {
     transform->localPosition = _spawnPosition;
     SetVerticalVelocity(0.0f);
 }
+
+bool Player::IsCharging() const {
+    return _states.IsIn<PlayerChargeState>();
+}
