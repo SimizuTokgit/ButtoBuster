@@ -17,8 +17,8 @@ namespace {
         // 吹っ飛ばされ値の許容値 体力があったころの体力と同じ量にしてある
         data.flinchLimit = 36.0f;
         data.blow.limit = 40.0f;
-        data.walkSpeed = 150.0f;
-        data.runSpeed = 380.0f;
+        data.walkSpeed = 200.0f;
+        data.runSpeed = 420.0f;
 
         data.slash.animationName = "Attack1";
         data.slash.hitStart = 24.5f;
@@ -80,9 +80,9 @@ namespace {
 
         data.flinchLimit = 72.0f;
         data.blow.limit = 100.0f;
-        data.walkSpeed = 180.0f;
-        data.runSpeed = 470.0f;
-        data.turnSpeed = 420.0f;
+        data.walkSpeed = 300.0f;
+        data.runSpeed = 550.0f;
+        data.turnSpeed = 500.0f;
         data.weight = 1.3f;
 
         data.slash.animationName = "Attack1";
