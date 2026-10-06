@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "MonoBehaviour.h"
 #include "InputInfo.h"
-#include  "BehaviourTree.h"
+#include  "BehaviorTree.h"
 
 class Enemy;
 class Character;
