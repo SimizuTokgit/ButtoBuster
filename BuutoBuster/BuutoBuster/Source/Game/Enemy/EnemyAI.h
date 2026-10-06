@@ -92,6 +92,9 @@ private:
     float _flankOffset = 0.0f;           // 回り込む先を個体ごとにずらす角度
 
 public:
+    // 練習台 攻撃も番の取り合いもせず、その場で相手のほうを向いて立っている チュートリアルが使う
+    bool isPassive = false;
+
     ~EnemyAI() override;
 
     void Start() override;
@@ -110,6 +113,9 @@ private:
     void ReleaseToken();
 
     static float RandomRange(float min, float max);
+
+    // 練習台のとき 相手を見て立っているだけ
+    InputInfo Stand();
 
     // ----- 行動の木 -----
     void BuildTree();

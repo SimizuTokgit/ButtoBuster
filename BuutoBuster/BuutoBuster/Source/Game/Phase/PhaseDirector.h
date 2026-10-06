@@ -31,6 +31,7 @@ public:
         Rest,       // 全回復して次の波まで休ませる
         GameOver,
         Victory,    // 最後のフェーズを越えた とどめの演出のあと VICTORY と結果を出す
+        Practice,   // チュートリアル フェーズを進めず、頼まれた敵だけを出して、場外へ消えたものを片付ける
     };
 
     // 進み方の数値 進め方の処理とフェーズの表示はここから読む
@@ -93,6 +94,17 @@ public:
 
     // 勝ったことを知らせる先 VICTORY を出す瞬間に知らせる 演出はここに Observer として登録する
     Subject<VictoryEvent>& GetVictoryEvents() { return _victoryEvents; }
+
+    // ----- チュートリアル -----
+
+    // フェーズを始めずに練習の段 (Practice) にする 敵は SpawnAt で頼まれたものだけを出す 攻撃の番は 1 体ずつ
+    void InitializePractice(Player* player, PlayerController* controller);
+
+    // 決めた場所に敵を出す 数値を書き換えた敵も出せる 敵は enemyData を指したまま持つので、消えるまで残しておくこと
+    Enemy* SpawnAt(const EnemyData& enemyData, VECTOR position);
+
+    // 今いる敵をすぐに全部消す 練習の相手を入れ替えるときに使う
+    void RemoveAllEnemies();
 
     // ----- 制作用 -----
 

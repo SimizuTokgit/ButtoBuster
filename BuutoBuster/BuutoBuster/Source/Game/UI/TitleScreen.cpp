@@ -1,6 +1,6 @@
 ﻿#include "TitleScreen.h"
 #include "GameFont.h"
-#include "GameScene.h"
+#include "TutorialScene.h"
 #include "SaveData.h"
 #include "InputSystem.h"
 #include "SceneManager.h"
@@ -30,7 +30,8 @@ void TitleScreen::Update(float deltaTime) {
 
     _isRequested = true;
     SoundManager::Instance().PlaySE("Common/system_enter");
-    SceneManager::Instance().RequestLoadScene<GameScene>();
+    // 本番の前に、毎回チュートリアルを挟む (長押しで飛ばせる)
+    SceneManager::Instance().RequestLoadScene<TutorialScene>();
 }
 
 void TitleScreen::Render() {

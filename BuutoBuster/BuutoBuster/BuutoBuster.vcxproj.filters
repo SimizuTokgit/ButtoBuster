@@ -82,6 +82,9 @@
     <Filter Include="Source\Game\State">
       <UniqueIdentifier>{00000018-1111-2222-3333-000000000018}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Game\Tutorial">
+      <UniqueIdentifier>{0000001d-1111-2222-3333-00000000001d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Game\UI">
       <UniqueIdentifier>{00000019-1111-2222-3333-000000000019}</UniqueIdentifier>
     </Filter>
@@ -279,6 +282,9 @@
     <ClCompile Include="Source\Game\Scene\GameScene.cpp">
       <Filter>Source\Game\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Scene\TutorialScene.cpp">
+      <Filter>Source\Game\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp">
       <Filter>Source\Game\Stage</Filter>
     </ClCompile>
@@ -293,6 +299,12 @@
     </ClCompile>
     <ClCompile Include="Source\Game\Stage\WallBreakSoundObserver.cpp">
       <Filter>Source\Game\Stage</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Tutorial\TutorialDirector.cpp">
+      <Filter>Source\Game\Tutorial</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Tutorial\TutorialSteps.cpp">
+      <Filter>Source\Game\Tutorial</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\ChainCounter.cpp">
       <Filter>Source\Game\UI</Filter>
@@ -313,6 +325,9 @@
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\UI\TitleScreen.cpp">
+      <Filter>Source\Game\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\UI\TutorialScreen.cpp">
       <Filter>Source\Game\UI</Filter>
     </ClCompile>
     <ClCompile Include="Source\WinMain.cpp">
@@ -653,6 +668,9 @@
     <ClInclude Include="Source\Game\Scene\TitleScene.h">
       <Filter>Source\Game\Scene</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Scene\TutorialScene.h">
+      <Filter>Source\Game\Scene</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Stage\ArenaBoundary.h">
       <Filter>Source\Game\Stage</Filter>
     </ClInclude>
@@ -677,6 +695,12 @@
     <ClInclude Include="Source\Game\State\StateManager.h">
       <Filter>Source\Game\State</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Tutorial\TutorialDirector.h">
+      <Filter>Source\Game\Tutorial</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Tutorial\TutorialSteps.h">
+      <Filter>Source\Game\Tutorial</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\UI\ChainCounter.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
@@ -696,6 +720,9 @@
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\TitleScreen.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\TutorialScreen.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
   </ItemGroup>

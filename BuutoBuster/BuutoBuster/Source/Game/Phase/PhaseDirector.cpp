@@ -32,8 +32,20 @@ void PhaseDirector::Initialize(Player* player, PlayerController* controller) {
     StartPhase(1);
 }
 
+void PhaseDirector::InitializePractice(Player* player, PlayerController* controller) {
+    _instance = this;
+    _player = player;
+    _controller = controller;
+
+    _tokens.SetCapacity(1);
+    EnterStep(Step::Practice);
+}
+
 void PhaseDirector::Update(float deltaTime) {
     RemoveFinishedEnemies();
+
+    // チュートリアルの間は片付けるだけ フェーズも勝ち負けも進めない
+    if (_step == Step::Practice) return;
 
     _stepTimer += deltaTime;
 
@@ -85,6 +97,10 @@ void PhaseDirector::Update(float deltaTime) {
         if (!_isVictoryAnnounced && _stepTimer >= data.victoryDelay) AnnounceVictory();
         if (_stepTimer >= data.victoryDelay + data.victoryResultDelay) _isResultReady = true;
         break;
+
+    case Step::Practice:
+        // 上で戻っているので、ここへは来ない
+        break;
     }
 }
 
@@ -134,6 +150,16 @@ void PhaseDirector::SkipPhases(int count) {
 void PhaseDirector::SpawnImmediately(EnemyKind kind) {
     if (IsFinished()) return;
     Spawn(kind);
+}
+
+void PhaseDirector::RemoveAllEnemies() {
+    _spawnQueue.clear();
+
+    // 実際に消えるのはフレームの最後 持っていた番は、消えるときに AI が返す
+    for (Enemy* enemy : _enemies) {
+        Scene::Instance().Destroy(enemy->gameObject);
+    }
+    _enemies.clear();
 }
 
 void PhaseDirector::StartPhase(int phase) {
@@ -257,9 +283,11 @@ void PhaseDirector::RemoveFinishedEnemies() {
 
 Enemy* PhaseDirector::Spawn(EnemyKind kind) {
     const EnemyData& enemyData = EnemyDatabase::Get(kind);
-    VECTOR position = ChooseSpawnPosition(enemyData);
+    return SpawnAt(enemyData, ChooseSpawnPosition(enemyData));
+}
 
-    Enemy* enemy = EnemyFactory::Create(kind, position, _player, _nextEnemyId++);
+Enemy* PhaseDirector::SpawnAt(const EnemyData& enemyData, VECTOR position) {
+    Enemy* enemy = EnemyFactory::Create(enemyData, position, _player, _nextEnemyId++);
     if (!enemy) return nullptr;
 
     _enemies.push_back(enemy);

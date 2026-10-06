@@ -44,11 +44,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ProjectDir)Source;$(ProjectDir)Source\Engine;$(ProjectDir)Source\Engine\AI;$(ProjectDir)Source\Engine\Animation;$(ProjectDir)Source\Engine\Audio;$(ProjectDir)Source\Engine\Core;$(ProjectDir)Source\Engine\Debug;$(ProjectDir)Source\Engine\Effect;$(ProjectDir)Source\Engine\Input;$(ProjectDir)Source\Engine\Physics;$(ProjectDir)Source\Engine\Render;$(ProjectDir)Source\Engine\UI;$(ProjectDir)Source\Game;$(ProjectDir)Source\Game\Camera;$(ProjectDir)Source\Game\Character;$(ProjectDir)Source\Game\Debug;$(ProjectDir)Source\Game\Effect;$(ProjectDir)Source\Game\Enemy;$(ProjectDir)Source\Game\Enemy\State;$(ProjectDir)Source\Game\Input;$(ProjectDir)Source\Game\Phase;$(ProjectDir)Source\Game\Player;$(ProjectDir)Source\Game\Player\State;$(ProjectDir)Source\Game\Projectile;$(ProjectDir)Source\Game\Scene;$(ProjectDir)Source\Game\Stage;$(ProjectDir)Source\Game\State;$(ProjectDir)Source\Game\UI;$(IncludePath)</IncludePath>
+    <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ProjectDir)Source;$(ProjectDir)Source\Engine;$(ProjectDir)Source\Engine\AI;$(ProjectDir)Source\Engine\Animation;$(ProjectDir)Source\Engine\Audio;$(ProjectDir)Source\Engine\Core;$(ProjectDir)Source\Engine\Debug;$(ProjectDir)Source\Engine\Effect;$(ProjectDir)Source\Engine\Input;$(ProjectDir)Source\Engine\Physics;$(ProjectDir)Source\Engine\Render;$(ProjectDir)Source\Engine\UI;$(ProjectDir)Source\Game;$(ProjectDir)Source\Game\Camera;$(ProjectDir)Source\Game\Character;$(ProjectDir)Source\Game\Debug;$(ProjectDir)Source\Game\Effect;$(ProjectDir)Source\Game\Enemy;$(ProjectDir)Source\Game\Enemy\State;$(ProjectDir)Source\Game\Input;$(ProjectDir)Source\Game\Phase;$(ProjectDir)Source\Game\Player;$(ProjectDir)Source\Game\Player\State;$(ProjectDir)Source\Game\Projectile;$(ProjectDir)Source\Game\Scene;$(ProjectDir)Source\Game\Stage;$(ProjectDir)Source\Game\State;$(ProjectDir)Source\Game\Tutorial;$(ProjectDir)Source\Game\UI;$(IncludePath)</IncludePath>
     <LibraryPath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ProjectDir)Source;$(ProjectDir)Source\Engine;$(ProjectDir)Source\Engine\AI;$(ProjectDir)Source\Engine\Animation;$(ProjectDir)Source\Engine\Audio;$(ProjectDir)Source\Engine\Core;$(ProjectDir)Source\Engine\Debug;$(ProjectDir)Source\Engine\Effect;$(ProjectDir)Source\Engine\Input;$(ProjectDir)Source\Engine\Physics;$(ProjectDir)Source\Engine\Render;$(ProjectDir)Source\Engine\UI;$(ProjectDir)Source\Game;$(ProjectDir)Source\Game\Camera;$(ProjectDir)Source\Game\Character;$(ProjectDir)Source\Game\Debug;$(ProjectDir)Source\Game\Effect;$(ProjectDir)Source\Game\Enemy;$(ProjectDir)Source\Game\Enemy\State;$(ProjectDir)Source\Game\Input;$(ProjectDir)Source\Game\Phase;$(ProjectDir)Source\Game\Player;$(ProjectDir)Source\Game\Player\State;$(ProjectDir)Source\Game\Projectile;$(ProjectDir)Source\Game\Scene;$(ProjectDir)Source\Game\Stage;$(ProjectDir)Source\Game\State;$(ProjectDir)Source\Game\UI;$(IncludePath)</IncludePath>
+    <IncludePath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(ProjectDir)Source;$(ProjectDir)Source\Engine;$(ProjectDir)Source\Engine\AI;$(ProjectDir)Source\Engine\Animation;$(ProjectDir)Source\Engine\Audio;$(ProjectDir)Source\Engine\Core;$(ProjectDir)Source\Engine\Debug;$(ProjectDir)Source\Engine\Effect;$(ProjectDir)Source\Engine\Input;$(ProjectDir)Source\Engine\Physics;$(ProjectDir)Source\Engine\Render;$(ProjectDir)Source\Engine\UI;$(ProjectDir)Source\Game;$(ProjectDir)Source\Game\Camera;$(ProjectDir)Source\Game\Character;$(ProjectDir)Source\Game\Debug;$(ProjectDir)Source\Game\Effect;$(ProjectDir)Source\Game\Enemy;$(ProjectDir)Source\Game\Enemy\State;$(ProjectDir)Source\Game\Input;$(ProjectDir)Source\Game\Phase;$(ProjectDir)Source\Game\Player;$(ProjectDir)Source\Game\Player\State;$(ProjectDir)Source\Game\Projectile;$(ProjectDir)Source\Game\Scene;$(ProjectDir)Source\Game\Stage;$(ProjectDir)Source\Game\State;$(ProjectDir)Source\Game\Tutorial;$(ProjectDir)Source\Game\UI;$(IncludePath)</IncludePath>
     <LibraryPath>C:\DxLib_VC\プロジェクトに追加すべきファイル_VC用;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -147,11 +147,14 @@
     <ClCompile Include="Source\Game\Projectile\Needle.cpp" />
     <ClCompile Include="Source\Game\Projectile\NeedlePool.cpp" />
     <ClCompile Include="Source\Game\Scene\GameScene.cpp" />
+    <ClCompile Include="Source\Game\Scene\TutorialScene.cpp" />
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp" />
     <ClCompile Include="Source\Game\Stage\ArenaWall.cpp" />
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp" />
     <ClCompile Include="Source\Game\Stage\WallBreakEffectObserver.cpp" />
     <ClCompile Include="Source\Game\Stage\WallBreakSoundObserver.cpp" />
+    <ClCompile Include="Source\Game\Tutorial\TutorialDirector.cpp" />
+    <ClCompile Include="Source\Game\Tutorial\TutorialSteps.cpp" />
     <ClCompile Include="Source\Game\UI\ChainCounter.cpp" />
     <ClCompile Include="Source\Game\UI\GameFont.cpp" />
     <ClCompile Include="Source\Game\UI\Hud.cpp" />
@@ -159,6 +162,7 @@
     <ClCompile Include="Source\Game\UI\PhaseBanner.cpp" />
     <ClCompile Include="Source\Game\UI\ResultScreen.cpp" />
     <ClCompile Include="Source\Game\UI\TitleScreen.cpp" />
+    <ClCompile Include="Source\Game\UI\TutorialScreen.cpp" />
     <ClCompile Include="Source\WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -273,6 +277,7 @@
     <ClInclude Include="Source\Game\Projectile\NeedlePool.h" />
     <ClInclude Include="Source\Game\Scene\GameScene.h" />
     <ClInclude Include="Source\Game\Scene\TitleScene.h" />
+    <ClInclude Include="Source\Game\Scene\TutorialScene.h" />
     <ClInclude Include="Source\Game\Stage\ArenaBoundary.h" />
     <ClInclude Include="Source\Game\Stage\ArenaWall.h" />
     <ClInclude Include="Source\Game\Stage\StageBuilder.h" />
@@ -281,6 +286,8 @@
     <ClInclude Include="Source\Game\Stage\WallBreakSoundObserver.h" />
     <ClInclude Include="Source\Game\State\ICharacterState.h" />
     <ClInclude Include="Source\Game\State\StateManager.h" />
+    <ClInclude Include="Source\Game\Tutorial\TutorialDirector.h" />
+    <ClInclude Include="Source\Game\Tutorial\TutorialSteps.h" />
     <ClInclude Include="Source\Game\UI\ChainCounter.h" />
     <ClInclude Include="Source\Game\UI\GameFont.h" />
     <ClInclude Include="Source\Game\UI\Hud.h" />
@@ -288,6 +295,7 @@
     <ClInclude Include="Source\Game\UI\PhaseBanner.h" />
     <ClInclude Include="Source\Game\UI\ResultScreen.h" />
     <ClInclude Include="Source\Game\UI\TitleScreen.h" />
+    <ClInclude Include="Source\Game\UI\TutorialScreen.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

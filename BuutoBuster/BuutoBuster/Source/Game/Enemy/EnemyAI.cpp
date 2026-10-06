@@ -55,8 +55,27 @@ void EnemyAI::Update(float deltaTime) {
     _enemy->SetTimeScale(timeScale);
     float scaledDeltaTime = deltaTime * timeScale;
 
-    InputInfo input = _tree ? ThinkWithTree(scaledDeltaTime) : Think(scaledDeltaTime);
+    InputInfo input;
+    if (isPassive) input = Stand();
+    else input = _tree ? ThinkWithTree(scaledDeltaTime) : Think(scaledDeltaTime);
     _enemy->Execute(input, scaledDeltaTime);
+}
+
+InputInfo EnemyAI::Stand() {
+    InputInfo input;
+
+    // 攻撃しないので番は持たない
+    ReleaseToken();
+    _enemy->ConsumeAttackFinished();
+    _enemy->SetThinking("");
+
+    const Character* target = _enemy->GetTarget();
+    if (_enemy->IsDead() || !target) return input;
+
+    VECTOR toTarget = VSub(target->GetPosition(), _enemy->GetPosition());
+    toTarget.y = 0.0f;
+    input.look = toTarget;
+    return input;
 }
 
 // ===== 今までの動き (賢さ 0 の敵: Bee と Golem) =====

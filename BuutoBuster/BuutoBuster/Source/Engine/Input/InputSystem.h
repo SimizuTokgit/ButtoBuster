@@ -185,6 +185,13 @@ public:
             || PadPressed(XINPUT_BUTTON_A);
     }
 
+    // スキップ チュートリアルを飛ばすのに使う 長押しで決まるので、押している間を返す
+    bool SkipHeld() const {
+        return KeyHeld(KEY_INPUT_RETURN)
+            || KeyHeld(KEY_INPUT_NUMPADENTER)
+            || PadHeld(XINPUT_BUTTON_START);
+    }
+
 private:
     InputSystem() = default;
     ~InputSystem() = default;

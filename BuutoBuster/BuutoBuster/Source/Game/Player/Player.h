@@ -19,6 +19,9 @@ public:
     // デバッグの無敵 攻撃を受けず、壁でも割られない
     bool isCheatInvincible = false;
 
+    // 負けるかどうか チュートリアルの練習中は false 攻撃は受けるが、許容値に届いて壁へ飛ばされても割れずに跳ね返る
+    bool canLose = true;
+
 private:
     StateManager<Player> _states;
     SlashTrail* _trail = nullptr;
@@ -47,6 +50,10 @@ private:
     // 回避の残り 1 で 1 回分 端数は戻っている途中の分
     float _dodgeStock = 0.0f;
 
+    // ガードで受けた回数と、攻撃を食らった回数 チュートリアルが数える
+    int _guardCount = 0;
+    int _hitCount = 0;
+
     VECTOR _spawnPosition = VGet(0.0f, 0.0f, 0.0f);
 
 public:
@@ -60,8 +67,8 @@ public:
     // 壁を割られたときに呼ばれる 場外へ飛ばされて負け
     void Defeat(VECTOR knockback) override;
 
-    // デバッグの無敵中は、壁を割られずに跳ね返る
-    bool CanBeDefeated() const override { return !isCheatInvincible; }
+    // デバッグの無敵中と、負けない練習中 (canLose が false) は、壁を割られずに跳ね返る
+    bool CanBeDefeated() const override { return !isCheatInvincible && canLose; }
 
     // ジャスト回避のあとの反撃の間は、敵全員をゆっくりにする
     float GetOpponentTimeScale() const override;
@@ -111,6 +118,10 @@ public:
 
     // ガードで受けたことを1回だけ知らせる ガード状態がのけぞりのアニメに使う
     bool ConsumeGuardImpact();
+
+    // ガードで受けた回数と、攻撃を食らった回数 チュートリアルが、できたかどうかを数えるのに使う
+    int GetGuardCount() const { return _guardCount; }
+    int GetHitCount() const { return _hitCount; }
 
     void AddCombo(int hits);
     int GetCombo() const { return _combo; }

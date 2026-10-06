@@ -59,6 +59,11 @@ void Character::ResetBlow() {
     _steamTimer = 0.0f;
 }
 
+void Character::SetBlowRatio(float ratio) {
+    _blowValue = GetBlowSettings().limit * ratio;
+    _blowIdleTime = 0.0f;
+}
+
 void Character::AddBlow(float amount) {
     if (amount <= 0.0f) return;
 

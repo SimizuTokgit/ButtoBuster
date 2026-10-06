@@ -112,7 +112,11 @@ namespace {
 }
 
 Enemy* EnemyFactory::Create(EnemyKind kind, VECTOR position, Character* target, int id) {
-    const EnemyData& data = EnemyDatabase::Get(kind);
+    return Create(EnemyDatabase::Get(kind), position, target, id);
+}
+
+Enemy* EnemyFactory::Create(const EnemyData& data, VECTOR position, Character* target, int id) {
+    EnemyKind kind = data.kind;
     Scene& scene = Scene::Instance();
 
     auto* root = scene.CreateGameObject(data.displayName);

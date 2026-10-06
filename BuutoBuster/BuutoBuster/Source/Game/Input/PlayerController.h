@@ -73,6 +73,9 @@ public:
     // 移動の向きをカメラから見た向きに直すため、視点を回すために使う
     void SetCamera(CameraFollow* camera) { _camera = camera; }
 
+    // このフレームに手で視点を回したか チュートリアルが、見回したかどうかを数えるのに使う
+    bool HasViewInput() const { return _hasViewInput; }
+
 private:
     Technique UpdateCombination(int pressed, int held);
     int ReadHeldButtons() const;

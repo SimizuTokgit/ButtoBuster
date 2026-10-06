@@ -75,6 +75,7 @@ HitResult Player::TakeHit(const HitInfo& info) {
     bool isFrontal = GetFacingDot(info.sourcePosition) > data.guardDot;
     if (_isGuarding && info.canGuard && isFrontal) {
         _isGuardImpact = true;
+        _guardCount++;
         SetKnockback(VScale(info.knockback, data.guardPushRate));
 
         VECTOR sparkPosition = VAdd(GetCenter(), VScale(GetForward(), 45.0f));
@@ -87,6 +88,7 @@ HitResult Player::TakeHit(const HitInfo& info) {
         return HitResult::Guarded;
     }
 
+    _hitCount++;
     _combo = 0;
     _comboTimer = 0.0f;
 

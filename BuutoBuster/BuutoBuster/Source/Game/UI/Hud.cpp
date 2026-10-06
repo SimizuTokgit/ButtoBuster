@@ -55,7 +55,10 @@ void Hud::Render() {
 
     DrawDanger(screenWidth, screenHeight);
     DrawDodgeStock();
-    DrawPhaseInfo(screenWidth, screenHeight);
+
+    // チュートリアルの間はフェーズの表示を出さない
+    if (_director->GetStep() != PhaseDirector::Step::Practice) DrawPhaseInfo(screenWidth, screenHeight);
+
     DrawCombo(screenWidth, screenHeight);
     DrawControls(screenWidth, screenHeight);
 }
