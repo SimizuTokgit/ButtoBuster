@@ -21,6 +21,9 @@ private:
     // 怯み値 当たった技のダメージが溜まり、EnemyData の flinchLimit に届いたらのけぞる
     float _flinchValue = 0.0f;
 
+    // 頭 (EnemyAI) が今していること F11 の表示に使う
+    const char* _thinking = "";
+
 public:
     void Initialize(const EnemyData& data, int id, Character* target);
 
@@ -41,6 +44,10 @@ public:
     // 攻撃が終わったことを AI に1回だけ知らせる 攻撃の番を返すきっかけ
     void NotifyAttackFinished() { _hasFinishedAttack = true; }
     bool ConsumeAttackFinished();
+
+    // 頭が今していることの名前 行動の木の葉が書き込む 木を使わない敵は空のまま
+    void SetThinking(const char* thinking) { _thinking = thinking; }
+    const char* GetThinking() const { return _thinking; }
 
     // 空を飛ぶ敵が高さを保つかどうか 落とされている間は止める
     void SetHovering(bool isHovering);

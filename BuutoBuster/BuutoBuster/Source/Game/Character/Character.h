@@ -95,6 +95,9 @@ public:
     // 構えて正面の攻撃を防いでいるか 敵の AI が、ガードできない技に切り替えるときに見る
     virtual bool IsGuarding() const { return false; }
 
+    // 重い一撃を溜めているか 敵の AI が、間合いの外へ下がるときに見る
+    virtual bool IsCharging() const { return false; }
+
     // この体の物理の時間の進み方 1 で普段どおり 状態や AI に渡す時間は、呼ぶ側が同じだけ縮めておく
     void SetTimeScale(float scale);
 

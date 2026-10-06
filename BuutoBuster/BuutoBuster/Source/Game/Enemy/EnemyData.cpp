@@ -51,10 +51,11 @@ namespace {
         data.cooldownMin = 0.8f;
         data.cooldownMax = 1.8f;
 
-        // 大振りは、構えている相手と、許容値に届いた相手には必ず振る それ以外でも 4 回に 1 回くらい振る
+        // 賢さ 2 ガード中とホカホカの相手には大振り、こちらを向いて溜めていたら下がる
+        // それ以外でも 4 回に 1 回くらい大振り
+        data.intelligence = 2;
+        data.reactionTime = 0.4f;
         data.heavyChance = 0.25f;
-        data.heavyVsGuard = true;
-        data.heavyVsLimit = true;
 
         data.cost = 0.6f;
         data.unlockPhase = 1;
@@ -116,10 +117,10 @@ namespace {
         data.cooldownMin = 0.8f;
         data.cooldownMax = 1.8f;
 
-        // 大振りの振り方は Goblin と同じ
+        // 賢さ 3 Goblin にできることに加えて、隙に踏み込み、待つ間は背中側へ回り込む 気づくのも速い
+        data.intelligence = 3;
+        data.reactionTime = 0.25f;
         data.heavyChance = 0.25f;
-        data.heavyVsGuard = true;
-        data.heavyVsLimit = true;
 
         data.cost = 1.5f;
         data.unlockPhase = 3;

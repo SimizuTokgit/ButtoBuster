@@ -183,21 +183,27 @@ void Hud::DrawStates() {
         if (!GetHeadScreenPosition(*character, screen)) continue;
 
         // 攻撃の番を持っている敵は赤く出す 取り巻きの動きを確かめるため
+        // 行動の木で動く敵は、頭が今していること (葉の名前) も体の状態の横に出す
         unsigned int color = 0x80FFFF;
+        char state[64];
+        snprintf(state, sizeof(state), "%s", character->GetStateName());
         if (const auto* enemy = dynamic_cast<const Enemy*>(character)) {
             if (_director->GetTokens().Has(enemy)) color = 0xFF6060;
+            if (enemy->GetThinking()[0] != '\0') {
+                snprintf(state, sizeof(state), "%s / %s", character->GetStateName(), enemy->GetThinking());
+            }
         }
 
         // 吹っ飛ばされ値は普段は数字で出さないので、調整するときはここで見る
         // 隙があるときは、あと何秒動けないかも出す 敵が隙を狙う AI を作るときに見る
-        char label[96];
+        char label[128];
         float opening = character->GetOpeningTime();
         if (opening > 0.0f) {
-            snprintf(label, sizeof(label), "%s  %.0f / %.0f  隙 %.2f", character->GetStateName(),
+            snprintf(label, sizeof(label), "%s  %.0f / %.0f  隙 %.2f", state,
                 character->GetBlowValue(), character->GetBlowLimit(), opening);
         }
         else {
-            snprintf(label, sizeof(label), "%s  %.0f / %.0f", character->GetStateName(),
+            snprintf(label, sizeof(label), "%s  %.0f / %.0f", state,
                 character->GetBlowValue(), character->GetBlowLimit());
         }
         GameFont::DrawCentered(static_cast<int>(screen.x), static_cast<int>(screen.y) - 26,

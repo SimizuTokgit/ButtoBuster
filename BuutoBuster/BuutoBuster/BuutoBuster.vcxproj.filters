@@ -7,6 +7,9 @@
     <Filter Include="Source\Engine">
       <UniqueIdentifier>{00000002-1111-2222-3333-000000000002}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\Engine\AI">
+      <UniqueIdentifier>{0000001c-1111-2222-3333-00000000001c}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source\Engine\Animation">
       <UniqueIdentifier>{00000003-1111-2222-3333-000000000003}</UniqueIdentifier>
     </Filter>
@@ -317,6 +320,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Engine\AI\BehaviorTree.h">
+      <Filter>Source\Engine\AI</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Animation\AnimationClip.h">
       <Filter>Source\Engine\Animation</Filter>
     </ClInclude>

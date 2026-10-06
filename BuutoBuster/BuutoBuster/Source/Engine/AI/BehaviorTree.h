@@ -1,16 +1,16 @@
-#pragma once
+ï»¿#pragma once
 #include <memory>
 #include <utility>
 #include <vector>
 
-// ß‚Í–ˆƒtƒŒ[ƒ€ Tick ‚ğŒÄ‚Î‚êA3 ‚Â‚Ì‚Ç‚ê‚©‚ğ•Ô‚·
+// ç¯€ã¯æ¯ãƒ•ãƒ¬ãƒ¼ãƒ  Tick ã‚’å‘¼ã°ã‚Œã€3 ã¤ã®ã©ã‚Œã‹ã‚’è¿”ã™
 enum class BehaviorStatus {
-    Success,    // ‚Å‚«‚½ / ğŒ‚É‡‚¤
-    Failure,    // ‚Å‚«‚È‚©‚Á‚½ / ğŒ‚É‡‚í‚È‚¢
-    Running,    // ‚Ü‚¾“r’† Ÿ‚ÌƒtƒŒ[ƒ€‚à‘±‚¯‚é
+    Success,    // ã§ããŸ / æ¡ä»¶ã«åˆã†
+    Failure,    // ã§ããªã‹ã£ãŸ / æ¡ä»¶ã«åˆã‚ãªã„
+    Running,    // ã¾ã é€”ä¸­ æ¬¡ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã‚‚ç¶šã‘ã‚‹
 };
 
-// ß‚ÌŒ³ T ‚Í–Ø‚ğ‚Â‘¤ 
+// ç¯€ã®å…ƒ T ã¯æœ¨ã‚’æŒã¤å´ 
 template<typename T>
 class BehaviorNode {
 public:
@@ -21,7 +21,7 @@ public:
 template<typename T>
 using BehaviorNodePtr = std::unique_ptr<BehaviorNode<T>>;
 
-// q‚ğã‚©‚ç‚µ‚ÄFailure ‚Å‚È‚©‚Á‚½Å‰‚Ìq‚Å~‚Ü‚é ‚Å‚«‚é‚à‚Ì‚ğ 1 ‚Â‘I‚Ô
+// å­ã‚’ä¸Šã‹ã‚‰è©¦ã—ã¦Failure ã§ãªã‹ã£ãŸæœ€åˆã®å­ã§æ­¢ã¾ã‚‹ ã§ãã‚‹ã‚‚ã®ã‚’ 1 ã¤é¸ã¶
 template<typename T>
 class BehaviorSelector : public BehaviorNode<T> {
 private:
@@ -39,7 +39,7 @@ public:
     }
 };
 
-// q‚ğã‚©‚çi‚ßASuccess ‚Å‚È‚©‚Á‚½q‚Å~‚Ü‚éğŒ‚ª‚»‚ë‚Á‚½‚ç‚â‚é
+// å­ã‚’ä¸Šã‹ã‚‰é€²ã‚ã€Success ã§ãªã‹ã£ãŸå­ã§æ­¢ã¾ã‚‹æ¡ä»¶ãŒãã‚ã£ãŸã‚‰ã‚„ã‚‹
 template<typename T>
 class BehaviorSequence : public BehaviorNode<T> {
 private:
@@ -57,7 +57,7 @@ public:
     }
 };
 
-// ‚¿å‚Ì const ‚Èƒƒ“ƒo[ŠÖ”‚ğŒÄ‚Ô
+// æŒã¡ä¸»ã® const ãªãƒ¡ãƒ³ãƒãƒ¼é–¢æ•°ã‚’å‘¼ã¶
 template<typename T>
 class BehaviorCondition : public BehaviorNode<T> {
 private:
@@ -71,7 +71,7 @@ public:
     }
 };
 
-// ‚¿å‚Ìƒƒ“ƒo[ŠÖ”‚ğŒÄ‚ÑA‚»‚ÌŒ‹‰Ê‚ğ•Ô‚·
+// æŒã¡ä¸»ã®ãƒ¡ãƒ³ãƒãƒ¼é–¢æ•°ã‚’å‘¼ã³ã€ãã®çµæœã‚’è¿”ã™
 template<typename T>
 class BehaviorAction : public BehaviorNode<T> {
 private:
