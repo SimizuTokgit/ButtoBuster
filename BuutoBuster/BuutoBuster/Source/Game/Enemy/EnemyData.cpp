@@ -51,6 +51,11 @@ namespace {
         data.cooldownMin = 0.8f;
         data.cooldownMax = 1.8f;
 
+        // 大振りは、構えている相手と、許容値に届いた相手には必ず振る それ以外でも 4 回に 1 回くらい振る
+        data.heavyChance = 0.25f;
+        data.heavyVsGuard = true;
+        data.heavyVsLimit = true;
+
         data.cost = 0.6f;
         data.unlockPhase = 1;
         data.pickWeight = 6;
@@ -110,6 +115,11 @@ namespace {
         data.surroundRadius = 340.0f;
         data.cooldownMin = 0.8f;
         data.cooldownMax = 1.8f;
+
+        // 大振りの振り方は Goblin と同じ
+        data.heavyChance = 0.25f;
+        data.heavyVsGuard = true;
+        data.heavyVsLimit = true;
 
         data.cost = 1.5f;
         data.unlockPhase = 3;

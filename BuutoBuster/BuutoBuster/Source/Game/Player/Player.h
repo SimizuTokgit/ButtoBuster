@@ -104,7 +104,7 @@ public:
     bool TryUseAirHang();
 
     void SetGuarding(bool isGuarding) { _isGuarding = isGuarding; }
-    bool IsGuarding() const { return _isGuarding; }
+    bool IsGuarding() const override { return _isGuarding; }
 
     // ガードで受けたことを1回だけ知らせる ガード状態がのけぞりのアニメに使う
     bool ConsumeGuardImpact();

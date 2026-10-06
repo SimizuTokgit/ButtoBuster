@@ -85,6 +85,11 @@ InputInfo EnemyAI::Engage(InputInfo input, VECTOR toTarget, float distance) {
 
     VECTOR targetPosition = VAdd(_enemy->GetPosition(), toTarget);
     if (_enemy->GetFacingDot(targetPosition) > FACE_DOT_TO_ATTACK) {
+        // 番を取ったときに決めた技を、振る瞬間の相手の様子で大振りに変えることがある
+        const Character* target = _enemy->GetTarget();
+        if (_plannedTechnique == Technique::Slash && target && ShouldSwitchToHeavy(*target)) {
+            _plannedTechnique = Technique::StrongSlash;
+        }
         input.technique = _plannedTechnique;
     }
     return input;
@@ -136,6 +141,17 @@ Technique EnemyAI::ChooseTechnique(float distance) const {
         return Technique::StrongSlash;
     }
     return Technique::Slash;
+}
+
+bool EnemyAI::ShouldSwitchToHeavy(const Character& target) const {
+    const EnemyData& data = _enemy->GetData();
+    if (!data.hasHeavy) return false;
+
+    // 構えている相手は、ガードできない大振りで崩しに行く
+    if (data.heavyVsGuard && target.IsGuarding()) return true;
+
+    // 許容値に届いた相手は、大振りで吹き飛ばして壁を割りに行く
+    return data.heavyVsLimit && target.GetBlowRatio() >= HEAVY_LIMIT_RATIO;
 }
 
 float EnemyAI::GetRange(Technique technique) const {

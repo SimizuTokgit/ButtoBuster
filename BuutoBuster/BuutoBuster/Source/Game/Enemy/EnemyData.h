@@ -58,6 +58,8 @@ struct EnemyData {
     float attackRange = 150.0f;         // これより近づいたら振る
     float shootRange = 0.0f;            // これより近ければ撃てる
     float heavyChance = 0.0f;           // 攻撃するとき重い技を選ぶ割合
+    bool heavyVsGuard = false;          // 振る瞬間に相手がガードしていたら、重い技に切り替える 重い技がガードできない敵に付ける
+    bool heavyVsLimit = false;          // 振る瞬間に相手の吹っ飛ばされ値が許容値に届いていたら、重い技に切り替える
     float surroundRadius = 320.0f;      // 攻撃の番を待つ間に取る間合い
     float cooldownMin = 1.2f;           // 攻撃してから次の番を欲しがるまで
     float cooldownMax = 2.5f;
