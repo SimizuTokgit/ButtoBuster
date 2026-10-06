@@ -28,7 +28,13 @@ struct PlayerData {
 
     // 吹っ飛ばされ値の許容値 溜まり方 減り方 中身は BlowSettings.h
     // 体力はない 許容値に届いた状態で壁にぶつかると、壁を割られて負け
-    BlowSettings blow{30.0f,3.8f};
+    // プレイヤーは時間では減らさない 減るのは、吹き飛んで起き上がったときと、5 フェーズごとの全回復だけ
+    BlowSettings blow{
+        30.0f,  // limit
+        3.8f,   // growth
+        1.0f,   // recoverDelay 時間では減らさないので使っていない
+        0.0f,   // recoverRate 0 で時間では減らない
+    };
 
     // ----- 移動 -----
 

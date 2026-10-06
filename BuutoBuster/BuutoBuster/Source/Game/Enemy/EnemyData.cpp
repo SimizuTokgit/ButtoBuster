@@ -48,8 +48,8 @@ namespace {
 
         data.attackRange = 150.0f;
         data.surroundRadius = 320.0f;
-        data.cooldownMin = 1.2f;
-        data.cooldownMax = 2.6f;
+        data.cooldownMin = 0.8f;
+        data.cooldownMax = 1.8f;
 
         data.cost = 0.6f;
         data.unlockPhase = 1;
