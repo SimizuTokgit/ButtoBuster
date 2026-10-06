@@ -121,6 +121,7 @@
     <ClCompile Include="Source\Game\Input\PlayerController.cpp" />
     <ClCompile Include="Source\Game\Phase\PhaseDirector.cpp" />
     <ClCompile Include="Source\Game\Phase\SaveData.cpp" />
+    <ClCompile Include="Source\Game\Phase\VictoryEffectObserver.cpp" />
     <ClCompile Include="Source\Game\Player\ChainEffectObserver.cpp" />
     <ClCompile Include="Source\Game\Player\ChainSoundObserver.cpp" />
     <ClCompile Include="Source\Game\Player\ChargeEffectObserver.cpp" />
@@ -240,6 +241,8 @@
     <ClInclude Include="Source\Game\Phase\PhaseData.h" />
     <ClInclude Include="Source\Game\Phase\PhaseDirector.h" />
     <ClInclude Include="Source\Game\Phase\SaveData.h" />
+    <ClInclude Include="Source\Game\Phase\VictoryEffectObserver.h" />
+    <ClInclude Include="Source\Game\Phase\VictoryEvent.h" />
     <ClInclude Include="Source\Game\Player\ChainEffectObserver.h" />
     <ClInclude Include="Source\Game\Player\ChainSoundObserver.h" />
     <ClInclude Include="Source\Game\Player\ChargeEffectObserver.h" />

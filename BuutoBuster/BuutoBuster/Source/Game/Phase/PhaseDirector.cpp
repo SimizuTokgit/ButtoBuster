@@ -37,7 +37,7 @@ void PhaseDirector::Update(float deltaTime) {
 
     _stepTimer += deltaTime;
 
-    if (_step != Step::GameOver && _player && _player->IsDead()) {
+    if (!IsFinished() && _player && _player->IsDead()) {
         EnterGameOver();
     }
 
@@ -51,7 +51,10 @@ void PhaseDirector::Update(float deltaTime) {
         UpdateSpawning(deltaTime);
         if (_spawnQueue.empty() && GetAliveCount() == 0) {
             SoundManager::Instance().PlaySE("Common/system_counter");
-            EnterStep(Step::Clear);
+
+            // 最後のフェーズを越えたら勝ち 全回復や次のフェーズへは進まない
+            if (IsFinalPhase()) EnterVictory();
+            else EnterStep(Step::Clear);
         }
         break;
 
@@ -76,6 +79,12 @@ void PhaseDirector::Update(float deltaTime) {
     case Step::GameOver:
         if (_stepTimer >= data.resultDelay) _isResultReady = true;
         break;
+
+    case Step::Victory:
+        // とどめの演出が落ち着いてから VICTORY を出し、少しおいて結果を出す
+        if (!_isVictoryAnnounced && _stepTimer >= data.victoryDelay) AnnounceVictory();
+        if (_stepTimer >= data.victoryDelay + data.victoryResultDelay) _isResultReady = true;
+        break;
     }
 }
 
@@ -86,6 +95,13 @@ int PhaseDirector::GetRemainingEnemyCount() const {
 int PhaseDirector::GetPhasesUntilHeal() const {
     int remainder = _phase % data.healInterval;
     return (remainder == 0) ? 0 : data.healInterval - remainder;
+}
+
+int PhaseDirector::GetPhasesUntilVictory() const {
+    if (data.finalPhase <= 0) return -1;
+
+    int left = data.finalPhase - _phase;
+    return (left > 0) ? left : 0;
 }
 
 void PhaseDirector::DefeatAllEnemies() {
@@ -105,14 +121,18 @@ void PhaseDirector::DefeatAllEnemies() {
 }
 
 void PhaseDirector::SkipPhases(int count) {
-    if (_step == Step::GameOver) return;
+    if (IsFinished()) return;
 
     DefeatAllEnemies();
-    StartPhase(_phase + count);
+
+    // 最後のフェーズより先へは飛ばさない 最後のフェーズで使えば、全滅させたのでそのまま勝ちになる
+    int target = _phase + count;
+    if (data.finalPhase > 0 && target > data.finalPhase) target = data.finalPhase;
+    if (target > _phase) StartPhase(target);
 }
 
 void PhaseDirector::SpawnImmediately(EnemyKind kind) {
-    if (_step == Step::GameOver) return;
+    if (IsFinished()) return;
     Spawn(kind);
 }
 
@@ -142,15 +162,52 @@ void PhaseDirector::EnterGameOver() {
     if (_controller) _controller->isInputLocked = true;
 
     // 倒れたフェーズまでたどり着いた、と数える
-    _isNewRecord = _phase > _bestPhase;
-    if (_isNewRecord) {
-        _bestPhase = _phase;
-        SaveData::SaveBestPhase(_phase);
-    }
+    SaveRecord();
 
     SoundManager::Instance().StopAllBGM(1.0f);
     SoundManager::Instance().PlayJingle("JINGLE_gameover");
     _currentBgm.clear();
+}
+
+void PhaseDirector::EnterVictory() {
+    EnterStep(Step::Victory);
+    _isVictoryAnnounced = false;
+
+    // 勝ったあとは動かさない 結果が出たらボタンでタイトルへ戻る
+    if (_controller) _controller->isInputLocked = true;
+
+    // 最後のフェーズまでたどり着いた、と数える
+    SaveRecord();
+}
+
+void PhaseDirector::AnnounceVictory() {
+    _isVictoryAnnounced = true;
+
+    SoundManager::Instance().StopAllBGM(1.0f);
+    SoundManager::Instance().PlayJingle("JINGLE_stageclear");
+    _currentBgm.clear();
+
+    // 画面の演出は、知らせを受けた Observer が出す (GameScene.cpp で登録)
+    VictoryEvent event;
+    event.phase = _phase;
+    if (_player) event.playerPosition = _player->GetPosition();
+    _victoryEvents.Notify(event);
+}
+
+void PhaseDirector::SaveRecord() {
+    _isNewRecord = _phase > _bestPhase;
+    if (!_isNewRecord) return;
+
+    _bestPhase = _phase;
+    SaveData::SaveBestPhase(_phase);
+}
+
+bool PhaseDirector::IsFinished() const {
+    return _step == Step::GameOver || _step == Step::Victory;
+}
+
+bool PhaseDirector::IsFinalPhase() const {
+    return data.finalPhase > 0 && _phase >= data.finalPhase;
 }
 
 void PhaseDirector::UpdateSpawning(float deltaTime) {

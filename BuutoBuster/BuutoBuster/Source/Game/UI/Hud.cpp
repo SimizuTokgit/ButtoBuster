@@ -112,14 +112,26 @@ void Hud::DrawPhaseInfo(int screenWidth, int screenHeight) {
     snprintf(text, sizeof(text), "残り %d", _director->GetRemainingEnemyCount());
     GameFont::DrawRight(right, 84, text, 0xE0E0E0, GameFont::Size::Medium);
 
+    // 全回復より先に勝ちが来るなら、勝ちまでを出す 最後のフェーズを越えたときは全回復しないので
     int untilHeal = _director->GetPhasesUntilHeal();
-    if (untilHeal == 0) {
+    int untilVictory = _director->GetPhasesUntilVictory();
+    unsigned int goalColor = 0x90F0B0;
+    if (untilVictory >= 0 && untilVictory <= untilHeal) {
+        goalColor = 0xFFD060;
+        if (untilVictory == 0) {
+            snprintf(text, sizeof(text), "このフェーズを越えれば勝利");
+        }
+        else {
+            snprintf(text, sizeof(text), "勝利まで あと %d フェーズ", untilVictory);
+        }
+    }
+    else if (untilHeal == 0) {
         snprintf(text, sizeof(text), "このフェーズを越えれば全回復");
     }
     else {
         snprintf(text, sizeof(text), "全回復まで あと %d フェーズ", untilHeal);
     }
-    GameFont::DrawRight(right, 122, text, 0x90F0B0, GameFont::Size::Small);
+    GameFont::DrawRight(right, 122, text, goalColor, GameFont::Size::Small);
 
     snprintf(text, sizeof(text), "撃破 %d", _director->GetKillCount());
     GameFont::DrawRight(right, 148, text, 0xC0C0C0, GameFont::Size::Small);

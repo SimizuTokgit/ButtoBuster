@@ -4,8 +4,9 @@
 class Player;
 class PhaseDirector;
 
-// 倒れたあとの結果
-// 到達フェーズがスコア 最高記録を超えたら知らせる
+// 倒れたあと (GAME OVER) と、最後のフェーズを越えて勝ったあと (VICTORY) の結果
+// 到達フェーズがスコア 最高記録を超えたら知らせる どちらもボタンを押すとタイトルへ戻る
+// 色と暗くする速さは .cpp の先頭に並べてある
 class ResultScreen : public UIImage {
 private:
     // 結果が出てから入力を受け付けるまで 連打でそのまま飛ばさないように

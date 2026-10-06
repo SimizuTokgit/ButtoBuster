@@ -11,6 +11,22 @@
 #include <cmath>
 #include <cstdio>
 
+namespace {
+    // ----- 結果の画面の見た目 -----
+
+    // 画面を暗くしきるまでの秒数と、いちばん暗いときの濃さ 0〜255
+    constexpr float DARKEN_TIME = 2.0f;
+    constexpr int DARKNESS = 190;
+
+    // 負けたときの大きな文字の色 (0xRRGGBB)
+    constexpr unsigned int GAME_OVER_COLOR = 0xFF6060;
+
+    // 勝ったときの大きな文字の色 (0xRRGGBB) と、浮かび上がるまでの秒数
+    // 勝ったときは結果より先にこの文字だけを出す 結果が出るまでの間は PhaseData の victoryResultDelay
+    constexpr unsigned int VICTORY_COLOR = 0xFFD060;
+    constexpr float VICTORY_FADE_TIME = 0.4f;
+}
+
 void ResultScreen::Setup(Player* player, PhaseDirector* director) {
     _player = player;
     _director = director;
@@ -32,28 +48,51 @@ void ResultScreen::Update(float deltaTime) {
 }
 
 void ResultScreen::Render() {
-    if (!_director || _director->GetStep() != PhaseDirector::Step::GameOver) return;
+    if (!_director) return;
+
+    PhaseDirector::Step step = _director->GetStep();
+    bool isVictory = step == PhaseDirector::Step::Victory;
+    if (!isVictory && step != PhaseDirector::Step::GameOver) return;
+
+    // 負けたときは倒れたときから、勝ったときは VICTORY を出すときから数える
+    float time = _director->GetStepTimer();
+    if (isVictory) time -= _director->data.victoryDelay;
+    if (time < 0.0f) return;
 
     int screenWidth = 0;
     int screenHeight = 0;
     GetDrawScreenSize(&screenWidth, &screenHeight);
     int centerX = screenWidth / 2;
 
-    // 倒れてから少しずつ暗くする
-    float darkness = _director->GetStepTimer() / 2.0f;
+    // 少しずつ暗くする
+    float darkness = time / DARKEN_TIME;
     if (darkness > 1.0f) darkness = 1.0f;
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(darkness * 190.0f));
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(darkness * DARKNESS));
     DrawBox(0, 0, screenWidth, screenHeight, 0x000000, TRUE);
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
+    int top = screenHeight / 2 - 190;
+
+    // 勝ったときは、結果より先に VICTORY だけを浮かび上がらせる
+    if (isVictory) {
+        float alpha = (VICTORY_FADE_TIME > 0.0f) ? time / VICTORY_FADE_TIME : 1.0f;
+        if (alpha > 1.0f) alpha = 1.0f;
+        SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
+        GameFont::DrawCentered(centerX, top, "VICTORY", VICTORY_COLOR, GameFont::Size::Huge);
+        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    }
+
     if (!_director->IsResultReady()) return;
 
-    int top = screenHeight / 2 - 190;
     char text[64];
 
-    GameFont::DrawCentered(centerX, top, "GAME OVER", 0xFF6060, GameFont::Size::Huge);
-
-    snprintf(text, sizeof(text), "到達フェーズ  %d", _director->GetPhase());
+    if (isVictory) {
+        snprintf(text, sizeof(text), "フェーズ %d クリア", _director->GetPhase());
+    }
+    else {
+        GameFont::DrawCentered(centerX, top, "GAME OVER", GAME_OVER_COLOR, GameFont::Size::Huge);
+        snprintf(text, sizeof(text), "到達フェーズ  %d", _director->GetPhase());
+    }
     GameFont::DrawCentered(centerX, top + 130, text, 0xFFFFFF, GameFont::Size::Large);
 
     snprintf(text, sizeof(text), "撃破  %d      最大コンボ  %d",

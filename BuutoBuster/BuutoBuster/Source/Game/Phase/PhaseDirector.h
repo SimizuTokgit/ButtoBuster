@@ -3,6 +3,8 @@
 #include "EnemyData.h"
 #include "AttackTokenPool.h"
 #include "PhaseData.h"
+#include "Observer.h"
+#include "VictoryEvent.h"
 #include "DxLib.h"
 #include <deque>
 #include <string>
@@ -15,6 +17,7 @@ class Enemy;
 // フェーズの進行
 // 敵の組み合わせをその場で組み立てて出し、全滅したら次へ進める
 // 決まったフェーズごとに全回復 (吹っ飛ばされ値を 0 に戻す) プレイヤーが壁を割られたら終わり
+// 最後のフェーズ (PhaseData の finalPhase) の敵を全部倒したら勝ち
 //
 // 敵の並びを表に書くのではなく、フェーズ番号から強さの予算を決め、
 // 出せる敵の中から予算に収まるまで選ぶ
@@ -27,6 +30,7 @@ public:
         Clear,
         Rest,       // 全回復して次の波まで休ませる
         GameOver,
+        Victory,    // 最後のフェーズを越えた とどめの演出のあと VICTORY と結果を出す
     };
 
     // 進み方の数値 進め方の処理とフェーズの表示はここから読む
@@ -42,6 +46,8 @@ private:
     std::vector<Enemy*> _enemies;
     std::deque<EnemyKind> _spawnQueue;
 
+    Subject<VictoryEvent> _victoryEvents;
+
     Step _step = Step::Announce;
     float _stepTimer = 0.0f;
     float _spawnTimer = 0.0f;
@@ -51,6 +57,10 @@ private:
     int _bestPhase = 0;
     bool _isNewRecord = false;
     bool _isResultReady = false;
+
+    // 勝ったあと、VICTORY を出して知らせたか
+    bool _isVictoryAnnounced = false;
+
     std::string _currentBgm;
 
 public:
@@ -78,6 +88,12 @@ public:
     // 次の全回復まであと何フェーズ 今のフェーズを終えれば回復するなら 0
     int GetPhasesUntilHeal() const;
 
+    // 勝ちまであと何フェーズ 今のフェーズを終えれば勝ちなら 0 勝ちが無いなら -1
+    int GetPhasesUntilVictory() const;
+
+    // 勝ったことを知らせる先 VICTORY を出す瞬間に知らせる 演出はここに Observer として登録する
+    Subject<VictoryEvent>& GetVictoryEvents() { return _victoryEvents; }
+
     // ----- 制作用 -----
 
     void DefeatAllEnemies();
@@ -88,6 +104,17 @@ private:
     void StartPhase(int phase);
     void EnterStep(Step step);
     void EnterGameOver();
+    void EnterVictory();
+    void AnnounceVictory();
+
+    // たどり着いたフェーズが最高記録を超えていたら残す
+    void SaveRecord();
+
+    // 負けか勝ちで、もう戦わない
+    bool IsFinished() const;
+
+    // 今のフェーズを越えたら勝ちか
+    bool IsFinalPhase() const;
 
     void UpdateSpawning(float deltaTime);
     void RemoveFinishedEnemies();

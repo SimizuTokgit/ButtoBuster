@@ -16,6 +16,7 @@
 #include "Player.h"
 #include "PlayerController.h"
 #include "PhaseDirector.h"
+#include "VictoryEffectObserver.h"
 #include "Hud.h"
 #include "PhaseBanner.h"
 #include "ResultScreen.h"
@@ -84,6 +85,10 @@ bool GameScene::OnLoad() {
     auto* directorObject = scene.CreateGameObject("PhaseDirector");
     auto* director = directorObject->AddComponent<PhaseDirector>();
     director->Initialize(player, controller);
+
+    // 勝ったときの演出 勝ちの知らせを受けて出すので、変えるときはこれを書き換える
+    auto* victoryObject = scene.CreateGameObject("VictoryEffects");
+    director->GetVictoryEvents().AddObserver(victoryObject->AddComponent<VictoryEffectObserver>());
 
     auto* uiObject = scene.CreateGameObject("UI");
     auto* hud = uiObject->AddComponent<Hud>();

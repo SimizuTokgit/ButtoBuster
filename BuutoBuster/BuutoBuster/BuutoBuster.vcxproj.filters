@@ -198,6 +198,9 @@
     <ClCompile Include="Source\Game\Phase\SaveData.cpp">
       <Filter>Source\Game\Phase</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Phase\VictoryEffectObserver.cpp">
+      <Filter>Source\Game\Phase</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Player\ChainEffectObserver.cpp">
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
@@ -549,6 +552,12 @@
       <Filter>Source\Game\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Phase\SaveData.h">
+      <Filter>Source\Game\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Phase\VictoryEffectObserver.h">
+      <Filter>Source\Game\Phase</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Phase\VictoryEvent.h">
       <Filter>Source\Game\Phase</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\ChainEffectObserver.h">
