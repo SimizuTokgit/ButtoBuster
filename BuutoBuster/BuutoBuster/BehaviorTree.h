@@ -51,7 +51,8 @@ public:
     BehaviorStatus Tick(T& owner, float deltaTime) override {
         for (auto& child : _children) {
             BehaviorStatus status = child->Tick(owner, deltaTime);
-            if (status != BehaviorStatus::Success) return status;
+            if (status != Be
+haviorStatus::Success) return status;
         }
         return BehaviorStatus::Success;
     }
