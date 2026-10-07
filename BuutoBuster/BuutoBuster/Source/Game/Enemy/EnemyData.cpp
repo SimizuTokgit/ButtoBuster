@@ -8,7 +8,7 @@ namespace {
     EnemyData CreateGoblin() {
         EnemyData data;
         data.kind = EnemyKind::Goblin;
-        data.displayName = "Goblin";
+        data.displayName = "グレゴブリン";
         data.folder = "Data/Character/Goblin/";
         data.modelFile = "Goblin.mv1";
         data.weaponBone = "hansocketR";
@@ -72,7 +72,7 @@ namespace {
     EnemyData CreateRedGoblin() {
         EnemyData data;
         data.kind = EnemyKind::RedGoblin;
-        data.displayName = "RedGoblin";
+        data.displayName = "ラッドゴブリン";
         data.folder = "Data/Character/RedGoblin/";
         data.modelFile = "RedGoblin.mv1";
         data.weaponBone = "hansocketR";
@@ -138,7 +138,7 @@ namespace {
     EnemyData CreateBee() {
         EnemyData data;
         data.kind = EnemyKind::Bee;
-        data.displayName = "Bee";
+        data.displayName = "ビーザトール";
         data.folder = "Data/Character/Bee/";
         data.modelFile = "Bee.mv1";
 
@@ -195,7 +195,7 @@ namespace {
     EnemyData CreateGolem() {
         EnemyData data;
         data.kind = EnemyKind::Golem;
-        data.displayName = "Golem";
+        data.displayName = "ロックマキナ";
         data.folder = "Data/Character/Golem/";
         data.modelFile = "golem.mv1";
 

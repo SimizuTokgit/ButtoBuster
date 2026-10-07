@@ -10,14 +10,20 @@ namespace {
         int thick;
     };
 
+    // { 大きさ px, 太さ } GameFont.h の Size と同じ順
     const FontSpec SPECS[] = {
-        { 18, 3 },
-        { 28, 5 },
-        { 56, 7 },
-        { 96, 9 },
+        { 18, 3 },  // Small
+        { 28, 5 },  // Medium
+        { 56, 7 },  // Large
+        { 96, 9 },  // Huge
+        { 15, 2 },  // Tiny
     };
 
-    int g_handles[] = { -1, -1, -1, -1 };
+    int g_handles[] = { -1, -1, -1, -1, -1 };
+
+    constexpr int SIZE_COUNT = static_cast<int>(GameFont::Size::Tiny) + 1;
+    static_assert(sizeof(SPECS) / sizeof(SPECS[0]) == SIZE_COUNT, "Size を足したら SPECS にも同じ順で足すこと");
+    static_assert(sizeof(g_handles) / sizeof(g_handles[0]) == SIZE_COUNT, "Size を足したら g_handles も増やすこと");
 }
 
 int GameFont::Get(Size size) {

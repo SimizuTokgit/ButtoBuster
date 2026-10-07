@@ -5,11 +5,13 @@
 // 大きさごとのフォントを最初に1回だけ作って使い回す
 namespace GameFont {
 
+    // 足した順に並べてある 大きさは GameFont.cpp の SPECS で、同じ順に並べる
     enum class Size {
         Small,
         Medium,
         Large,
         Huge,
+        Tiny,       // Small より小さい チュートリアルの説明に使う
     };
 
     int Get(Size size);

@@ -375,7 +375,7 @@ BehaviorStatus EnemyAI::SwingPlanned(float deltaTime) {
 }
 
 BehaviorStatus EnemyAI::SwingHeavy(float deltaTime) {
-    _enemy->SetThinking("大振り (ガード中かホカホカ)");
+    _enemy->SetThinking("大振り (ガード中かバースト値が溜まった)");
     return SwingAt(Technique::StrongSlash);
 }
 

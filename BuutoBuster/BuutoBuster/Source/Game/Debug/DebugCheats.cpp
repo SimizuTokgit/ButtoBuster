@@ -36,13 +36,13 @@ void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
     menu.AddCommand(KEY_INPUT_F6, "5フェーズ進める", [director]() {
         director->SkipPhases(5);
     });
-    menu.AddCommand(KEY_INPUT_F7, "Goblin を出す", [director]() {
+    menu.AddCommand(KEY_INPUT_F7, "グレゴブリン を出す", [director]() {
         director->SpawnImmediately(EnemyKind::Goblin);
     });
-    menu.AddCommand(KEY_INPUT_F8, "Bee を出す", [director]() {
+    menu.AddCommand(KEY_INPUT_F8, "ビーザトール を出す", [director]() {
         director->SpawnImmediately(EnemyKind::Bee);
     });
-    menu.AddCommand(KEY_INPUT_F9, "Golem を出す", [director]() {
+    menu.AddCommand(KEY_INPUT_F9, "ロックマキナ を出す", [director]() {
         director->SpawnImmediately(EnemyKind::Golem);
     });
 }

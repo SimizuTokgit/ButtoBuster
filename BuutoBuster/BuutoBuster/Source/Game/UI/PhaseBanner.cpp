@@ -76,7 +76,7 @@ void PhaseBanner::Render() {
         DrawBand(screenWidth, centerY + 30, 150, alpha);
         SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
         GameFont::DrawCentered(centerX, centerY - 10, "FULL HEAL", 0x80FFA0, GameFont::Size::Large);
-        GameFont::DrawCentered(centerX, centerY + 56, "吹っ飛ばされ値が 0 に戻った 次の波まで少し休める", 0xE0FFE8, GameFont::Size::Small);
+        GameFont::DrawCentered(centerX, centerY + 56, "バースト値が 0 に戻った 次の波まで少し休める", 0xE0FFE8, GameFont::Size::Small);
         SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
         break;
     }

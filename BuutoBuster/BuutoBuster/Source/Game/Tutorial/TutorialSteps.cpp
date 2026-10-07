@@ -69,7 +69,7 @@ namespace {
         { TutorialGoal::OwnHeat, TutorialPartner::None, 1,
             "自分のバースト値に気をつけよう",
             { "攻撃を食らうと、自分のバースト値も溜まる",
-              "バースト地がたっていると赤くなり湯気が出るので注意！！",
+              "バースト値が溜まっていると赤くなり湯気が出るので注意！！",
               "値は 5 フェーズごとの全回復で 0 に戻る" } },
 
         { TutorialGoal::HeatEnemy, TutorialPartner::Dummy, 1,
@@ -86,9 +86,9 @@ namespace {
 
         { TutorialGoal::DropBee, TutorialPartner::Bee, 1,
             "空の ビーザトール を落とそう",
-            { "Bee は空にいるので、地上の斬りは届かない",
+            { "ビーザトール は空にいるので、地上の斬りは届かない",
               "攻撃 + ジャンプ (J + SPACE / X + A) の対空斬りで落としてから叩く",
-              "本番の Bee は、離れたところから針を撃ってくる" } },
+              "本番の ビーザトール は、離れたところから針を撃ってくる" } },
 
         { TutorialGoal::AvoidStomp, TutorialPartner::Golem, 1,
             "ロックマキナ の踏みつけ",
