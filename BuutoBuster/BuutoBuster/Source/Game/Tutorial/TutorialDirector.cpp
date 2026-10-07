@@ -1,4 +1,5 @@
 ﻿#include "TutorialDirector.h"
+#include "GameObject.h"
 #include "Player.h"
 #include "PlayerController.h"
 #include "PlayerJumpState.h"
