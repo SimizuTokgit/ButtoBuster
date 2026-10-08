@@ -19,5 +19,5 @@ int WINAPI WinMain(
         return SceneManager::Instance().LoadScene<TitleScene>();
     });
     return result ? 0 : -1;
-	string str = "Hello, World!";
+
 }
