@@ -173,7 +173,9 @@ void PhaseDirector::StartPhase(int phase) {
 
     std::vector<EnemyKind> composition = BuildComposition(phase);
     _spawnQueue.assign(composition.begin(), composition.end());
-    _spawnTimer = 0.0f;
+
+    // 番号を出してから少し待って出し始める (PhaseData の spawnStartDelay)
+    _spawnTimer = data.spawnStartDelay;
 
     _tokens.SetCapacity(GetTokenCapacity());
     UpdateBgm();
