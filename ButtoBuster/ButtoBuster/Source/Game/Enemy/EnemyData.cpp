@@ -262,8 +262,8 @@ namespace {
         data.cooldownMax = 3.5f;
 
         data.cost = 4.0f;
-        data.unlockPhase = 8;
-        data.maxPerPhase = 2;
+        data.unlockPhase = 10;  // 最後のフェーズだけに 1 体出る
+        data.maxPerPhase = 1;
         data.pickWeight = 1;
 
         data.soundHit = "Golem/dmg_bySabel";

@@ -105,7 +105,7 @@ InputInfo EnemyAI::Think(float deltaTime) {
         if (_enemy->ConsumeAttackFinished() || _tokenTimer > TOKEN_TIMEOUT) {
             ReleaseToken();
             const EnemyData& data = _enemy->GetData();
-            _cooldown = RandomRange(data.cooldownMin, data.cooldownMax);
+            _cooldown = RollCooldown();
         }
     }
     else {
@@ -220,8 +220,9 @@ float EnemyAI::RandomRange(float min, float max) {
 // 木の形 上の枝ほど優先する 毎フレーム上から見直し、条件のそろった最初の枝を進める
 // 賢さが足りない枝は、はじめから木に入れない
 void EnemyAI::BuildTree() {
-    // 選んでいる難易度で足し引きする (Difficulty.cpp の intelligenceShift)
-    int intelligence = GameMode::AdjustIntelligence(_enemy->GetData().intelligence);
+    // 選んでいる難易度で足し引きする (Difficulty.cpp の intelligenceShift) 練習相手は決めた賢さのまま
+    int baseIntelligence = _enemy->GetData().intelligence;
+    int intelligence = followsDifficulty ? GameMode::AdjustIntelligence(baseIntelligence) : baseIntelligence;
     auto root = std::make_unique<BehaviorSelector<EnemyAI>>();
 
     // 振っている途中や、のけぞり 吹き飛びの間は、体が入力を聞かないので何もしない
@@ -288,7 +289,7 @@ void EnemyAI::UpdateAttackCycle(float deltaTime) {
     if (_enemy->ConsumeAttackFinished()) {
         ReleaseToken();
         const EnemyData& data = _enemy->GetData();
-        _cooldown = RandomRange(data.cooldownMin, data.cooldownMax);
+        _cooldown = RollCooldown();
         _nextTechnique = RollTechnique();
     }
     _cooldown -= deltaTime;
@@ -298,6 +299,12 @@ void EnemyAI::UpdateAttackCycle(float deltaTime) {
         _tokenTimer += deltaTime;
         if (_tokenTimer > TOKEN_TIMEOUT) ReleaseToken();
     }
+}
+
+float EnemyAI::RollCooldown() const {
+    const EnemyData& data = _enemy->GetData();
+    float rate = followsDifficulty ? GameMode::GetData().enemyCooldownRate : 1.0f;
+    return RandomRange(data.cooldownMin, data.cooldownMax) * rate;
 }
 
 bool EnemyAI::Notices(float seenTime) const {
