@@ -113,6 +113,9 @@ struct PlayerData {
     // ガードで受けたときに押される強さ 攻撃の吹っ飛ばしに掛ける割合
     float guardPushRate = 0.35f;
 
+    // ガードで弾いた敵を押し返す強さ 敵はのけぞり (EnemyDamageState)、この 6 割の速さで後ろへ下がる
+    float guardStaggerPush = 500.0f;
+
     // ----- 攻撃 -----
 
     // すべての技のダメージと吹っ飛ばしに掛ける倍率 強化で上げる

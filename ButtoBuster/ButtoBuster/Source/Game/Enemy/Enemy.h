@@ -30,6 +30,7 @@ public:
     void Start() override;
     void Execute(const InputInfo& input, float deltaTime) override;
     HitResult TakeHit(const HitInfo& info) override;
+    void OnAttackGuarded(VECTOR pushBack) override;
 
     // 壁を割ったときと、制作用に全滅させるときに呼ぶ 場外へ飛んで消えていく
     void Defeat(VECTOR knockback) override;

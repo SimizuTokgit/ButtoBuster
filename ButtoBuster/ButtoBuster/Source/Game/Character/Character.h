@@ -97,6 +97,10 @@ public:
 
     virtual bool IsCharging() const { return false; }
 
+    // 自分の攻撃が相手のガードで弾かれたときに呼ばれる pushBack は押し返される向きと強さ (水平)
+    // 敵はのけぞって隙を見せる プレイヤーの攻撃を止める敵はいないので、ここでは何もしない
+    virtual void OnAttackGuarded(VECTOR pushBack) {}
+
     // この体の物理の時間の進み方 1 で普段どおり 状態や AI に渡す時間は、呼ぶ側が同じだけ縮めておく
     void SetTimeScale(float scale);
 

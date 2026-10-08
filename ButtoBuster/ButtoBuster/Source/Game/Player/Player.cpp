@@ -85,6 +85,8 @@ HitResult Player::TakeHit(const HitInfo& info) {
             effects->HitStop(0.04f);
         }
         SoundManager::Instance().PlaySE("Player/guard_success");
+
+        StaggerGuardedAttacker(info);
         return HitResult::Guarded;
     }
 
@@ -260,6 +262,20 @@ void Player::UpdateDodgeStock(float deltaTime) {
 
     _dodgeStock += deltaTime / data.dodgeRechargeTime;
     if (_dodgeStock > fullStock) _dodgeStock = fullStock;
+}
+
+void Player::StaggerGuardedAttacker(const HitInfo& info) {
+    // 針のように撃った本人がいない攻撃と、飛んできた敵がぶつかった攻撃は弾き返さない
+    if (!info.attacker || info.isFromProjectile) return;
+
+    // 自分から相手へ向かう向きに押し返す
+    VECTOR away = VSub(info.attacker->GetPosition(), GetPosition());
+    away.y = 0.0f;
+    float distance = VSize(away);
+    if (distance < 0.001f) return;
+
+    VECTOR pushBack = VScale(away, data.guardStaggerPush / distance);
+    info.attacker->OnAttackGuarded(pushBack);
 }
 
 void Player::SucceedJustDodge(const Character* attacker) {

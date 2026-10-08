@@ -149,6 +149,9 @@ private:
     // attacker はかわした攻撃を振った相手 その目の前まで寄る 分からなければ寄らない
     void SucceedJustDodge(const Character* attacker);
 
+    // ガードで止めた攻撃の持ち主をのけぞらせる 反撃の隙を作る
+    void StaggerGuardedAttacker(const HitInfo& info);
+
     // 地形の穴に落ちたら、最初の場所へ戻す
     void ReturnIfFallen();
 };
