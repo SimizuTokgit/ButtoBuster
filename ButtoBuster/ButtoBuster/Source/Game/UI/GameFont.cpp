@@ -18,13 +18,13 @@ namespace {
     };
 
     // { 大きさ px, 太さ, FONT_FILE を使うか } GameFont.h の Size と同じ順
-    // 叛逆明朝 は字が細く縦長なので、小さい大きさ (Small Tiny) で読みにくければ false にする
+    // 叛逆明朝 は字が細く縦長で小さいと読みにくいので、見出しの大きさ (Medium Large Huge) だけに使う
     const FontSpec SPECS[] = {
-        { 18, 3, true },    // Small
+        { 18, 3, false },   // Small  説明の文字 読みやすさを優先して標準のフォント
         { 28, 5, true },    // Medium
         { 56, 7, true },    // Large
         { 96, 9, true },    // Huge
-        { 15, 2, true },    // Tiny
+        { 15, 2, false },   // Tiny   チュートリアルの説明 同じく標準のフォント
     };
 
     int g_handles[] = { -1, -1, -1, -1, -1 };
