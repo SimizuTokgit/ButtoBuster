@@ -62,6 +62,9 @@ private:
     void ApplyHit(Player& player);
     bool TryContinue(Player& player, const InputInfo& input);
 
+    // あと隙が明けたあと、ガードを押していれば、アニメの終わりを待たずに構える
+    bool TryGuard(Player& player, const InputInfo& input);
+
     // あと隙が明けたら true 明けるまでは回避も次の技も受け付けない
     bool UpdateRecovery(Player& player, float deltaTime);
 

@@ -114,6 +114,16 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     return HitResult::Hit;
 }
 
+void Enemy::OnAttackGuarded(VECTOR pushBack) {
+    // 倒された敵と、殴ってものけぞらない重い敵 (ロックマキナ) はそのまま
+    if (IsDead() || !_data->canFlinch) return;
+
+    // 弾かれて体勢を崩すだけなので、吹っ飛ばされ値は溜めない
+    // 攻撃の状態を抜けるときに振り終わりを知らせるので、攻撃の番も返される (EnemyAttackState::Exit)
+    SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
+    _states.Transition(_states.GetCurrent(), std::make_unique<EnemyDamageState>(pushBack));
+}
+
 bool Enemy::ConsumeAttackFinished() {
     bool isFinished = _hasFinishedAttack;
     _hasFinishedAttack = false;

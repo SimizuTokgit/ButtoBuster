@@ -3,6 +3,7 @@
 #include "PlayerActions.h"
 #include "PlayerAttacks.h"
 #include "PlayerIdleState.h"
+#include "PlayerGuardState.h"
 #include "PlayerJumpState.h"
 #include "CombatSystem.h"
 #include "BlowChain.h"
@@ -96,7 +97,9 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
     // あと隙の間は、回避もガードも次の技も出せない 押された技は覚えておき、明けたら出す
     if (!UpdateRecovery(player, deltaTime)) return;
 
+    // あと隙が明けたら、押してあった技を先に出し、なければガードを見る
     if (TryContinue(player, input)) return;
+    if (TryGuard(player, input)) return;
 
     if (!player.IsAnimationFinished()) return;
 
@@ -225,6 +228,15 @@ float PlayerAttackState::GetOpeningTime(const Player& player) const {
 
 float PlayerAttackState::GetLastHitEnd() const {
     return (_data.hitStart2 >= 0.0f) ? _data.hitEnd2 : _data.hitEnd;
+}
+
+bool PlayerAttackState::TryGuard(Player& player, const InputInfo& input) {
+    // 構えられるのは地上だけ 空中の技は今までどおり着地まで待つ
+    if (!input.isGuardHeld || !player.IsGrounded()) return false;
+
+    // あと隙は最後の判定が消えてから数えるので、ここではもう攻撃の判定は出ていない
+    // 剣の軌跡の後片付けは Exit が行う
+    return player.GetStates().Transition(this, make_unique<PlayerGuardState>());
 }
 
 bool PlayerAttackState::TryContinue(Player& player, const InputInfo& input) {
