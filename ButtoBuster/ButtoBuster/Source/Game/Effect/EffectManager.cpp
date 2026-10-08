@@ -3,6 +3,7 @@
 #include "Transform.h"
 #include "ParticleSystem.h"
 #include "ScreenFlash.h"
+#include "EnemyMarkerRenderer.h"
 #include "CameraFollow.h"
 #include "StageBuilder.h"
 #include "ArenaBoundary.h"
@@ -247,6 +248,9 @@ void EffectManager::Initialize(CameraFollow* camera) {
     // 弧と輪 画像は剣の軌跡と同じものを使い、見た目をそろえる
     _shapes = gameObject->AddChild("ShapeEffects")->AddComponent<ShapeEffectRenderer>();
     _shapes->Setup("Data/Effect/SlashLocus.png", "Data/Effect/SphereLocus.png");
+
+    // 敵の足元の影と輪 地面に溶けて見えにくい敵を目立たせる
+    gameObject->AddChild("EnemyMarkers")->AddComponent<EnemyMarkerRenderer>()->Setup();
 
     _screenFlash = gameObject->AddChild("ScreenFlash")->AddComponent<ScreenFlash>();
 }
