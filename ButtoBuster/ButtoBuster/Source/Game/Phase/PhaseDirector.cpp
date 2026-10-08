@@ -34,6 +34,7 @@ void PhaseDirector::Initialize(Player* player, PlayerController* controller) {
     const DifficultyData& difficulty = GameMode::GetData();
     data.tokenStepPhases = difficulty.tokenStepPhases;
     data.maxTokens = difficulty.maxTokens;
+    data.healInterval = difficulty.healInterval;
 
     StartPhase(1);
 }

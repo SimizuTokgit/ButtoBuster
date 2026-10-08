@@ -70,7 +70,7 @@ namespace {
             "自分のバースト値に気をつけよう",
             { "攻撃を食らうと、自分のバースト値も溜まる",
               "バースト値が溜まっていると赤くなり湯気が出るので注意！！",
-              "値は 5 フェーズごとの全回復で 0 に戻る" } },
+              "値は全回復で 0 に戻る (EASY は 3、NORMAL は 4、HARD は 5 フェーズごと)" } },
 
         { TutorialGoal::HeatEnemy, TutorialPartner::Dummy, 1,
             "敵のバースト値を溜めよう",
@@ -99,7 +99,7 @@ namespace {
         { TutorialGoal::Finish, TutorialPartner::None, 1,
             "準備完了",
             { "敵を全部倒すと次のフェーズへ フェーズ 10 を越えれば勝ち",
-              "5 フェーズごとに全回復する",
+              "全回復は EASY 3 / NORMAL 4 / HARD 5 フェーズごと",
               "決定で本番へ" } },
     };
 
