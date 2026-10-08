@@ -147,6 +147,9 @@
     <ClCompile Include="Source\Game\Effect\EffectManager.cpp">
       <Filter>Source\Game\Effect</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Effect\EnemyMarkerRenderer.cpp">
+      <Filter>Source\Game\Effect</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Effect\ScreenFlash.cpp">
       <Filter>Source\Game\Effect</Filter>
     </ClCompile>
@@ -513,6 +516,9 @@
       <Filter>Source\Game\Debug</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Effect\EffectManager.h">
+      <Filter>Source\Game\Effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Effect\EnemyMarkerRenderer.h">
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Effect\ScreenFlash.h">

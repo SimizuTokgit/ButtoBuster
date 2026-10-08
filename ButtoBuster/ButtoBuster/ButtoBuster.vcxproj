@@ -102,6 +102,7 @@
     <ClCompile Include="Source\Game\Debug\ChargePoseDebugger.cpp" />
     <ClCompile Include="Source\Game\Debug\DebugCheats.cpp" />
     <ClCompile Include="Source\Game\Effect\EffectManager.cpp" />
+    <ClCompile Include="Source\Game\Effect\EnemyMarkerRenderer.cpp" />
     <ClCompile Include="Source\Game\Effect\ScreenFlash.cpp" />
     <ClCompile Include="Source\Game\Effect\ShapeEffectRenderer.cpp" />
     <ClCompile Include="Source\Game\Effect\SlashTrail.cpp" />
@@ -226,6 +227,7 @@
     <ClInclude Include="Source\Game\Debug\ColliderGizmo.h" />
     <ClInclude Include="Source\Game\Debug\DebugCheats.h" />
     <ClInclude Include="Source\Game\Effect\EffectManager.h" />
+    <ClInclude Include="Source\Game\Effect\EnemyMarkerRenderer.h" />
     <ClInclude Include="Source\Game\Effect\ScreenFlash.h" />
     <ClInclude Include="Source\Game\Effect\ShapeEffectRenderer.h" />
     <ClInclude Include="Source\Game\Effect\SlashTrail.h" />
