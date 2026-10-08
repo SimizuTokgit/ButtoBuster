@@ -2,7 +2,7 @@
 #include "UIImage.h"
 
 // タイトル画面
-// 最高記録と操作を出し、決定でゲームへ進む
+// 操作を出し、決定でモード選択へ進む
 class TitleScreen : public UIImage {
 private:
     // 前の画面で押しっぱなしのボタンで即開始しないように少し待つ
@@ -10,7 +10,6 @@ private:
 
     float _timer = 0.0f;
     bool _isRequested = false;
-    int _bestPhase = 0;
     int _background = -1;
 
 public:

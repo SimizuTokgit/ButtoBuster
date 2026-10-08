@@ -7,6 +7,7 @@
 #include "SoundManager.h"
 #include "Time.h"
 #include "TitleScene.h"
+#include "Difficulty.h"
 #include "DxLib.h"
 #include <cmath>
 #include <cstdio>
@@ -99,7 +100,7 @@ void ResultScreen::Render() {
         _director->GetKillCount(), _player ? _player->GetMaxCombo() : 0);
     GameFont::DrawCentered(centerX, top + 206, text, 0xE0E0E0, GameFont::Size::Medium);
 
-    snprintf(text, sizeof(text), "最高記録  フェーズ %d", _director->GetBestPhase());
+    snprintf(text, sizeof(text), "%s の最高記録  フェーズ %d", GameMode::GetData().name, _director->GetBestPhase());
     GameFont::DrawCentered(centerX, top + 252, text, 0xC0C0C0, GameFont::Size::Medium);
 
     if (_director->IsNewRecord()) {

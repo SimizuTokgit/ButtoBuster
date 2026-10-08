@@ -185,6 +185,32 @@ public:
             || PadPressed(XINPUT_BUTTON_A);
     }
 
+    // 戻る モード選択からタイトルへ戻るのに使う
+    bool CancelPressed() const {
+        return KeyPressed(KEY_INPUT_BACK)
+            || MousePressed(MOUSE_INPUT_RIGHT)
+            || PadPressed(XINPUT_BUTTON_B);
+    }
+
+    // メニューの選択を上下に動かす キー 十字キー 左スティック
+    // スティックは、遊びの外へ倒した瞬間の 1 回だけ数える
+    bool MenuUpPressed() const {
+        return KeyPressed(KEY_INPUT_W) || KeyPressed(KEY_INPUT_UP)
+            || PadPressed(XINPUT_BUTTON_DPAD_UP)
+            || (StickY(_pad) > DEAD_ZONE && StickY(_prevPad) <= DEAD_ZONE);
+    }
+
+    bool MenuDownPressed() const {
+        return KeyPressed(KEY_INPUT_S) || KeyPressed(KEY_INPUT_DOWN)
+            || PadPressed(XINPUT_BUTTON_DPAD_DOWN)
+            || (StickY(_pad) < -DEAD_ZONE && StickY(_prevPad) >= -DEAD_ZONE);
+    }
+
+    // マウスのカーソルの位置 画面の座標
+    void GetMousePosition(int* x, int* y) const {
+        GetMousePoint(x, y);
+    }
+
     // スキップ チュートリアルを飛ばすのに使う 長押しで決まるので、押している間を返す
     bool SkipHeld() const {
         return KeyHeld(KEY_INPUT_RETURN)
@@ -195,6 +221,12 @@ public:
 private:
     InputSystem() = default;
     ~InputSystem() = default;
+
+    // 左スティックの上下 上がプラス -1〜1
+    float StickY(const XINPUT_STATE& pad) const {
+        if (!_padConnected) return 0.0f;
+        return pad.ThumbLY / STICK_MAX;
+    }
 
     // 押していなければ TRIGGER_PRESS まで引いたら押した、押していれば TRIGGER_RELEASE より戻したら離した
     static bool IsTriggerHeld(bool wasHeld, int value) {

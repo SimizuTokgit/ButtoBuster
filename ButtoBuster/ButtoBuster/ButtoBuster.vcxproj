@@ -119,6 +119,7 @@
     <ClCompile Include="Source\Game\Enemy\State\EnemyMoveState.cpp" />
     <ClCompile Include="Source\Game\Enemy\State\EnemyShootState.cpp" />
     <ClCompile Include="Source\Game\Input\PlayerController.cpp" />
+    <ClCompile Include="Source\Game\Phase\Difficulty.cpp" />
     <ClCompile Include="Source\Game\Phase\PhaseDirector.cpp" />
     <ClCompile Include="Source\Game\Phase\SaveData.cpp" />
     <ClCompile Include="Source\Game\Phase\VictoryEffectObserver.cpp" />
@@ -159,6 +160,7 @@
     <ClCompile Include="Source\Game\UI\GameFont.cpp" />
     <ClCompile Include="Source\Game\UI\Hud.cpp" />
     <ClCompile Include="Source\Game\UI\JustDodgeBanner.cpp" />
+    <ClCompile Include="Source\Game\UI\ModeSelectScreen.cpp" />
     <ClCompile Include="Source\Game\UI\PhaseBanner.cpp" />
     <ClCompile Include="Source\Game\UI\ResultScreen.cpp" />
     <ClCompile Include="Source\Game\UI\TitleScreen.cpp" />
@@ -243,6 +245,7 @@
     <ClInclude Include="Source\Game\Enemy\State\EnemyShootState.h" />
     <ClInclude Include="Source\Game\Input\InputInfo.h" />
     <ClInclude Include="Source\Game\Input\PlayerController.h" />
+    <ClInclude Include="Source\Game\Phase\Difficulty.h" />
     <ClInclude Include="Source\Game\Phase\PhaseData.h" />
     <ClInclude Include="Source\Game\Phase\PhaseDirector.h" />
     <ClInclude Include="Source\Game\Phase\SaveData.h" />
@@ -276,6 +279,7 @@
     <ClInclude Include="Source\Game\Projectile\Needle.h" />
     <ClInclude Include="Source\Game\Projectile\NeedlePool.h" />
     <ClInclude Include="Source\Game\Scene\GameScene.h" />
+    <ClInclude Include="Source\Game\Scene\ModeSelectScene.h" />
     <ClInclude Include="Source\Game\Scene\TitleScene.h" />
     <ClInclude Include="Source\Game\Scene\TutorialScene.h" />
     <ClInclude Include="Source\Game\Stage\ArenaBoundary.h" />
@@ -292,6 +296,7 @@
     <ClInclude Include="Source\Game\UI\GameFont.h" />
     <ClInclude Include="Source\Game\UI\Hud.h" />
     <ClInclude Include="Source\Game\UI\JustDodgeBanner.h" />
+    <ClInclude Include="Source\Game\UI\ModeSelectScreen.h" />
     <ClInclude Include="Source\Game\UI\PhaseBanner.h" />
     <ClInclude Include="Source\Game\UI\ResultScreen.h" />
     <ClInclude Include="Source\Game\UI\TitleScreen.h" />

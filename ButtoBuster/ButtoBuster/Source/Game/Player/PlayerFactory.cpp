@@ -16,6 +16,7 @@
 #include "CapsuleCollider.h"
 #include "SkinnedMeshRenderer.h"
 #include "Animator.h"
+#include "Difficulty.h"
 
 namespace {
     const char* const FOLDER = "Data/Character/Player/";
@@ -87,6 +88,9 @@ Player* PlayerFactory::Create(VECTOR position) {
     // 操作役を先に付けておくと、毎フレーム Player より先に入力を作る
     root->AddComponent<PlayerController>();
     auto* player = root->AddComponent<Player>();
+
+    // 許容値は選んでいる難易度で決める (Difficulty.cpp の playerBlowLimit)
+    player->data.blow.limit = GameMode::GetData().playerBlowLimit;
     root->AddComponent<ColliderGizmo>();
 
     // 溜めの音と光は Player に書かず、知らせを受け取る側としてここでつなぐ

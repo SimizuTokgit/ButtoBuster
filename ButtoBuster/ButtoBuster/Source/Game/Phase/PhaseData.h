@@ -19,6 +19,7 @@ struct PhaseData {
 
     // 同時に攻撃してくる数 = 1 + (フェーズ - 1) ÷ tokenStepPhases (maxTokens まで)
     // ほかの敵は周りを回って順番を待つ
+    // 本番では、この 2 つは選んだ難易度の値で置き換わる (Difficulty.cpp の表) ここの値はノーマルと同じ
     int tokenStepPhases = 3;
     int maxTokens = 4;
 

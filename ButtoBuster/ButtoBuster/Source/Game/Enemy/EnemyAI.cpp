@@ -4,6 +4,7 @@
 #include "EnemyMoveState.h"
 #include "ArenaWall.h"
 #include "PhaseDirector.h"
+#include "Difficulty.h"
 #include "GameObject.h"
 #include <cmath>
 
@@ -219,7 +220,8 @@ float EnemyAI::RandomRange(float min, float max) {
 // 木の形 上の枝ほど優先する 毎フレーム上から見直し、条件のそろった最初の枝を進める
 // 賢さが足りない枝は、はじめから木に入れない
 void EnemyAI::BuildTree() {
-    int intelligence = _enemy->GetData().intelligence;
+    // 選んでいる難易度で足し引きする (Difficulty.cpp の intelligenceShift)
+    int intelligence = GameMode::AdjustIntelligence(_enemy->GetData().intelligence);
     auto root = std::make_unique<BehaviorSelector<EnemyAI>>();
 
     // 振っている途中や、のけぞり 吹き飛びの間は、体が入力を聞かないので何もしない

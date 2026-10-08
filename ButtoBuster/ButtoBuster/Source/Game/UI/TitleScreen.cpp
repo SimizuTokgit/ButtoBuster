@@ -1,13 +1,11 @@
 ﻿#include "TitleScreen.h"
 #include "GameFont.h"
-#include "TutorialScene.h"
-#include "SaveData.h"
+#include "ModeSelectScene.h"
 #include "InputSystem.h"
 #include "SceneManager.h"
 #include "SoundManager.h"
 #include "DxLib.h"
 #include <cmath>
-#include <cstdio>
 
 TitleScreen::~TitleScreen() {
     if (_background != -1) DeleteGraph(_background);
@@ -17,7 +15,6 @@ void TitleScreen::Start() {
     // 描画の一覧に登録するのは親の Start なので必ず呼ぶ
     UIImage::Start();
 
-    _bestPhase = SaveData::LoadBestPhase();
     _background = LoadGraph("Data/2D/TitleBack.png");
     SoundManager::Instance().CrossfadeBGM("BGM_title", 1.0f);
 }
@@ -30,8 +27,8 @@ void TitleScreen::Update(float deltaTime) {
 
     _isRequested = true;
     SoundManager::Instance().PlaySE("Common/system_enter");
-    // 本番の前に、毎回チュートリアルを挟む (長押しで飛ばせる)
-    SceneManager::Instance().RequestLoadScene<TutorialScene>();
+    // 難易度を選ぶ画面へ チュートリアルと本番はそのあと
+    SceneManager::Instance().RequestLoadScene<ModeSelectScene>();
 }
 
 void TitleScreen::Render() {
@@ -53,11 +50,7 @@ void TitleScreen::Render() {
     GameFont::DrawCentered(centerX, 110, "BUTTO BUSTER", 0xFFFFFF, GameFont::Size::Huge);
     GameFont::DrawCentered(centerX, 220, "押し寄せる敵の波を 何フェーズ生き残れるか", 0xD0D0D0, GameFont::Size::Small);
 
-    char text[64];
-    if (_bestPhase > 0) {
-        snprintf(text, sizeof(text), "最高記録  フェーズ %d", _bestPhase);
-        GameFont::DrawCentered(centerX, 262, text, 0xFFD060, GameFont::Size::Medium);
-    }
+    // 最高記録は難易度ごとに分けたので、モード選択のボタンの横に出す
 
     const char* controls[] = {
         "移動              WASD / 左スティック",

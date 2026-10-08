@@ -17,6 +17,7 @@ Unity のコンポーネント指向の仕組みを C++ と DxLib で作った�
 | 連鎖 | 吹き飛んだ敵が砲弾になり、触れた敵も巻き込んで吹き飛ばす |
 | ジャスト回避 | 当たる直前の回避で敵がスローになり、踏み込んで反撃できる |
 | フェーズ | 敵を全部倒すと次へ。5 フェーズごとに全回復、フェーズ 10 を越えたら勝ち |
+| 難易度 | EASY / NORMAL / HARD。自分の許容値、敵の賢さ、同時に攻撃してくる敵の数が変わる。最高記録も難易度ごと |
 
 ## 操作
 
@@ -60,7 +61,7 @@ Engine/ は Game/ を一切参照しません（依存は Game → Engine の一
 | オブザーバー | Subject&lt;E&gt; / Observer&lt;E&gt; | 音や演出を足しても、プレイヤーや進行の処理を書き換えない |
 | ストラテジー | InputInfo | 人（PlayerController）と敵（EnemyAI）が同じ処理で動く |
 | ビヘイビアツリー | Engine/AI/BehaviorTree.h、EnemyAI | 敵の行動を優先順の枝で選び、賢さの数値で枝を変える |
-| データ駆動 | AttackData / EnemyData / PhaseData / TutorialSteps | 技や敵の違いは表で表し、処理は 1 つにする |
+| データ駆動 | AttackData / EnemyData / PhaseData / DifficultyData / TutorialSteps | 技や敵の違いは表で表し、処理は 1 つにする |
 | ファクトリ / ビルダー | PlayerFactory / EnemyFactory / CharacterBuilder | キャラの組み立て手順を 1 か所にまとめる |
 | オブジェクトプール | NeedlePool | 針を先に作って使い回す |
 | 共有の寿命 | BlowChain（shared_ptr） | 連鎖に関わる全員で持ち、最後の 1 人が手放したら終わる |

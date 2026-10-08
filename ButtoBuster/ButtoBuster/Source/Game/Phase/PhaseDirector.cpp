@@ -1,5 +1,6 @@
 ﻿#include "PhaseDirector.h"
 #include "SaveData.h"
+#include "Difficulty.h"
 #include "Player.h"
 #include "PlayerController.h"
 #include "Enemy.h"
@@ -27,7 +28,12 @@ void PhaseDirector::Initialize(Player* player, PlayerController* controller) {
     _instance = this;
     _player = player;
     _controller = controller;
-    _bestPhase = SaveData::LoadBestPhase();
+    _bestPhase = SaveData::LoadBestPhase(GameMode::Get());
+
+    // 同時に攻撃してくる数は難易度で決める (Difficulty.cpp の表)
+    const DifficultyData& difficulty = GameMode::GetData();
+    data.tokenStepPhases = difficulty.tokenStepPhases;
+    data.maxTokens = difficulty.maxTokens;
 
     StartPhase(1);
 }
@@ -225,7 +231,7 @@ void PhaseDirector::SaveRecord() {
     if (!_isNewRecord) return;
 
     _bestPhase = _phase;
-    SaveData::SaveBestPhase(_phase);
+    SaveData::SaveBestPhase(GameMode::Get(), _phase);
 }
 
 bool PhaseDirector::IsFinished() const {
