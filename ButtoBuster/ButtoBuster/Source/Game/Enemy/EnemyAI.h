@@ -118,6 +118,9 @@ public:
     // 練習台 攻撃も番の取り合いもせず、その場で相手のほうを向いて立っている チュートリアルが使う
     bool isPassive = false;
 
+    // 選んだ難易度 (賢さの増減と攻撃の待ちの倍率) に従うか チュートリアルの練習相手は false にして、決めた通りに動かす
+    bool followsDifficulty = true;
+
     ~EnemyAI() override;
 
     void Start() override;
@@ -136,6 +139,9 @@ private:
     void ReleaseToken();
 
     static float RandomRange(float min, float max);
+
+    // 攻撃してから次の番を欲しがるまでの待ち 難易度の倍率を掛ける
+    float RollCooldown() const;
 
     // 練習台のとき 相手を見て立っているだけ
     InputInfo Stand();

@@ -29,6 +29,10 @@ struct DifficultyData {
     // 勝ちはフェーズ 10 なので、3 なら 3 6 9 の 3 回、4 なら 4 8 の 2 回、5 なら 5 の 1 回
     int healInterval;
 
+    // 敵が攻撃してから次の攻撃の番を欲しがるまでの待ち (EnemyData の cooldownMin / Max) に掛ける数
+    // 大きいほど攻撃がまばらになる
+    float enemyCooldownRate;
+
     // モード選択でこのボタンを選んでいる間の背景 無ければタイトルの背景を使う
     const char* background;
 };

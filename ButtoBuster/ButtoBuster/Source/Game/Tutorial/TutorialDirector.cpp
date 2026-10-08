@@ -34,10 +34,10 @@ namespace {
         return data;
     }
 
-    // 大振りだけを振る Goblin
+    // 大振りだけを振る Goblin 賢さ 2 から大振りを振るので 2 にする
     EnemyData MakeHeavy() {
         EnemyData data = EnemyDatabase::Get(EnemyKind::Goblin);
-        data.intelligence = 1;
+        data.intelligence = 2;
         data.heavyChance = 1.0f;
         return data;
     }
@@ -399,8 +399,12 @@ void TutorialDirector::SpawnPartner() {
     position.y = groundY + (data.isFlying ? data.hoverHeight : 40.0f);
 
     _partner = _phases->SpawnAt(data, position);
-    if (_partner && IsPassivePartner(_partnerKind)) {
-        if (auto* ai = _partner->GetComponent<EnemyAI>()) ai->isPassive = true;
+    if (!_partner) return;
+
+    // 練習相手は難易度に関係なく、上の数値の通りに動かす
+    if (auto* ai = _partner->GetComponent<EnemyAI>()) {
+        ai->followsDifficulty = false;
+        ai->isPassive = IsPassivePartner(_partnerKind);
     }
 }
 
