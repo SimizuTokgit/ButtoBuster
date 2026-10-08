@@ -27,7 +27,7 @@ namespace {
 
         { TutorialGoal::Combo, TutorialPartner::Dummy, 3,
             "練習台を斬ってみよう",
-            { "J / 左クリック / X で斬る 続けて押すと 3 段まで繋がる",
+            { "J / 左クリック / X で斬る 続けて押すと 3 段までつながる",
               "3 回続けて当てよう" } },
 
         { TutorialGoal::Charge, TutorialPartner::Dummy, 1,

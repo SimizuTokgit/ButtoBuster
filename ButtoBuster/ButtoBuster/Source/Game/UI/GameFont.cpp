@@ -3,23 +3,42 @@
 #include <cstring>
 
 namespace {
+    // ----- 使うフォント -----
+    // ファイルはゲームの中だけで使えるように読み込む (パソコンに入れなくてよい)
+    // 名前はフォントの中に書いてある名前 (叛逆明朝 の英語の名前) 読めなかったときは標準のフォントで描く
+    constexpr const char* FONT_FILE = "Data/Font/Hangyaku.ttf";
+    constexpr const char* FONT_NAME = "Hangyaku";
+
     constexpr unsigned int EDGE_COLOR = 0x101018;
 
     struct FontSpec {
         int size;
         int thick;
+        bool useFontFile;   // true で FONT_FILE のフォント、false で標準のフォント
     };
 
-    // { 大きさ px, 太さ } GameFont.h の Size と同じ順
+    // { 大きさ px, 太さ, FONT_FILE を使うか } GameFont.h の Size と同じ順
+    // 叛逆明朝 は字が細く縦長なので、小さい大きさ (Small Tiny) で読みにくければ false にする
     const FontSpec SPECS[] = {
-        { 18, 3 },  // Small
-        { 28, 5 },  // Medium
-        { 56, 7 },  // Large
-        { 96, 9 },  // Huge
-        { 15, 2 },  // Tiny
+        { 18, 3, true },    // Small
+        { 28, 5, true },    // Medium
+        { 56, 7, true },    // Large
+        { 96, 9, true },    // Huge
+        { 15, 2, true },    // Tiny
     };
 
     int g_handles[] = { -1, -1, -1, -1, -1 };
+
+    // フォントのファイルを読み込んだか 最初に文字を作るときに 1 回だけ読む
+    bool g_isFontLoaded = false;
+    bool g_hasFontFile = false;
+
+    // FR_PRIVATE で読むので、このゲームを閉じると自動で外れる
+    void LoadFontFile() {
+        if (g_isFontLoaded) return;
+        g_isFontLoaded = true;
+        g_hasFontFile = AddFontResourceExA(FONT_FILE, FR_PRIVATE, nullptr) > 0;
+    }
 
     constexpr int SIZE_COUNT = static_cast<int>(GameFont::Size::Tiny) + 1;
     static_assert(sizeof(SPECS) / sizeof(SPECS[0]) == SIZE_COUNT, "Size を足したら SPECS にも同じ順で足すこと");
@@ -29,8 +48,9 @@ namespace {
 int GameFont::Get(Size size) {
     int index = static_cast<int>(size);
     if (g_handles[index] == -1) {
+        LoadFontFile();
         const FontSpec& spec = SPECS[index];
-        g_handles[index] = CreateFontToHandle(nullptr, spec.size, spec.thick, DX_FONTTYPE_ANTIALIASING_EDGE_8X8, -1, 2);
+        g_handles[index] = CreateFontToHandle((g_hasFontFile && spec.useFontFile) ? FONT_NAME : nullptr, spec.size, spec.thick, DX_FONTTYPE_ANTIALIASING_EDGE_8X8, -1, 2);
     }
     return g_handles[index];
 }
