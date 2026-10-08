@@ -10,10 +10,13 @@ class Character;
 // 状況を見て InputInfo を作り、Enemy に渡す
 // PlayerController と同じ役割で、敵の体はどちらから来た入力かを知らない
 //
-// 賢さ (EnemyData の intelligence) が 1 以上の敵は、行動の木 (BehaviorTree.h) で動く 木の形は BuildTree
-//   1: 番を取ったら近づいて振る 届く距離に入れば番がなくても振る ときどき大振り (heavyChance)
-//   2: + ガード中とホカホカの相手には大振り、こちらを向いて溜めていたら下がる
+// 賢さ (EnemyData の intelligence を難易度で足し引きした値) が 1 以上の敵は、行動の木 (BehaviorTree.h) で動く 木の形は BuildTree
+// 賢さが 1 上がるごとに枝が増え、気づくのも早くなる (REACTION_RATES)
+//   1: 番を取ったら近づいて振る 届く距離に入れば番がなくても振る 大振りは振らない 気づくのが遅い
+//   2: + ときどき大振り (heavyChance)、ガード中とホカホカの相手には大振り、こちらを向いて溜めていたら下がる
 //   3: + 相手の隙に踏み込む、待つ間は背中側へ回り込む
+//   4: + 自分のバースト値が溜まったら壁から離れる (壁を割られないように) 気づくのが早い
+//   5: + 相手が背中を向けたら、番がなくても踏み込む 気づくのがいちばん早い
 // 賢さ 0 の敵 (Bee と Golem) は今までどおり、番を持っていれば近づいて技を出し、持っていなければ相手の周りを回る
 class EnemyAI : public MonoBehaviour {
 private:
@@ -68,6 +71,23 @@ private:
     // 回り込むときは普段 (ORBIT_SPEED) の何倍の速さで回るか
     static constexpr float FLANK_SPEED_RATE = 2.0f;
 
+    // 気づくまでの時間 (EnemyData の reactionTime) に掛ける数 賢さ 0〜5 の順 小さいほど早く気づく
+    static constexpr float REACTION_RATES[] = { 1.0f, 1.8f, 1.0f, 1.0f, 0.6f, 0.4f };
+
+    // 自分の吹っ飛ばされ値が許容値のこの割合以上で、壁に近いと離れる (賢さ 4)
+    static constexpr float SELF_DANGER_RATIO = 0.7f;
+
+    // 壁までがこの距離より近いと離れ始め、WALL_SAFE_DISTANCE まで離れたらやめる (賢さ 4)
+    // 2 つの距離をずらしておくと、境目で離れる 戻るを繰り返さない
+    static constexpr float WALL_DANGER_DISTANCE = 450.0f;
+    static constexpr float WALL_SAFE_DISTANCE = 700.0f;
+
+    // 相手の向きとこちらへの向きの内積がこれより小さいと、背中を向けているとみなす (賢さ 5) -1 で真後ろ
+    static constexpr float BACK_TURNED_DOT = -0.3f;
+
+    // 背中を向けた相手に踏み込むのは、この距離より近いとき (賢さ 5)
+    static constexpr float BACKSTAB_DISTANCE = 600.0f;
+
     Enemy* _enemy = nullptr;
 
     bool _hasToken = false;
@@ -82,6 +102,9 @@ private:
 
     // ----- 行動の木 (賢さ 1 以上の敵) -----
     BehaviorNodePtr<EnemyAI> _tree;
+    int _intelligence = 0;               // 難易度で足し引きしたあとの賢さ BuildTree で決める
+    float _wallDistance = 0.0f;          // 壁までの距離
+    bool _isLeavingWall = false;         // 壁から離れている途中か
     InputInfo _input;                    // 葉が書き込む、このフレームの入力
     VECTOR _toTarget = VGet(0.0f, 0.0f, 0.0f);
     float _distance = 0.0f;
@@ -139,6 +162,8 @@ private:
     bool IsTargetAtLimit() const;
     bool SeesCharge() const;
     bool SeesOpening() const;
+    bool IsCornered() const;
+    bool SeesBack() const;
 
     // 行動の葉 _input に書き込み、Running / Success / Failure を返す
     BehaviorStatus Hold(float deltaTime);
@@ -150,5 +175,6 @@ private:
     BehaviorStatus RushIn(float deltaTime);
     BehaviorStatus Orbit(float deltaTime);
     BehaviorStatus Flank(float deltaTime);
+    BehaviorStatus LeaveWall(float deltaTime);
     BehaviorStatus SwingAt(Technique technique);
 };

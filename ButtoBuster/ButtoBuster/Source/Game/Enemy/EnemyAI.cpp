@@ -3,6 +3,7 @@
 #include "EnemyIdleState.h"
 #include "EnemyMoveState.h"
 #include "ArenaWall.h"
+#include "StageBuilder.h"
 #include "PhaseDirector.h"
 #include "Difficulty.h"
 #include "GameObject.h"
@@ -221,14 +222,21 @@ float EnemyAI::RandomRange(float min, float max) {
 // 賢さが足りない枝は、はじめから木に入れない
 void EnemyAI::BuildTree() {
     // 選んでいる難易度で足し引きする (Difficulty.cpp の intelligenceShift)
-    int intelligence = GameMode::AdjustIntelligence(_enemy->GetData().intelligence);
+    _intelligence = GameMode::AdjustIntelligence(_enemy->GetData().intelligence);
+    int intelligence = _intelligence;
     auto root = std::make_unique<BehaviorSelector<EnemyAI>>();
 
     // 振っている途中や、のけぞり 吹き飛びの間は、体が入力を聞かないので何もしない
     root->Add(When(If(&EnemyAI::IsBusy), Do(&EnemyAI::Hold)));
 
+    // 賢さ 4 から 自分のバースト値が溜まっていたら、壁を割られないよう壁から離れる
+    if (intelligence >= 4) root->Add(When(If(&EnemyAI::IsCornered), Do(&EnemyAI::LeaveWall)));
+
     // 賢さ 2 から こちらを向いて溜めていたら、届かない所まで下がって待つ
     if (intelligence >= 2) root->Add(When(If(&EnemyAI::SeesCharge), Do(&EnemyAI::BackOff)));
+
+    // 賢さ 5 から 相手が背中を向けたら、番がなくても走って踏み込む
+    if (intelligence >= 5) root->Add(When(If(&EnemyAI::SeesBack), Do(&EnemyAI::RushIn)));
 
     // 賢さ 3 から 相手の隙 (あと隙 回避の終わり 叩きつけの着地) に走って踏み込む
     if (intelligence >= 3) root->Add(When(If(&EnemyAI::SeesOpening), Do(&EnemyAI::RushIn)));
@@ -281,6 +289,12 @@ void EnemyAI::Sense(float deltaTime) {
     _guardTime = target->IsGuarding() ? _guardTime + deltaTime : 0.0f;
     _chargeTime = target->IsCharging() ? _chargeTime + deltaTime : 0.0f;
     _openingTime = (target->GetOpeningTime() > 0.0f) ? _openingTime + deltaTime : 0.0f;
+
+    // 壁までの距離 十分に離れたか、バースト値が下がったら、壁から離れるのをやめる
+    VECTOR fromCenter = VSub(_enemy->GetPosition(), StageBuilder::GetArenaCenter());
+    fromCenter.y = 0.0f;
+    _wallDistance = StageBuilder::ARENA_RADIUS - VSize(fromCenter);
+    if (_wallDistance >= WALL_SAFE_DISTANCE || _enemy->GetBlowRatio() < SELF_DANGER_RATIO) _isLeavingWall = false;
 }
 
 void EnemyAI::UpdateAttackCycle(float deltaTime) {
@@ -301,12 +315,19 @@ void EnemyAI::UpdateAttackCycle(float deltaTime) {
 }
 
 bool EnemyAI::Notices(float seenTime) const {
-    return seenTime >= _enemy->GetData().reactionTime;
+    // 賢いほど早く気づく 賢さの範囲の外は、そのままの速さ
+    int count = static_cast<int>(sizeof(REACTION_RATES) / sizeof(REACTION_RATES[0]));
+    float rate = (_intelligence >= 0 && _intelligence < count) ? REACTION_RATES[_intelligence] : 1.0f;
+    return seenTime >= _enemy->GetData().reactionTime * rate;
 }
 
 Technique EnemyAI::RollTechnique() const {
     // ときどき大振り 毎フレーム引くと偏るので、振り終わりに 1 回だけ決める
     const EnemyData& data = _enemy->GetData();
+
+    // 賢さ 1 は大振りを振らない 読みやすい斬りだけで来る
+    if (_intelligence <= 1) return Technique::Slash;
+
     bool isHeavy = data.hasHeavy && GetRand(99) < static_cast<int>(data.heavyChance * 100.0f);
     return isHeavy ? Technique::StrongSlash : Technique::Slash;
 }
@@ -340,6 +361,17 @@ bool EnemyAI::SeesCharge() const {
 
 bool EnemyAI::SeesOpening() const {
     return _cooldown <= 0.0f && Notices(_openingTime) && _distance < RUSH_DISTANCE;
+}
+
+bool EnemyAI::IsCornered() const {
+    if (_enemy->GetBlowRatio() < SELF_DANGER_RATIO) return false;
+    return _wallDistance < WALL_DANGER_DISTANCE || (_isLeavingWall && _wallDistance < WALL_SAFE_DISTANCE);
+}
+
+bool EnemyAI::SeesBack() const {
+    // 相手の正面がこちらを向いていない (背中かほぼ横を向けている) とき
+    bool isBackTurned = _enemy->GetTarget()->GetFacingDot(_enemy->GetPosition()) < BACK_TURNED_DOT;
+    return _cooldown <= 0.0f && isBackTurned && _distance < BACKSTAB_DISTANCE;
 }
 
 // ----- 行動の葉 -----
@@ -429,6 +461,21 @@ BehaviorStatus EnemyAI::Flank(float deltaTime) {
     }
 
     _input = Surround(_input, _toTarget, deltaTime);
+    return BehaviorStatus::Running;
+}
+
+BehaviorStatus EnemyAI::LeaveWall(float deltaTime) {
+    _enemy->SetThinking("壁から離れる (バースト値が溜まった)");
+
+    // 離れている間は殴りに行かないので、番は返す
+    ReleaseToken();
+    _isLeavingWall = true;
+
+    // 真ん中のほうへ走る 向きは look で相手へ向けたまま
+    VECTOR toCenter = VSub(StageBuilder::GetArenaCenter(), _enemy->GetPosition());
+    toCenter.y = 0.0f;
+    float length = VSize(toCenter);
+    if (length > 1.0f) _input.move = VScale(toCenter, 1.0f / length);
     return BehaviorStatus::Running;
 }
 

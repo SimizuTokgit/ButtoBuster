@@ -17,7 +17,7 @@ struct DifficultyData {
     // プレイヤーの吹っ飛ばされ値の許容値 (PlayerData の blow.limit を置き換える) 大きいほど壁を割られにくい
     float playerBlowLimit;
 
-    // 敵の賢さに足す数 賢さ 1 以上の敵 (行動の木で動く敵) だけにかけ、1〜3 に収める
+    // 敵の賢さに足す数 賢さ 1 以上の敵 (行動の木で動く敵) だけにかけ、1〜5 に収める
     // 賢さ 0 の敵 (ビーザトール ロックマキナ) は専用の動きなので変えない
     int intelligenceShift;
 

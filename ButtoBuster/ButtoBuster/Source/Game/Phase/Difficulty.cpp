@@ -12,15 +12,15 @@ namespace {
           30.0f,  0, 3, 4, "Data/2D/ModeNormal.png" },
 
         { "HARD",   "腕に自信のある人向け すぐ吹き飛ばされ、敵も賢く数も多い",
-          24.0f,  1, 2, 5, "Data/2D/ModeHard.png" },
+          24.0f,  2, 2, 5, "Data/2D/ModeHard.png" },
     };
 
     static_assert(sizeof(TABLE) / sizeof(TABLE[0]) == static_cast<int>(Difficulty::Count),
         "Difficulty を足したら TABLE にも同じ順で足すこと");
 
-    // 賢さの範囲 行動の木で動く敵は 1〜3
+    // 賢さの範囲 行動の木で動く敵は 1〜5 (EnemyAI.h の枝の一覧)
     constexpr int MIN_INTELLIGENCE = 1;
-    constexpr int MAX_INTELLIGENCE = 3;
+    constexpr int MAX_INTELLIGENCE = 5;
 
     Difficulty g_difficulty = Difficulty::Normal;
 }
