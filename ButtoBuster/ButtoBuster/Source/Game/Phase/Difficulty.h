@@ -25,6 +25,10 @@ struct DifficultyData {
     int tokenStepPhases;
     int maxTokens;
 
+    // 何フェーズごとに全回復するか PhaseData の healInterval を置き換える
+    // 勝ちはフェーズ 10 なので、3 なら 3 6 9 の 3 回、4 なら 4 8 の 2 回、5 なら 5 の 1 回
+    int healInterval;
+
     // モード選択でこのボタンを選んでいる間の背景 無ければタイトルの背景を使う
     const char* background;
 };

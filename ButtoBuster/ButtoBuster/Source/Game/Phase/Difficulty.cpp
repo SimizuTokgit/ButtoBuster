@@ -3,16 +3,16 @@
 namespace {
     // ----- 難易度の表 調整はここだけ見ればよい -----
     // 並びは Difficulty と同じ (Easy Normal Hard)
-    // ノーマルは、難易度を作る前の数値と同じにしてある
+    // { 名前, 説明, 自分の許容値, 賢さの増減, 攻撃の番が増える間隔, 攻撃の番の最大, 全回復の間隔, 背景 }
     const DifficultyData TABLE[] = {
         { "EASY",   "はじめての人向け 吹き飛ばされにくく、敵もおとなしい",
-          45.0f, -1, 4, 3, "Data/2D/ModeEasy.png" },
+          45.0f, -1, 4, 3, 3, "Data/2D/ModeEasy.png" },
 
         { "NORMAL", "ふつうの難しさ ガードと回避を使いこなそう",
-          30.0f,  0, 3, 4, "Data/2D/ModeNormal.png" },
+          30.0f,  0, 3, 4, 4, "Data/2D/ModeNormal.png" },
 
         { "HARD",   "腕に自信のある人向け すぐ吹き飛ばされ、敵も賢く数も多い",
-          24.0f,  1, 2, 5, "Data/2D/ModeHard.png" },
+          24.0f,  1, 2, 5, 5, "Data/2D/ModeHard.png" },
     };
 
     static_assert(sizeof(TABLE) / sizeof(TABLE[0]) == static_cast<int>(Difficulty::Count),
