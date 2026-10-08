@@ -3,7 +3,6 @@
 #include "System.h"
 #include "SceneManager.h"
 #include "TitleScene.h"
-#include "string.h"
 
 int WINAPI WinMain(
     HINSTANCE hInstance,
@@ -18,6 +17,7 @@ int WINAPI WinMain(
     bool result = system.Main([]() {
         return SceneManager::Instance().LoadScene<TitleScene>();
     });
+
     return result ? 0 : -1;
 
 }
