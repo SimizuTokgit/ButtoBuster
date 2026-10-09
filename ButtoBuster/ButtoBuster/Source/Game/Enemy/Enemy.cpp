@@ -88,8 +88,11 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     // 飛んできた敵に当たったときと、許容値に届いているときは、重くて剣では止まらない敵も吹き飛ぶ
     bool isBlown = _data->canBlow || info.isFromProjectile || isOverLimit;
 
-    // Golem は殴っても止まらない 許容値に届けば吹き飛ぶ
-    if (!_data->canFlinch && !info.isFromProjectile && !isOverLimit) return HitResult::Hit;
+    // Golem は殴っても止まらない 許容値に届けば吹き飛ぶ 声だけは斬られるたびに出す
+    if (!_data->canFlinch && !info.isFromProjectile && !isOverLimit) {
+        SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
+        return HitResult::Hit;
+    }
 
     // 吹き飛ばすとき以外は、怯み値が上限に届くまでのけぞらない
     bool isBlowing = isBlowHit && isBlown;

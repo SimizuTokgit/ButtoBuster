@@ -451,9 +451,9 @@ int PhaseDirector::GetTokenCapacity() const {
 }
 
 void PhaseDirector::UpdateBgm() {
+    // 5〜10 の終盤は HeroArrived! (Data/Sound/ButtoBuster_SE&BGM/BGM)
     const char* bgm = "BGM_stg0";
-    if (_phase >= data.bossBgmPhase) bgm = "BGM_boss";
-    else if (_phase >= data.stage2BgmPhase) bgm = "BGM_stg1";
+    if (_phase >= data.stage2BgmPhase) bgm = "HeroArrived!";
 
     if (_currentBgm == bgm) return;
 

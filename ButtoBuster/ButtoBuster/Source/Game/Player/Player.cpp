@@ -94,6 +94,7 @@ HitResult Player::TakeHit(const HitInfo& info) {
             effects->HitStop(0.04f);
         }
         SoundManager::Instance().PlaySE("Player/guard_success");
+        SoundManager::Instance().PlaySE("Player/Vc_Guard", 0.8f);
 
         StaggerGuardedAttacker(info);
         return HitResult::Guarded;
@@ -144,7 +145,7 @@ void Player::Defeat(VECTOR knockback) {
     if (IsDead()) return;
 
     MarkDefeated();
-    SoundManager::Instance().PlaySE("Player/VO_J_dmg_blow");
+    SoundManager::Instance().PlaySE("Player/Vc_GameOver");
     _states.ForceTransition(std::make_unique<PlayerDeadState>(knockback));
 }
 

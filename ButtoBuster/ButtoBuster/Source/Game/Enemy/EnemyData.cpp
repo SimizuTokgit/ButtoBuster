@@ -63,7 +63,7 @@ namespace {
 
         data.soundHit = "Goblin/dmg_bySabel";
         data.soundDamage = "Goblin/Vc_Goblin_Damage";
-        data.soundBlow = "Goblin/VO_dmgBlow";
+        data.soundBlow = "Goblin/Vc_Goblin_Damage";
         data.soundDead = "Goblin/Vc_Goblin_Die";
         data.soundSpawn = "Goblin/Vc_Goblin_Spw";
         return data;
@@ -129,7 +129,7 @@ namespace {
 
         data.soundHit = "RedGoblin/dmg_bySabel";
         data.soundDamage = "RedGoblin/Vc_RedGoblin_Damage";
-        data.soundBlow = "RedGoblin/VO_dmgBlow";
+        data.soundBlow = "RedGoblin/Vc_RedGoblin_Damage";
         data.soundDead = "RedGoblin/Vc_RedGoblin_Die";
         data.soundSpawn = "RedGoblin/Vc_RedGoblin_Spw";
         return data;
@@ -187,7 +187,7 @@ namespace {
 
         data.soundHit = "Bee/dmg_bySabel";
         data.soundDamage = "Bee/Vc_Bee_Damage";
-        data.soundBlow = "Bee/VO_damage_B";
+        data.soundBlow = "Bee/Vc_Bee_Damage";
         data.soundDead = "Bee/Vc_Bee_Die";
         data.soundSpawn = "Bee/Vc_Bee_Spw";
         return data;
@@ -270,6 +270,8 @@ namespace {
         data.pickWeight = 1;
 
         data.soundHit = "Golem/dmg_bySabel";
+        data.soundDamage = "Golem/Vc_Golem_Damage";
+        data.soundBlow = "Golem/Vc_Golem_Damage";
         data.soundDead = "Golem/Vc_Golem_Die";
         data.soundSpawn = "Golem/Vc_Golem_Spw";
         return data;

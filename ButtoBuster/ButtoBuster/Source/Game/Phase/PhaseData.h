@@ -73,8 +73,10 @@ struct PhaseData {
 
     // ----- BGM -----
 
-    // このフェーズから曲を替える BGM_stg0 → BGM_stg1 → BGM_boss
+    // このフェーズから終盤の曲 (HeroArrived!) に替える それまでは BGM_stg0
     int stage2BgmPhase = 5;
+
+    // ボスのフェーズ ロックマキナが出る 始まりの声をボスの声にする 曲は終盤の曲のまま
     int bossBgmPhase = 10;
 
     // 曲を替えるときに重ねる時間 秒
