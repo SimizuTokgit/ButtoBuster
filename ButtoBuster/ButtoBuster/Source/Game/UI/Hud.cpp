@@ -32,25 +32,48 @@ namespace {
     // バーの下に出す名前
     constexpr const char* DODGE_BAR_LABEL = "回避";
 
-    // ----- 必殺技のゲージ (回避のバーの下) -----
-    // 当てた数 (コンボ) 連鎖 壁割りで溜まる 満タンになるとパッド Y / キーボード F で撃てる
+    // ----- バースターゲージ (必殺技のゲージ 右下) -----
+    // 当てた数 (コンボ) 連鎖 壁割りで溜まる 満タンになるとパッド Y / キーボード F で必殺技を撃てる
     // どれだけ溜まるかは PlayerData の specialGain で始まる値
-    constexpr int SPECIAL_BAR_X = 40;
-    constexpr int SPECIAL_BAR_Y = 96;
-    constexpr int SPECIAL_BAR_WIDTH = 380;
-    constexpr int SPECIAL_BAR_HEIGHT = 16;
+    // 画像は Data/2D の BusterGauge で始まるもの 枠は左右を反転して、紋章を右にしてある
+    constexpr const char* SPECIAL_FRAME_IMAGE = "Data/2D/BusterGaugeFrame.png";
+    constexpr const char* SPECIAL_FILL_IMAGE = "Data/2D/BusterGaugeFill.png";
+    constexpr const char* SPECIAL_LOGO_IMAGE = "Data/2D/BusterLogo.png";
 
-    // 溜まっている途中の色と、満タンの色
-    constexpr unsigned int SPECIAL_FILL_COLOR = 0x4A78D0;
-    constexpr unsigned int SPECIAL_READY_COLOR = 0xFFD060;
+    // 枠を置く場所 (左上) と大きさ 画像 (1000 x 133) に掛ける倍率
+    constexpr int SPECIAL_GAUGE_X = 790;
+    constexpr int SPECIAL_GAUGE_Y = 520;
+    constexpr float SPECIAL_GAUGE_SCALE = 0.45f;
 
-    // 満タンの間、バーに重ねる光の濃さ 0〜255 と、1 秒に光る回数
-    constexpr int SPECIAL_READY_GLOW_ALPHA = 140;
+    // 中身を入れる所 枠の画像の中の位置 (px) 中身の画像をこの四角に合わせて伸ばす
+    constexpr int SPECIAL_FILL_LEFT = 108;
+    constexpr int SPECIAL_FILL_TOP = 61;
+    constexpr int SPECIAL_FILL_RIGHT = 816;
+    constexpr int SPECIAL_FILL_BOTTOM = 100;
+
+    // 溜まっている途中の中身の濃さ 0〜255 満タンになると 255 で光る
+    constexpr int SPECIAL_FILL_ALPHA = 200;
+
+    // 満タンの間、中身に重ねる白い光の濃さ 0〜255 と、1 秒に光る回数
+    constexpr int SPECIAL_READY_GLOW_ALPHA = 120;
     constexpr float SPECIAL_READY_BEATS_PER_SECOND = 1.5f;
 
-    // バーの下に出す名前 満タンのときは押すボタンも出す
-    constexpr const char* SPECIAL_BAR_LABEL = "バースターゲージ";
-    constexpr const char* SPECIAL_READY_LABEL = "バースターゲージ  F / Y で必殺技!";
+    // 満タンで出る BUSTER!! の文字 枠の真ん中からずらす量 (px) と大きさ (画像 815 x 185 に掛ける倍率)
+    constexpr int SPECIAL_LOGO_OFFSET_X = -10;
+    constexpr int SPECIAL_LOGO_OFFSET_Y = -55;
+    constexpr float SPECIAL_LOGO_SCALE = 0.5f;
+
+    // 文字の出方 この倍率の大きさから、この秒数で元の大きさへ縮みながら現れる 出た瞬間は白く光らせる
+    constexpr float SPECIAL_LOGO_POP_SCALE = 2.2f;
+    constexpr float SPECIAL_LOGO_POP_TIME = 0.25f;
+    constexpr float SPECIAL_LOGO_FLASH_TIME = 0.4f;
+
+    // 出たあと、文字をゆっくり脈打たせる大きさの幅 (0.04 で ±4%)
+    constexpr float SPECIAL_LOGO_PULSE = 0.04f;
+
+    // 満タンのとき枠の下に出す、押すボタン 空なら出さない
+    constexpr const char* SPECIAL_READY_HINT = "F / Y";
+    constexpr unsigned int SPECIAL_READY_HINT_COLOR = 0xA8E0FF;
 
     // ----- 吹っ飛ばされそうな危なさ (画面の縁の赤み) -----
     // 自分の吹っ飛ばされ値が許容値のこの割合を越えるごとに、縁の赤みを濃く太く、脈を速くする
@@ -89,9 +112,19 @@ namespace {
     }
 }
 
+Hud::~Hud() {
+    if (_specialFrameGraph != -1) DeleteGraph(_specialFrameGraph);
+    if (_specialFillGraph != -1) DeleteGraph(_specialFillGraph);
+    if (_specialLogoGraph != -1) DeleteGraph(_specialLogoGraph);
+}
+
 void Hud::Setup(Player* player, PhaseDirector* director) {
     _player = player;
     _director = director;
+
+    _specialFrameGraph = LoadGraph(SPECIAL_FRAME_IMAGE);
+    _specialFillGraph = LoadGraph(SPECIAL_FILL_IMAGE);
+    _specialLogoGraph = LoadGraph(SPECIAL_LOGO_IMAGE);
 }
 
 void Hud::Render() {
@@ -188,31 +221,91 @@ void Hud::DrawDodgeStock() {
 }
 
 void Hud::DrawSpecialGauge() {
+    if (_specialFrameGraph == -1) return;
+
     float ratio = _player->GetSpecialRatio();
     if (ratio > 1.0f) ratio = 1.0f;
     bool isReady = _player->IsSpecialReady();
-    int bottom = SPECIAL_BAR_Y + SPECIAL_BAR_HEIGHT;
 
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, DODGE_BAR_SHADE_ALPHA);
-    DrawBox(SPECIAL_BAR_X - 4, SPECIAL_BAR_Y - 4, SPECIAL_BAR_X + SPECIAL_BAR_WIDTH + 4, bottom + 4, 0x000000, TRUE);
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    // 満タンになった瞬間を覚えておき、そこから文字を出す
+    int now = GetNowCount();
+    if (isReady && !_wasSpecialReady) _specialReadyTime = now;
+    _wasSpecialReady = isReady;
 
-    unsigned int color = isReady ? SPECIAL_READY_COLOR : SPECIAL_FILL_COLOR;
-    int fillWidth = static_cast<int>(SPECIAL_BAR_WIDTH * ratio);
-    if (fillWidth > 0) DrawBox(SPECIAL_BAR_X, SPECIAL_BAR_Y, SPECIAL_BAR_X + fillWidth, bottom, color, TRUE);
+    auto toScreenX = [](int x) { return SPECIAL_GAUGE_X + static_cast<int>(x * SPECIAL_GAUGE_SCALE); };
+    auto toScreenY = [](int y) { return SPECIAL_GAUGE_Y + static_cast<int>(y * SPECIAL_GAUGE_SCALE); };
 
-    // 満タンの間は白い光を重ねて脈打たせ、撃てることに気づけるようにする
-    if (isReady) {
-        float seconds = GetNowCount() / 1000.0f;
-        float pulse = (sinf(seconds * SPECIAL_READY_BEATS_PER_SECOND * DX_TWO_PI_F) + 1.0f) * 0.5f;
-        SetDrawBlendMode(DX_BLENDMODE_ADD, static_cast<int>(SPECIAL_READY_GLOW_ALPHA * pulse));
-        DrawBox(SPECIAL_BAR_X, SPECIAL_BAR_Y, SPECIAL_BAR_X + SPECIAL_BAR_WIDTH, bottom, WHITE, TRUE);
-        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    int frameWidth = 0;
+    int frameHeight = 0;
+    GetGraphSize(_specialFrameGraph, &frameWidth, &frameHeight);
+
+    // 中身 左から溜まった分だけ、画像も同じ割合だけ切り取って伸ばす
+    int fillLeft = toScreenX(SPECIAL_FILL_LEFT);
+    int fillTop = toScreenY(SPECIAL_FILL_TOP);
+    int fillRight = toScreenX(SPECIAL_FILL_RIGHT);
+    int fillBottom = toScreenY(SPECIAL_FILL_BOTTOM);
+    if (_specialFillGraph != -1 && ratio > 0.0f) {
+        int fillWidth = 0;
+        int fillHeight = 0;
+        GetGraphSize(_specialFillGraph, &fillWidth, &fillHeight);
+
+        int right = fillLeft + static_cast<int>((fillRight - fillLeft) * ratio);
+        int sourceWidth = static_cast<int>(fillWidth * ratio);
+        if (sourceWidth > 0) {
+            SetDrawBlendMode(DX_BLENDMODE_ALPHA, isReady ? 255 : SPECIAL_FILL_ALPHA);
+            DrawRectExtendGraph(fillLeft, fillTop, right, fillBottom, 0, 0, sourceWidth, fillHeight, _specialFillGraph, TRUE);
+
+            // 満タンの間は同じ画像を光らせて重ね、脈打たせる
+            if (isReady) {
+                float seconds = now / 1000.0f;
+                float pulse = (sinf(seconds * SPECIAL_READY_BEATS_PER_SECOND * DX_TWO_PI_F) + 1.0f) * 0.5f;
+                SetDrawBlendMode(DX_BLENDMODE_ADD, static_cast<int>(SPECIAL_READY_GLOW_ALPHA * pulse));
+                DrawRectExtendGraph(fillLeft, fillTop, right, fillBottom, 0, 0, sourceWidth, fillHeight, _specialFillGraph, TRUE);
+            }
+            SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+        }
     }
-    DrawBox(SPECIAL_BAR_X, SPECIAL_BAR_Y, SPECIAL_BAR_X + SPECIAL_BAR_WIDTH, bottom, WHITE, FALSE);
 
-    const char* label = isReady ? SPECIAL_READY_LABEL : SPECIAL_BAR_LABEL;
-    GameFont::Draw(SPECIAL_BAR_X, bottom + 6, label, isReady ? SPECIAL_READY_COLOR : WHITE, GameFont::Size::Small);
+    // 枠は中身の上に重ねる
+    DrawExtendGraph(SPECIAL_GAUGE_X, SPECIAL_GAUGE_Y, toScreenX(frameWidth), toScreenY(frameHeight), _specialFrameGraph, TRUE);
+
+    if (!isReady) return;
+
+    if (SPECIAL_READY_HINT[0] != '\0') {
+        GameFont::DrawCentered((fillLeft + fillRight) / 2, toScreenY(frameHeight) + 2,
+            SPECIAL_READY_HINT, SPECIAL_READY_HINT_COLOR, GameFont::Size::Small);
+    }
+
+    // BUSTER!! の文字 大きく出て縮みながら現れ、白く光ってから、ゆっくり脈打つ
+    if (_specialLogoGraph == -1) return;
+
+    float elapsed = (now - _specialReadyTime) / 1000.0f;
+    float scale = SPECIAL_LOGO_SCALE;
+    int alpha = 255;
+    if (elapsed < SPECIAL_LOGO_POP_TIME) {
+        float t = elapsed / SPECIAL_LOGO_POP_TIME;
+        float eased = 1.0f - (1.0f - t) * (1.0f - t);
+        scale *= SPECIAL_LOGO_POP_SCALE + (1.0f - SPECIAL_LOGO_POP_SCALE) * eased;
+        alpha = static_cast<int>(255.0f * t);
+    }
+    else {
+        float pulse = sinf(elapsed * SPECIAL_READY_BEATS_PER_SECOND * DX_TWO_PI_F);
+        scale *= 1.0f + SPECIAL_LOGO_PULSE * pulse;
+    }
+
+    int centerX = (SPECIAL_GAUGE_X + toScreenX(frameWidth)) / 2 + SPECIAL_LOGO_OFFSET_X;
+    int centerY = SPECIAL_GAUGE_Y + SPECIAL_LOGO_OFFSET_Y;
+
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
+    DrawRotaGraph(centerX, centerY, scale, 0.0, _specialLogoGraph, TRUE);
+
+    // 出た瞬間は、同じ文字を光らせて重ねる
+    if (elapsed < SPECIAL_LOGO_FLASH_TIME) {
+        float flash = 1.0f - elapsed / SPECIAL_LOGO_FLASH_TIME;
+        SetDrawBlendMode(DX_BLENDMODE_ADD, static_cast<int>(255.0f * flash));
+        DrawRotaGraph(centerX, centerY, scale, 0.0, _specialLogoGraph, TRUE);
+    }
+    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }
 
 void Hud::DrawPhaseInfo(int screenWidth, int screenHeight) {

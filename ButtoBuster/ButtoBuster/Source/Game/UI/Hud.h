@@ -5,9 +5,9 @@ class Player;
 class PhaseDirector;
 
 // 戦闘中の表示
-// 回避の残り 必殺技のゲージ フェーズ 残りの敵 次の全回復 コンボ 割られそうなときの画面の縁
+// 回避の残り バースターゲージ (必殺技のゲージ) フェーズ 残りの敵 次の全回復 コンボ 割られそうなときの画面の縁
 // 体力はなく、吹っ飛ばされ値も数字では出さない 溜まり具合は体の赤みと湯気で見せる
-// 回避の残りのバーと必殺技のゲージの場所と色は .cpp の先頭に並べてある
+// 回避の残りのバーとバースターゲージの場所と大きさは .cpp の先頭に並べてある
 class Hud : public UIImage {
 private:
     Player* _player = nullptr;
@@ -18,9 +18,20 @@ private:
     // 危なさの音を最後に鳴らした脈の番号 同じ脈で 2 回鳴らさないように
     int _lastDangerBeat = -1;
 
+    // バースターゲージの画像 枠 中身 満タンで出る BUSTER!! の文字
+    int _specialFrameGraph = -1;
+    int _specialFillGraph = -1;
+    int _specialLogoGraph = -1;
+
+    // 満タンになった時刻 (ミリ秒) 文字が現れる動きはここから数える
+    bool _wasSpecialReady = false;
+    int _specialReadyTime = 0;
+
 public:
     // 制作用 キャラの頭上に今の状態と吹っ飛ばされ値、隙があればその残りを出す
     bool isStateVisible = false;
+
+    ~Hud() override;
 
     void Setup(Player* player, PhaseDirector* director);
 
