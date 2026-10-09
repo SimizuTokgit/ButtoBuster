@@ -41,6 +41,16 @@ private:
     // 回り込み先が壁の外に出たら、体の太さとこの分だけ壁の手前に寄せる
     static constexpr float SLOT_WALL_MARGIN = 50.0f;
 
+    // ----- 枝が入る賢さ (BuildTree) -----
+    // 敵の賢さがこの数以上のとき、その枝が木に入る
+    static constexpr int LEVEL_BASIC = 1;           // 待つ・振る・近づく・回る (どの敵も持つ)
+    static constexpr int LEVEL_BACK_OFF = 2;        // こちらを向いて溜めていたら下がる
+    static constexpr int LEVEL_HEAVY = 2;           // ときどき大振り、構えている相手ととどめを刺せる相手には大振り
+    static constexpr int LEVEL_RUSH_IN = 3;         // 相手の隙に踏み込む
+    static constexpr int LEVEL_FLANK = 3;           // 待つ間は背中側へ回り込む
+    static constexpr int LEVEL_LEAVE_WALL = 4;      // 自分のバースト値が溜まったら壁から離れる
+    static constexpr int LEVEL_BACKSTAB = 5;        // 相手が背中を向けたら踏み込む
+
     // ----- 行動の木で使う数値 -----
 
     // 相手の吹っ飛ばされ値が、許容値に対してこの割合以上なら「許容値に届いた」とみなす (賢さ 2 から、とどめの大振りを振る)
@@ -71,8 +81,15 @@ private:
     // 回り込むときは普段 (ORBIT_SPEED) の何倍の速さで回るか
     static constexpr float FLANK_SPEED_RATE = 2.0f;
 
-    // 気づくまでの時間 (EnemyData の reactionTime) に掛ける数 賢さ 0〜5 の順 小さいほど早く気づく
-    static constexpr float REACTION_RATES[] = { 1.0f, 1.8f, 1.0f, 1.0f, 0.6f, 0.4f };
+    // 気づくまでの時間 (EnemyData の reactionTime) に掛ける数 [賢さ] で引く 小さいほど早く気づく
+    static constexpr float REACTION_RATES[] = {
+        1.0f,   // 賢さ 0 行動の木を使わない敵 そのまま
+        1.8f,   // 賢さ 1 気づくのが遅い
+        1.0f,   // 賢さ 2
+        1.0f,   // 賢さ 3
+        0.6f,   // 賢さ 4 気づくのが早い
+        0.4f,   // 賢さ 5 気づくのがいちばん早い
+    };
 
     // 自分の吹っ飛ばされ値が許容値のこの割合以上で、壁に近いと離れる (賢さ 4)
     static constexpr float SELF_DANGER_RATIO = 0.7f;

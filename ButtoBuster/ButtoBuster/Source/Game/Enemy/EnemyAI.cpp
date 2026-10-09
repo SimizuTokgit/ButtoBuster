@@ -248,28 +248,28 @@ void EnemyAI::BuildTree() {
     // ----- 2. 振り方を選ぶ Selector (届く距離に入ったときに、根の枝から使う) -----
     // 大振りはガードできないので、構えている相手と、とどめを刺せる相手には大振り
     auto swing = std::make_unique<BehaviorSelector<EnemyAI>>();
-    addIf(*swing, 2, When(If(&EnemyAI::SeesGuard),       Do(&EnemyAI::SwingHeavy)));
-    addIf(*swing, 2, When(If(&EnemyAI::IsTargetAtLimit), Do(&EnemyAI::SwingHeavy)));
-    addIf(*swing, 1, Do(&EnemyAI::SwingPlanned));   // ほかは、振り終わりに決めておいた技 (RollTechnique)
+    addIf(*swing, LEVEL_HEAVY,      When(If(&EnemyAI::SeesGuard),       Do(&EnemyAI::SwingHeavy)));
+    addIf(*swing, LEVEL_HEAVY,      When(If(&EnemyAI::IsTargetAtLimit), Do(&EnemyAI::SwingHeavy)));
+    addIf(*swing, LEVEL_BASIC,      Do(&EnemyAI::SwingPlanned));   // ほかは、振り終わりに決めておいた技 (RollTechnique)
 
     // ----- 3. 根の Selector 上の枝ほど優先する -----
     auto root = std::make_unique<BehaviorSelector<EnemyAI>>();
 
     // 動けない 振っている のけぞり 吹き飛びの間は、体が入力を聞かないので何もしない
-    addIf(*root, 1, When(If(&EnemyAI::IsBusy),      Do(&EnemyAI::Hold)));
+    addIf(*root, LEVEL_BASIC,      When(If(&EnemyAI::IsBusy),      Do(&EnemyAI::Hold)));
 
     // 身を守る
-    addIf(*root, 4, When(If(&EnemyAI::IsCornered),  Do(&EnemyAI::LeaveWall)));  // バースト値が溜まって壁際なら、割られないよう離れる
-    addIf(*root, 2, When(If(&EnemyAI::SeesCharge),  Do(&EnemyAI::BackOff)));    // こちらを向いて溜めていたら、届かない所まで下がる
+    addIf(*root, LEVEL_LEAVE_WALL, When(If(&EnemyAI::IsCornered),  Do(&EnemyAI::LeaveWall)));  // バースト値が溜まって壁際なら、割られないよう離れる
+    addIf(*root, LEVEL_BACK_OFF,   When(If(&EnemyAI::SeesCharge),  Do(&EnemyAI::BackOff)));    // こちらを向いて溜めていたら、届かない所まで下がる
 
     // 攻める
-    addIf(*root, 5, When(If(&EnemyAI::SeesBack),    Do(&EnemyAI::RushIn)));     // 背中を向けたら、番がなくても走って踏み込む
-    addIf(*root, 3, When(If(&EnemyAI::SeesOpening), Do(&EnemyAI::RushIn)));     // 隙 (あと隙 回避の終わり 叩きつけの着地) に踏み込む
-    addIf(*root, 1, When(If(&EnemyAI::IsInReach),   std::move(swing)));         // 届く距離なら、番がなくても振る
-    addIf(*root, 1, When(Do(&EnemyAI::TakeToken),   Do(&EnemyAI::Approach)));   // 番が取れたら近づく 届いたら上の枝で振る
+    addIf(*root, LEVEL_BACKSTAB,   When(If(&EnemyAI::SeesBack),    Do(&EnemyAI::RushIn)));     // 背中を向けたら、番がなくても走って踏み込む
+    addIf(*root, LEVEL_RUSH_IN,    When(If(&EnemyAI::SeesOpening), Do(&EnemyAI::RushIn)));     // 隙 (あと隙 回避の終わり 叩きつけの着地) に踏み込む
+    addIf(*root, LEVEL_BASIC,      When(If(&EnemyAI::IsInReach),   std::move(swing)));         // 届く距離なら、番がなくても振る
+    addIf(*root, LEVEL_BASIC,      When(Do(&EnemyAI::TakeToken),   Do(&EnemyAI::Approach)));   // 番が取れたら近づく 届いたら上の枝で振る
 
     // 待つ ほかは周りを回る 賢さ 3 からは相手の背中側へ回り込む
-    addIf(*root, 1, Do(intelligence >= 3 ? &EnemyAI::Flank : &EnemyAI::Orbit));
+    addIf(*root, LEVEL_BASIC,      Do(intelligence >= LEVEL_FLANK ? &EnemyAI::Flank : &EnemyAI::Orbit));
 
     _tree = std::move(root);
 }
@@ -346,7 +346,7 @@ Technique EnemyAI::RollTechnique() const {
     const EnemyData& data = _enemy->GetData();
 
     // 賢さ 1 は大振りを振らない 読みやすい斬りだけで来る
-    if (_intelligence <= 1) return Technique::Slash;
+    if (_intelligence < LEVEL_HEAVY) return Technique::Slash;
 
     bool isHeavy = data.hasHeavy && GetRand(99) < static_cast<int>(data.heavyChance * 100.0f);
     return isHeavy ? Technique::StrongSlash : Technique::Slash;
