@@ -28,6 +28,7 @@ enum class TutorialGoal {
 enum class TutorialPartner {
     None,
     Dummy,      // 練習台の Goblin 攻撃してこない
+    Crowd,      // 練習台の Goblin をまとめて何体も 攻撃してこない コンボと必殺技の段で使う
     Slasher,    // 普通の斬りだけを振る Goblin
     Heavy,      // 大振りだけを振る Goblin
     Bee,        // 飛んでいるだけの Bee 攻撃してこない

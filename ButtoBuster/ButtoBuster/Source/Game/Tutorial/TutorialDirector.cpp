@@ -4,7 +4,6 @@
 #include "PlayerController.h"
 #include "PlayerJumpState.h"
 #include "PlayerAirSlamState.h"
-#include "PlayerSpecialState.h"
 #include "CameraFollow.h"
 #include "PhaseDirector.h"
 #include "Enemy.h"
@@ -67,7 +66,7 @@ namespace {
 
     // 攻撃してこない相手 (EnemyAI の isPassive)
     bool IsPassivePartner(TutorialPartner partner) {
-        return partner == TutorialPartner::Dummy || partner == TutorialPartner::Bee;
+        return partner == TutorialPartner::Dummy || partner == TutorialPartner::Crowd || partner == TutorialPartner::Bee;
     }
 }
 
@@ -81,8 +80,9 @@ void TutorialDirector::Initialize(Player* player, PlayerController* controller, 
     // 練習の間は負けない 攻撃は受けるが、壁を割られずに跳ね返る
     _player->canLose = false;
 
-    // 溜め、ジャスト回避、壁割りは、知らせを受けて数える
+    // 溜め、ジャスト回避、壁割り、必殺技は、知らせを受けて数える
     _player->GetChargeEvents().AddObserver(this);
+    _player->GetSpecialEvents().AddObserver(this);
     _player->GetJustDodgeEvents().AddObserver(this);
     ArenaWall::GetBreakEvents().AddObserver(this);
 
@@ -139,6 +139,13 @@ void TutorialDirector::OnNotify(const PlayerChargeEvent& event) {
 void TutorialDirector::OnNotify(const JustDodgeEvent& event) {
     if (_isCleared || _isLeaving) return;
     if (GetStep().goal == TutorialGoal::JustDodge) AddProgress(1);
+}
+
+void TutorialDirector::OnNotify(const SpecialEvent& event) {
+    if (_isCleared || _isLeaving || event.type != SpecialEvent::Type::Strike) return;
+
+    // 撃ち始めではなく雷が落ちたときに数える 吹き飛んだ練習台が壁を割るところまで見せてから次の段へ
+    if (GetStep().goal == TutorialGoal::Special) AddProgress(1);
 }
 
 void TutorialDirector::OnNotify(const WallBreakEvent& event) {
@@ -215,7 +222,6 @@ void TutorialDirector::BeginStep() {
     _lookedDegrees = 0.0f;
     _wasJumping = states.IsIn<PlayerJumpState>();
     _wasSlamming = states.IsIn<PlayerAirSlamState>();
-    _wasSpecial = states.IsIn<PlayerSpecialState>();
     _lastDodgeStock = _player->GetDodgeStock();
     _guardCountAtStart = _player->GetGuardCount();
 
@@ -234,6 +240,7 @@ void TutorialDirector::BeginStep() {
     if (step.partner != _partnerKind) {
         _phases->RemoveAllEnemies();
         _partner = nullptr;
+        _crowd.clear();
         _partnerKind = step.partner;
         _respawnTimer = 0.0f;
         if (_partnerKind != TutorialPartner::None) SpawnPartner();
@@ -322,13 +329,6 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
         SetProgress(_player->GetCombo());
         break;
 
-    case TutorialGoal::Special: {
-        bool isSpecial = states.IsIn<PlayerSpecialState>();
-        if (isSpecial && !_wasSpecial) AddProgress(1);
-        _wasSpecial = isSpecial;
-        break;
-    }
-
     case TutorialGoal::AirSlam: {
         bool isSlamming = states.IsIn<PlayerAirSlamState>();
         if (isSlamming && !_wasSlamming) AddProgress(1);
@@ -366,7 +366,7 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
     }
 
     default:
-        // 溜め斬り、ジャスト回避、壁割りは、知らせ (OnNotify) で数える
+        // 溜め斬り、ジャスト回避、壁割り、必殺技は、知らせ (OnNotify) で数える
         break;
     }
 }
@@ -384,7 +384,19 @@ void TutorialDirector::RefreshPartner() {
 
     // 場外へ飛んで消えた相手は、PhaseDirector の一覧から外れる 外れたら手放す
     const auto& enemies = _phases->GetEnemies();
-    if (std::find(enemies.begin(), enemies.end(), _partner) == enemies.end()) {
+    auto isGone = [&enemies](const Enemy* enemy) {
+        return std::find(enemies.begin(), enemies.end(), enemy) == enemies.end();
+    };
+
+    // まとめて出した練習台は、残っているものだけを持ち続ける 全部消えたら手放す
+    if (!_crowd.empty()) {
+        _crowd.erase(std::remove_if(_crowd.begin(), _crowd.end(), isGone), _crowd.end());
+        _partner = _crowd.empty() ? nullptr : _crowd.front();
+        if (!_partner) _respawnTimer = 0.0f;
+        return;
+    }
+
+    if (isGone(_partner)) {
         _partner = nullptr;
         _respawnTimer = 0.0f;
     }
@@ -408,21 +420,42 @@ void TutorialDirector::SpawnPartner() {
     // カメラの向いている先、プレイヤーの前に出す 出たところが見えるように
     VECTOR forward = _camera ? _camera->GetGroundForward() : _player->GetForward();
     float distance = (_partnerKind == TutorialPartner::Golem) ? PARTNER_DISTANCE * 2.0f : PARTNER_DISTANCE;
-    VECTOR position = VAdd(_player->GetPosition(), VScale(forward, distance));
+    VECTOR center = VAdd(_player->GetPosition(), VScale(forward, distance));
+
+    if (_partnerKind != TutorialPartner::Crowd) {
+        _partner = SpawnPartnerAt(data, center);
+        return;
+    }
+
+    // まとめて出す練習台 真ん中に 1 体、そのまわりの輪に残りを並べる まとめて斬れて、必殺技で一気に飛ばせるように
+    _crowd.clear();
+    for (int i = 0; i < CROWD_COUNT; ++i) {
+        VECTOR position = center;
+        if (i > 0) {
+            float angle = DX_TWO_PI_F * (i - 1) / (CROWD_COUNT - 1);
+            position = VAdd(center, VGet(cosf(angle) * CROWD_RADIUS, 0.0f, sinf(angle) * CROWD_RADIUS));
+        }
+        if (Enemy* enemy = SpawnPartnerAt(data, position)) _crowd.push_back(enemy);
+    }
+    _partner = _crowd.empty() ? nullptr : _crowd.front();
+}
+
+Enemy* TutorialDirector::SpawnPartnerAt(const EnemyData& data, VECTOR position) {
     position = ArenaWall::ClampInside(position, data.bodyRadius + PARTNER_WALL_MARGIN);
 
     float groundY = _player->GetPosition().y;
     StageBuilder::FindGroundHeight(position.x, position.z, groundY);
     position.y = groundY + (data.isFlying ? data.hoverHeight : 40.0f);
 
-    _partner = _phases->SpawnAt(data, position);
-    if (!_partner) return;
+    Enemy* enemy = _phases->SpawnAt(data, position);
+    if (!enemy) return nullptr;
 
     // 練習相手は難易度に関係なく、上の数値の通りに動かす
-    if (auto* ai = _partner->GetComponent<EnemyAI>()) {
+    if (auto* ai = enemy->GetComponent<EnemyAI>()) {
         ai->followsDifficulty = false;
         ai->isPassive = IsPassivePartner(_partnerKind);
     }
+    return enemy;
 }
 
 void TutorialDirector::ResetPartnerWatch() {

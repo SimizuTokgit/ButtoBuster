@@ -30,13 +30,13 @@ namespace {
             { "キーボード / SPACE",
               "コントローラー / A でジャンプ" } },
 
-        { TutorialGoal::Combo, TutorialPartner::Dummy, 3,
+        { TutorialGoal::Combo, TutorialPartner::Crowd, 3,
             "練習台を斬ってみよう",
             { "キーボード / 左クリック",
               "コントローラー / X で斬る",
               "3 回続けてコンボにしよう" } },
 
-        { TutorialGoal::Special, TutorialPartner::Dummy, 1,
+        { TutorialGoal::Special, TutorialPartner::Crowd, 1,
             "必殺技で大勢の敵を倒そう",
             { "コンボを当てたり、敵を巻き込んで吹き飛ばしたりすると、バースターゲージが溜まる",
               "キーボード / F",

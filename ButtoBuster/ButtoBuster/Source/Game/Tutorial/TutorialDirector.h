@@ -4,14 +4,17 @@
 #include "PlayerChargeEvent.h"
 #include "JustDodgeEvent.h"
 #include "WallBreakEvent.h"
+#include "SpecialEvent.h"
 #include "TutorialSteps.h"
 #include "DxLib.h"
+#include <vector>
 
 class Player;
 class PlayerController;
 class CameraFollow;
 class PhaseDirector;
 class Enemy;
+struct EnemyData;
 
 // チュートリアルの進め役
 // 段の表 (TutorialSteps.cpp) を上から 1 段ずつ出し、言われたことができたら次の段へ進める
@@ -21,7 +24,8 @@ class Enemy;
 class TutorialDirector : public MonoBehaviour,
     public Observer<PlayerChargeEvent>,
     public Observer<JustDodgeEvent>,
-    public Observer<WallBreakEvent> {
+    public Observer<WallBreakEvent>,
+    public Observer<SpecialEvent> {
 public:
     // できてから「OK!」を出しておく秒数 そのあと次の段へ
     static constexpr float CLEAR_TIME = 1.2f;
@@ -39,7 +43,7 @@ public:
     static constexpr float LOOK_DEGREES = 180.0f;
 
     // 「必殺技」の段の始めに、バースターゲージをここまで溜めておく 0〜1
-    // 練習台 1 体ではなかなか溜まらないので、数回のコンボで満タンになるくらいにする
+    // 練習台をまとめて斬れば 1 回のコンボでも溜まるが、すぐ撃てるように最初から 7 割にしておく
     static constexpr float SPECIAL_START_RATIO = 0.7f;
 
     // 練習の相手を出す、プレイヤーの前 (カメラの向き) の距離 cm 大きい Golem はこの倍
@@ -48,7 +52,11 @@ public:
     // 練習の相手が壁の近くに出そうなときに、体の太さとこの分だけ内側へ寄せる cm
     static constexpr float PARTNER_WALL_MARGIN = 200.0f;
 
-    // 練習の相手が倒れて場外へ消えたら、出し直すまでの秒数
+    // まとめて出す練習台 (TutorialPartner::Crowd) の数と、プレイヤーの前のどれくらいの広さに並べるか cm
+    static constexpr int CROWD_COUNT = 6;
+    static constexpr float CROWD_RADIUS = 220.0f;
+
+    // 練習の相手が倒れて場外へ消えたら、出し直すまでの秒数 まとめて出した練習台は、全部消えてから出し直す
     static constexpr float RESPAWN_DELAY = 1.5f;
 
 private:
@@ -74,13 +82,13 @@ private:
     float _lookedDegrees = 0.0f;
     bool _wasJumping = false;
     bool _wasSlamming = false;
-    bool _wasSpecial = false;
     float _lastDodgeStock = 0.0f;
     int _guardCountAtStart = 0;
 
     // 練習の相手
     Enemy* _partner = nullptr;
     TutorialPartner _partnerKind = TutorialPartner::None;
+    std::vector<Enemy*> _crowd;         // まとめて出した練習台 _partner はこの先頭
     float _respawnTimer = 0.0f;
     bool _wasPartnerSwinging = false;   // 前のフレームに振っていたか
     int _hitCountAtSwing = 0;           // 振り始めたときに、プレイヤーが食らっていた回数
@@ -93,6 +101,9 @@ public:
     void OnNotify(const PlayerChargeEvent& event) override;
     void OnNotify(const JustDodgeEvent& event) override;
     void OnNotify(const WallBreakEvent& event) override;
+
+    // 必殺技の雷が落ちたら、必殺技の段はできた
+    void OnNotify(const SpecialEvent& event) override;
 
     // ----- 画面 (TutorialScreen) が読む -----
 
@@ -132,6 +143,7 @@ private:
     void RefreshPartner();
     void KeepPartner(float deltaTime);
     void SpawnPartner();
+    Enemy* SpawnPartnerAt(const EnemyData& data, VECTOR position);
     void ResetPartnerWatch();
 
     // 相手が振り終えたときに、振っている間に食らっていなければ「かわした」と数える
