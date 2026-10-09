@@ -98,6 +98,17 @@ namespace {
     constexpr const char* SPECIAL_READY_HINT = "F / Y";
     constexpr unsigned int SPECIAL_READY_HINT_COLOR = 0xA8E0FF;
 
+    // ----- 操作の説明 (画面の下の真ん中) -----
+    // 画像は Data/2D/Controls.png (1001 x 216) 読めないときは文字で出す
+    constexpr const char* CONTROLS_IMAGE = "Data/2D/Controls.png";
+
+    // 画面に出す幅 px 高さは画像の縦横の比で決まる 下の端からの隙間
+    constexpr int CONTROLS_WIDTH = 720;
+    constexpr int CONTROLS_BOTTOM_MARGIN = 6;
+
+    // 濃さ 0〜255 少し透かして、後ろの戦いが見えるようにする
+    constexpr int CONTROLS_ALPHA = 230;
+
     // ----- 吹っ飛ばされそうな危なさ (画面の縁の赤み) -----
     // 自分の吹っ飛ばされ値が許容値のこの割合を越えるごとに、縁の赤みを濃く太く、脈を速くする
     // あとどのくらいで壁を割られてしまうかを、数字を出さずに分かるように
@@ -141,6 +152,7 @@ Hud::~Hud() {
     if (_specialLogoGraph != -1) DeleteGraph(_specialLogoGraph);
     if (_dodgeFrameGraph != -1) DeleteGraph(_dodgeFrameGraph);
     if (_dodgeFillGraph != -1) DeleteGraph(_dodgeFillGraph);
+    if (_controlsGraph != -1) DeleteGraph(_controlsGraph);
 }
 
 void Hud::Setup(Player* player, PhaseDirector* director) {
@@ -152,6 +164,7 @@ void Hud::Setup(Player* player, PhaseDirector* director) {
     _specialLogoGraph = LoadGraph(SPECIAL_LOGO_IMAGE);
     _dodgeFrameGraph = LoadGraph(DODGE_FRAME_IMAGE);
     _dodgeFillGraph = LoadGraph(DODGE_FILL_IMAGE);
+    _controlsGraph = LoadGraph(CONTROLS_IMAGE);
 }
 
 void Hud::Render() {
@@ -432,6 +445,23 @@ void Hud::DrawCombo(int screenWidth, int screenHeight) {
 }
 
 void Hud::DrawControls(int screenWidth, int screenHeight) {
+    if (_controlsGraph != -1) {
+        int imageWidth = 0;
+        int imageHeight = 0;
+        GetGraphSize(_controlsGraph, &imageWidth, &imageHeight);
+        if (imageWidth > 0) {
+            int height = CONTROLS_WIDTH * imageHeight / imageWidth;
+            int left = (screenWidth - CONTROLS_WIDTH) / 2;
+            int top = screenHeight - CONTROLS_BOTTOM_MARGIN - height;
+
+            SetDrawBlendMode(DX_BLENDMODE_ALPHA, CONTROLS_ALPHA);
+            DrawExtendGraph(left, top, left + CONTROLS_WIDTH, top + height, _controlsGraph, TRUE);
+            SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+            return;
+        }
+    }
+
+    // 画像が読めないときの文字の説明
     const char* lines[] = {
         "移動 WASD / 左スティック    視点 マウス / 右スティック    正面を向く C / L1",
         "攻撃 左クリック / X    ガード 右クリック / L2    ジャンプ SPACE / A",

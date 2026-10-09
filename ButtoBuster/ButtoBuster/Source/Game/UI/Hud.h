@@ -18,6 +18,9 @@ private:
     // 危なさの音を最後に鳴らした脈の番号 同じ脈で 2 回鳴らさないように
     int _lastDangerBeat = -1;
 
+    // 画面の下の操作の説明の画像
+    int _controlsGraph = -1;
+
     // 回避ゲージの画像 枠 (左の紋章つき) と、1 回分の中身
     int _dodgeFrameGraph = -1;
     int _dodgeFillGraph = -1;
