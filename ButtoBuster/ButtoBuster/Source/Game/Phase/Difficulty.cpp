@@ -1,7 +1,7 @@
 ﻿#include "Difficulty.h"
 
 namespace {
-    // 難易度の表 調整はここだけ見ればよい
+    // 難易度の表 調整はここだけ見ればよい -----
     // 並びは Difficulty と同じ (Easy Normal Hard)
     // { 名前, 説明, 自分の許容値, 賢さの増減, 攻撃の番が増える間隔, 攻撃の番の最大, 全回復の間隔, 敵の攻撃の待ちの倍率, 背景 }
     const DifficultyData TABLE[] = {
@@ -13,7 +13,6 @@ namespace {
 
         { "HARD",   "腕に自信のある人向け すぐ吹き飛ばされ、敵も賢く数も多い",
           24.0f,  2, 2, 5, 5, 1.0f, "Data/2D/ModeHard.png" },
-          //マジックナンバー直す
     };
 
     static_assert(sizeof(TABLE) / sizeof(TABLE[0]) == static_cast<int>(Difficulty::Count),
