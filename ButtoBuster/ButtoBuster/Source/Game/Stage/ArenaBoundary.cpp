@@ -108,13 +108,16 @@ void ArenaBoundary::AddPanels() {
         float uA = static_cast<float>(i % SEGMENTS_PER_PANEL) / SEGMENTS_PER_PANEL;
         float uB = static_cast<float>(i % SEGMENTS_PER_PANEL + 1) / SEGMENTS_PER_PANEL;
 
-        float bottomA = _groundHeights[i] - PANEL_SINK;
-        float bottomB = _groundHeights[next] - PANEL_SINK;
-        AddQuad(_vertices,
-            MakeVertex(PointAt(angleA, bottomA), color, alpha, uA, 1.0f),
-            MakeVertex(PointAt(angleA, bottomA + PANEL_HEIGHT), color, alpha, uA, 0.0f),
-            MakeVertex(PointAt(angleB, bottomB), color, alpha, uB, 1.0f),
-            MakeVertex(PointAt(angleB, bottomB + PANEL_HEIGHT), color, alpha, uB, 0.0f));
+        // 地面から上へ PANEL_ROWS 段積む
+        for (int row = 0; row < PANEL_ROWS; ++row) {
+            float bottomA = _groundHeights[i] - PANEL_SINK + PANEL_HEIGHT * row;
+            float bottomB = _groundHeights[next] - PANEL_SINK + PANEL_HEIGHT * row;
+            AddQuad(_vertices,
+                MakeVertex(PointAt(angleA, bottomA), color, alpha, uA, 1.0f),
+                MakeVertex(PointAt(angleA, bottomA + PANEL_HEIGHT), color, alpha, uA, 0.0f),
+                MakeVertex(PointAt(angleB, bottomB), color, alpha, uB, 1.0f),
+                MakeVertex(PointAt(angleB, bottomB + PANEL_HEIGHT), color, alpha, uB, 0.0f));
+        }
     }
 }
 

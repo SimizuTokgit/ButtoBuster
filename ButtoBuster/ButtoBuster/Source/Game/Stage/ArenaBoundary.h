@@ -29,9 +29,12 @@ private:
     static constexpr float PANEL_HEIGHT = 565.0f;
     static constexpr float PANEL_SINK = 20.0f;
 
+    // 板を縦に何段積むか 1 段だと低く見えるので、上に 2 段重ねて高い壁にする
+    static constexpr int PANEL_ROWS = 3;
+
     // 幕の濃さ 離れていてもこの濃さで見せ、VISIBLE_DISTANCE より近づくほど NEAR_ALPHA へ濃くする
-    static constexpr float BASE_ALPHA = 0.25f;
-    static constexpr float NEAR_ALPHA = 0.55f;
+    static constexpr float BASE_ALPHA = 0.35f;
+    static constexpr float NEAR_ALPHA = 0.75f;
     static constexpr float VISIBLE_DISTANCE = 700.0f;
 
     // 色だけの幕の高さ 地面から下と上へどこまで張るか 上へ行くほど消える (画像が読めないとき)
