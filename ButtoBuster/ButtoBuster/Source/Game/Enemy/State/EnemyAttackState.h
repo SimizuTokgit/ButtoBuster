@@ -19,8 +19,8 @@ private:
     bool _hasEnteredSecondHit = false;
     bool _hasPlayedArc = false;
     bool _hasPlayedSecondArc = false;
-    bool _hasPlayedDodgeCue = false;
-    bool _hasPlayedSecondDodgeCue = false;
+    bool _hasPlayedWarning = false;
+    bool _hasPlayedSecondWarning = false;
 
 public:
     EnemyAttackState(const AttackData& data, float areaRadius);
@@ -31,9 +31,13 @@ public:
     const char* GetName() const override { return _areaRadius > 0.0f ? "Stomp" : "Attack"; }
 
 private:
-    void PlayWarning(Enemy& enemy);
+    // 踏みつけの当たる範囲を、振りかぶった瞬間に地面へ出す
+    void PlayAreaWarning(Enemy& enemy);
+
+    // 当たる少し前に頭の上を光らせ、音を鳴らす 光った瞬間に回避すればジャスト回避になる
+    void PlayWarning(Enemy& enemy, float time);
+
     void PlaySwing(Enemy& enemy, float time);
-    void PlayDodgeCue(Enemy& enemy, float time);
     void PlayArc(Enemy& enemy, float swing);
     void ApplyHit(Enemy& enemy, float time);
 };

@@ -169,7 +169,7 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _dust->color = GetColorU8(170, 150, 120, 255);
     }
 
-    // 敵が振りかぶった瞬間の光 見ていれば避けられるようにする
+    // 敵の攻撃が当たる直前の光 光った瞬間に回避すればジャスト回避になる
     _warningGlint = CreateSystem("WarningGlint", _damageGraph);
     if (_warningGlint) {
         _warningGlint->startSizeMin = 100.0f;
@@ -193,20 +193,6 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _heavyGlint->startLifetimeMax = 0.5f;
         _heavyGlint->alphaFadeRatio = 0.5f;
         _heavyGlint->color = GetColorU8(255, 50, 40, 255);
-    }
-
-    // ジャスト回避の合図 振りかぶりの合図 (オレンジ・赤) と見分けがつくよう白く強く
-    // 光り始めが押す瞬間 当たる瞬間を過ぎるまで光らせておき、見逃しにくくする
-    _dodgeCueGlint = CreateSystem("DodgeCueGlint", _damageGraph);
-    if (_dodgeCueGlint) {
-        _dodgeCueGlint->startSizeMin = 170.0f;
-        _dodgeCueGlint->startSizeMax = 190.0f;
-        _dodgeCueGlint->startSpeedMin = 0.0f;
-        _dodgeCueGlint->startSpeedMax = 0.0f;
-        _dodgeCueGlint->startLifetimeMin = 0.28f;
-        _dodgeCueGlint->startLifetimeMax = 0.3f;
-        _dodgeCueGlint->alphaFadeRatio = 0.4f;
-        _dodgeCueGlint->color = GetColorU8(255, 255, 255, 255);
     }
 
     // 衝撃波で跳ね上がる地面のかけら
@@ -349,10 +335,6 @@ void EffectManager::PlayDust(VECTOR groundPosition, int count) {
 
 void EffectManager::PlayWarning(VECTOR position, bool isHeavy) {
     Burst(isHeavy ? _heavyGlint : _warningGlint, position, 1);
-}
-
-void EffectManager::PlayDodgeCue(VECTOR position) {
-    Burst(_dodgeCueGlint, position, 1);
 }
 
 void EffectManager::PlaySteam(VECTOR position, int count) {

@@ -13,13 +13,13 @@ namespace {
     // アニメの時間は 30fps のフレームで数えている
     constexpr float ANIMATION_FPS = 30.0f;
 
-    // ----- ジャスト回避の合図 -----
-    // 当たり判定が出るこの秒数前に、敵を白く光らせて音を鳴らす 光った瞬間に回避すればジャスト回避になる
+    // ----- 攻撃の合図 (頭の上のオレンジ 大振りは赤) -----
+    // 当たり判定が出るこの秒数前に光らせて音を鳴らす 光った瞬間に回避すればジャスト回避になる
     // ジャスト回避は、押してから justDodgeWindow (PlayerData 0.18 秒) のうちに当たったときなので、それより短くする
-    // 前は 0.3 秒前に光らせていたが、光った瞬間に押すと早すぎて失敗していた
-    constexpr float DODGE_CUE_LEAD_SECONDS = 0.15f;
-    constexpr const char* DODGE_CUE_SOUND = "Player/equip";
-    constexpr float DODGE_CUE_VOLUME = 0.6f;
+    // 前は振りかぶった瞬間に光らせていたが、当たるまでが長くて回避の合図にならなかった
+    constexpr float WARNING_LEAD_SECONDS = 0.15f;
+    constexpr const char* WARNING_SOUND = "Player/equip";
+    constexpr float WARNING_VOLUME = 0.6f;
 }
 
 EnemyAttackState::EnemyAttackState(const AttackData& data, float areaRadius)
@@ -32,7 +32,7 @@ void EnemyAttackState::Enter(Enemy& enemy) {
     enemy.FaceImmediately(EnemyActions::ToTarget(enemy));
     enemy.StopHorizontal();
 
-    PlayWarning(enemy);
+    PlayAreaWarning(enemy);
 }
 
 void EnemyAttackState::Execute(Enemy& enemy, const InputInfo& input, float deltaTime) {
@@ -53,8 +53,8 @@ void EnemyAttackState::Execute(Enemy& enemy, const InputInfo& input, float delta
         enemy.StopHorizontal();
     }
 
+    PlayWarning(enemy, time);
     PlaySwing(enemy, time);
-    PlayDodgeCue(enemy, time);
     ApplyHit(enemy, time);
 
     if (enemy.IsAnimationFinished()) {
@@ -69,22 +69,39 @@ void EnemyAttackState::Exit(Enemy& enemy) {
     enemy.NotifyAttackFinished();
 }
 
-void EnemyAttackState::PlayWarning(Enemy& enemy) {
+void EnemyAttackState::PlayAreaWarning(Enemy& enemy) {
+    // 踏みつけは当たる範囲を先に地面へ出す 赤が満ちきったときに当たる
+    // 輪は普段の時間で満ちるので、反撃の間に敵がゆっくりになっていると、満ちたあと少ししてから当たる
+    if (_areaRadius <= 0.0f) return;
+
     auto* effects = EffectManager::Get();
     if (!effects) return;
 
-    // 振りかぶった瞬間に頭の上を光らせる 囲まれていても、次に誰が殴ってくるか分かるように
-    bool isArea = _areaRadius > 0.0f;
-    bool isHeavy = isArea || !_data.canGuard;
-    VECTOR head = VAdd(enemy.GetCenter(), VGet(0.0f, enemy.bodyHeight * 0.5f, 0.0f));
-    effects->PlayWarning(head, isHeavy);
+    float seconds = _data.hitStart / (ANIMATION_FPS * _data.animationSpeed);
+    effects->PlayAreaWarning(enemy.GetPosition(), _areaRadius, seconds);
+}
 
-    // 踏みつけは当たる範囲を先に地面へ出す 赤が満ちきったときに当たる
-    // 輪は普段の時間で満ちるので、反撃の間に敵がゆっくりになっていると、満ちたあと少ししてから当たる
-    if (isArea) {
-        float seconds = _data.hitStart / (ANIMATION_FPS * _data.animationSpeed);
-        effects->PlayAreaWarning(enemy.GetPosition(), _areaRadius, seconds);
+void EnemyAttackState::PlayWarning(Enemy& enemy, float time) {
+    // 光らせるのは、判定が出るこの数だけ前のフレーム (アニメの速さで変わる)
+    float leadFrames = WARNING_LEAD_SECONDS * ANIMATION_FPS * _data.animationSpeed;
+
+    bool isFirst = !_hasPlayedWarning && time >= _data.hitStart - leadFrames;
+    if (isFirst) _hasPlayedWarning = true;
+
+    // 二段斬りは、二段目の前にももう一度光らせる
+    bool hasSecond = _data.hitStart2 >= 0.0f;
+    bool isSecond = hasSecond && !_hasPlayedSecondWarning && time >= _data.hitStart2 - leadFrames;
+    if (isSecond) _hasPlayedSecondWarning = true;
+
+    if (!isFirst && !isSecond) return;
+
+    // 頭の上を光らせる 囲まれていても、誰の攻撃が来るか分かるように 大振りと踏みつけは赤く大きく
+    if (auto* effects = EffectManager::Get()) {
+        bool isHeavy = _areaRadius > 0.0f || !_data.canGuard;
+        VECTOR head = VAdd(enemy.GetCenter(), VGet(0.0f, enemy.bodyHeight * 0.5f, 0.0f));
+        effects->PlayWarning(head, isHeavy);
     }
+    SoundManager::Instance().PlaySE(WARNING_SOUND, WARNING_VOLUME);
 }
 
 void EnemyAttackState::PlaySwing(Enemy& enemy, float time) {
@@ -102,24 +119,6 @@ void EnemyAttackState::PlaySwing(Enemy& enemy, float time) {
         _hasPlayedSecondArc = true;
         PlayArc(enemy, -_data.arcSwing);
     }
-}
-
-void EnemyAttackState::PlayDodgeCue(Enemy& enemy, float time) {
-    // 合図を出すのは、判定が出るこの数だけ前のフレーム (アニメの速さで変わる)
-    float leadFrames = DODGE_CUE_LEAD_SECONDS * ANIMATION_FPS * _data.animationSpeed;
-
-    bool isFirstCue = !_hasPlayedDodgeCue && time >= _data.hitStart - leadFrames;
-    if (isFirstCue) _hasPlayedDodgeCue = true;
-
-    // 二段斬りは、二段目の前にももう一度出す
-    bool hasSecond = _data.hitStart2 >= 0.0f;
-    bool isSecondCue = hasSecond && !_hasPlayedSecondDodgeCue && time >= _data.hitStart2 - leadFrames;
-    if (isSecondCue) _hasPlayedSecondDodgeCue = true;
-
-    if (!isFirstCue && !isSecondCue) return;
-
-    if (auto* effects = EffectManager::Get()) effects->PlayDodgeCue(enemy.GetCenter());
-    SoundManager::Instance().PlaySE(DODGE_CUE_SOUND, DODGE_CUE_VOLUME);
 }
 
 void EnemyAttackState::PlayArc(Enemy& enemy, float swing) {

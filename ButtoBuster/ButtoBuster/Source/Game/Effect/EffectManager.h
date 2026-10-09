@@ -44,7 +44,6 @@ private:
     ParticleSystem* _dust = nullptr;
     ParticleSystem* _warningGlint = nullptr;
     ParticleSystem* _heavyGlint = nullptr;
-    ParticleSystem* _dodgeCueGlint = nullptr;
     ParticleSystem* _shockDebris = nullptr;
     ParticleSystem* _steam = nullptr;
     ParticleSystem* _wallShard = nullptr;
@@ -82,11 +81,8 @@ public:
     // 足元の土煙 着地や回避の踏み切り
     void PlayDust(VECTOR groundPosition, int count);
 
-    // 敵が振りかぶった合図 重い技は赤く大きく光らせる
+    // 敵の攻撃が当たる直前の合図 重い技は赤く大きく光らせる 光ったら回避、で覚えられるように
     void PlayWarning(VECTOR position, bool isHeavy);
-
-    // ジャスト回避の合図 当たる直前に敵を白く光らせる 光ったら回避、で覚えられるように
-    void PlayDodgeCue(VECTOR position);
 
     // 吹っ飛ばされ値が溜まった体から立ちのぼる湯気 溜まるほど多く呼ばれる
     void PlaySteam(VECTOR position, int count);
