@@ -10,6 +10,7 @@ enum class TutorialGoal {
     Combo,          // 続けて当てる (count 回)
     Special,        // 必殺技を撃つ (count 回)
     Charge,         // 溜め斬りを count 段階以上溜めて振る
+    AirSlash,       // 空中で斬る (count 回)
     AirSlam,        // 空中から叩きつける (count 回)
     Guard,          // ガードで受ける (count 回)
     Dodge,          // 回避する (count 回)

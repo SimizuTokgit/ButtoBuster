@@ -82,6 +82,7 @@ private:
     float _lookedDegrees = 0.0f;
     bool _wasJumping = false;
     bool _wasSlamming = false;
+    const void* _lastState = nullptr;   // 前のフレームの状態 空中の斬りが新しく始まったかを見る
     float _lastDodgeStock = 0.0f;
     int _guardCountAtStart = 0;
 

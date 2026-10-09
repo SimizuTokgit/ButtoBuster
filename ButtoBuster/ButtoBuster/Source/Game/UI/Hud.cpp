@@ -98,13 +98,14 @@ namespace {
     constexpr const char* SPECIAL_READY_HINT = "F / Y";
     constexpr unsigned int SPECIAL_READY_HINT_COLOR = 0xA8E0FF;
 
-    // ----- 操作の説明 (画面の下の真ん中) -----
+    // ----- 操作の説明 (画面の左下) -----
     // 画像は Data/2D/Controls.png (1001 x 216) 読めないときは文字で出す
     constexpr const char* CONTROLS_IMAGE = "Data/2D/Controls.png";
 
-    // 画面に出す幅 px 高さは画像の縦横の比で決まる 下の端からの隙間
+    // 画面に出す幅 px 高さは画像の縦横の比で決まる 左の端と下の端からの隙間
     constexpr int CONTROLS_WIDTH = 720;
-    constexpr int CONTROLS_BOTTOM_MARGIN = 6;
+    constexpr int CONTROLS_LEFT_MARGIN = 8;
+    constexpr int CONTROLS_BOTTOM_MARGIN = 2;
 
     // 濃さ 0〜255 少し透かして、後ろの戦いが見えるようにする
     constexpr int CONTROLS_ALPHA = 230;
@@ -451,7 +452,7 @@ void Hud::DrawControls(int screenWidth, int screenHeight) {
         GetGraphSize(_controlsGraph, &imageWidth, &imageHeight);
         if (imageWidth > 0) {
             int height = CONTROLS_WIDTH * imageHeight / imageWidth;
-            int left = (screenWidth - CONTROLS_WIDTH) / 2;
+            int left = CONTROLS_LEFT_MARGIN;
             int top = screenHeight - CONTROLS_BOTTOM_MARGIN - height;
 
             SetDrawBlendMode(DX_BLENDMODE_ALPHA, CONTROLS_ALPHA);

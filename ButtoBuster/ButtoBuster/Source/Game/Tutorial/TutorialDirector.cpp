@@ -4,6 +4,7 @@
 #include "PlayerController.h"
 #include "PlayerJumpState.h"
 #include "PlayerAirSlamState.h"
+#include "PlayerAttackState.h"
 #include "CameraFollow.h"
 #include "PhaseDirector.h"
 #include "Enemy.h"
@@ -162,6 +163,7 @@ bool TutorialDirector::IsCounted() const {
     case TutorialGoal::Jump:
     case TutorialGoal::Combo:
     case TutorialGoal::Special:
+    case TutorialGoal::AirSlash:
     case TutorialGoal::AirSlam:
     case TutorialGoal::Guard:
     case TutorialGoal::Dodge:
@@ -222,6 +224,7 @@ void TutorialDirector::BeginStep() {
     _lookedDegrees = 0.0f;
     _wasJumping = states.IsIn<PlayerJumpState>();
     _wasSlamming = states.IsIn<PlayerAirSlamState>();
+    _lastState = states.GetCurrent();
     _lastDodgeStock = _player->GetDodgeStock();
     _guardCountAtStart = _player->GetGuardCount();
 
@@ -328,6 +331,16 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
         // 続けて当てた数 食らったり途切れたりしたら数え直し
         SetProgress(_player->GetCombo());
         break;
+
+    case TutorialGoal::AirSlash: {
+        // 空中の斬りを振り始めた回数 段が進むたびに新しい状態になるので、状態が替わった所で数える
+        const auto* current = states.GetCurrent();
+        const auto* attack = dynamic_cast<const PlayerAttackState*>(current);
+        bool isAirSlash = attack && attack->GetKind() == PlayerAttackState::Kind::Air;
+        if (isAirSlash && current != _lastState) AddProgress(1);
+        _lastState = current;
+        break;
+    }
 
     case TutorialGoal::AirSlam: {
         bool isSlamming = states.IsIn<PlayerAirSlamState>();

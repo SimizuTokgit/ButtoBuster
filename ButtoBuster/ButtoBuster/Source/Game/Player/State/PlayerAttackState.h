@@ -55,6 +55,9 @@ public:
     void Execute(Player& player, const InputInfo& input, float deltaTime) override;
     void Exit(Player& player) override;
     const char* GetName() const override;
+
+    // どの振りか チュートリアルが、空中の斬りを数えるのに使う
+    Kind GetKind() const { return _kind; }
     float GetOpeningTime(const Player& player) const override;
 
 private:
