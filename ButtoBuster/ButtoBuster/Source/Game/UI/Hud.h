@@ -15,6 +15,9 @@ private:
 
     int _shownCombo = 0;
 
+    // 危なさの音を最後に鳴らした脈の番号 同じ脈で 2 回鳴らさないように
+    int _lastDangerBeat = -1;
+
 public:
     // 制作用 キャラの頭上に今の状態と吹っ飛ばされ値、隙があればその残りを出す
     bool isStateVisible = false;

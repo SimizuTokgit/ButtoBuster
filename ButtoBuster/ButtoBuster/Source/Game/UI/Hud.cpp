@@ -4,6 +4,7 @@
 #include "PhaseDirector.h"
 #include "Enemy.h"
 #include "CharacterRegistry.h"
+#include "SoundManager.h"
 #include "DxLib.h"
 #include <cmath>
 #include <cstdio>
@@ -30,6 +31,32 @@ namespace {
 
     // バーの下に出す名前
     constexpr const char* DODGE_BAR_LABEL = "回避";
+
+    // ----- 吹っ飛ばされそうな危なさ (画面の縁の赤み) -----
+    // 自分の吹っ飛ばされ値が許容値のこの割合を越えるごとに、縁の赤みを濃く太く、脈を速くする
+    // あとどのくらいで壁を割られてしまうかを、数字を出さずに分かるように
+    struct DangerLook {
+        float ratio;            // この割合から (1 で許容値に届いた 今壁に飛ばされたら負け)
+        int width;              // 縁の太さ px
+        int alphaMin;           // 脈の弱いときの濃さ 0〜255
+        int alphaMax;           // 脈の強いときの濃さ 0〜255
+        float beatsPerSecond;   // 1 秒に脈打つ回数
+    };
+    const DangerLook DANGER_LOOKS[] = {
+        { 0.5f,  30, 10,  45, 1.0f },   // 半分を越えた うっすら、ゆっくり
+        { 0.75f, 45, 30,  90, 1.6f },   // 4 分の 3 を越えた はっきり
+        { 1.0f,  64, 60, 150, 2.4f },   // 許容値に届いた 濃く、速く
+    };
+    constexpr int DANGER_LOOK_COUNT = sizeof(DANGER_LOOKS) / sizeof(DANGER_LOOKS[0]);
+
+    constexpr unsigned int DANGER_COLOR = 0xC02020;
+
+    // 縁をこの数の帯に分け、内側ほど薄くしてぼかす
+    constexpr int DANGER_BANDS = 5;
+
+    // 許容値に届いている間、脈ごとに鳴らす音 空なら鳴らさない (心音の音を Data/Sound/SE に入れたら名前を書く)
+    constexpr const char* DANGER_BEAT_SOUND = "";
+    constexpr float DANGER_BEAT_VOLUME = 0.8f;
 
     // 頭の上の画面の位置 カメラの後ろにあるなら false
     bool GetHeadScreenPosition(const Character& character, VECTOR& outScreen) {
@@ -64,17 +91,47 @@ void Hud::Render() {
 }
 
 void Hud::DrawDanger(int screenWidth, int screenHeight) {
-    // 吹っ飛ばされ値が許容値に届いたら、画面の縁を赤く脈打たせる 今壁に飛ばされたら負けると気づけるように
-    if (_player->IsDead() || _player->GetBlowRatio() < 1.0f) return;
+    // 吹っ飛ばされ値が溜まるほど、画面の縁を赤く脈打たせる 段の数値は先頭の DANGER_LOOKS
+    if (_player->IsDead()) return;
 
-    float pulse = (sinf(GetNowCount() / 1000.0f * 6.0f) + 1.0f) * 0.5f;
-    constexpr int EDGE = 18;
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(40 + pulse * 70));
-    DrawBox(0, 0, screenWidth, EDGE, 0xC02020, TRUE);
-    DrawBox(0, screenHeight - EDGE, screenWidth, screenHeight, 0xC02020, TRUE);
-    DrawBox(0, 0, EDGE, screenHeight, 0xC02020, TRUE);
-    DrawBox(screenWidth - EDGE, 0, screenWidth, screenHeight, 0xC02020, TRUE);
+    // 今の吹っ飛ばされ値で届いている、いちばん強い段を選ぶ
+    float ratio = _player->GetBlowRatio();
+    int stage = -1;
+    for (int i = 0; i < DANGER_LOOK_COUNT; ++i) {
+        if (ratio >= DANGER_LOOKS[i].ratio) stage = i;
+    }
+    if (stage < 0) return;
+    const DangerLook& look = DANGER_LOOKS[stage];
+
+    // 0〜1 で脈打つ
+    float seconds = GetNowCount() / 1000.0f;
+    float pulse = (sinf(seconds * look.beatsPerSecond * DX_TWO_PI_F) + 1.0f) * 0.5f;
+    float alpha = look.alphaMin + (look.alphaMax - look.alphaMin) * pulse;
+
+    // 外側から内側へ、帯ごとに薄くしてぼかす
+    int band = look.width / DANGER_BANDS;
+    for (int i = 0; i < DANGER_BANDS; ++i) {
+        float fade = 1.0f - static_cast<float>(i) / DANGER_BANDS;
+        SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * fade));
+
+        int inner = band * i;
+        int outer = band * (i + 1);
+        DrawBox(0, inner, screenWidth, outer, DANGER_COLOR, TRUE);                                          // 上
+        DrawBox(0, screenHeight - outer, screenWidth, screenHeight - inner, DANGER_COLOR, TRUE);            // 下
+        DrawBox(inner, outer, outer, screenHeight - outer, DANGER_COLOR, TRUE);                             // 左
+        DrawBox(screenWidth - outer, outer, screenWidth - inner, screenHeight - outer, DANGER_COLOR, TRUE); // 右
+    }
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+    // いちばん強い段では、脈ごとに音を鳴らす
+    bool isMaxStage = stage == DANGER_LOOK_COUNT - 1;
+    if (isMaxStage && DANGER_BEAT_SOUND[0] != '\0') {
+        int beat = static_cast<int>(seconds * look.beatsPerSecond);
+        if (beat != _lastDangerBeat) {
+            _lastDangerBeat = beat;
+            SoundManager::Instance().PlaySE(DANGER_BEAT_SOUND, DANGER_BEAT_VOLUME);
+        }
+    }
 }
 
 void Hud::DrawDodgeStock() {
