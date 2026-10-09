@@ -12,7 +12,28 @@
 namespace {
     constexpr unsigned int WHITE = 0xFFFFFF;
 
-    // ----- 回避の残りのバー (左上) -----
+    // ----- 回避ゲージ (左上) -----
+    // 続けて回避できる回数 (PlayerData の dodgeCount) の 2 つの枠に、1 回分ずつ中身が入る
+    // 画像は Data/2D の DodgeGauge で始まるもの 枠の左の菱形 (回避の紋章) も枠の画像に入っている
+    constexpr const char* DODGE_FRAME_IMAGE = "Data/2D/DodgeGaugeFrame.png";
+    constexpr const char* DODGE_FILL_IMAGE = "Data/2D/DodgeGaugeFill.png";
+
+    // 画像の枠の数 dodgeCount がこれと違うときは、下の四角のバーで出す
+    constexpr int DODGE_SLOT_COUNT = 2;
+
+    // 枠を置く場所 (左上) と大きさ 画像 (1190 x 215) に掛ける倍率
+    constexpr int DODGE_GAUGE_X = 20;
+    constexpr int DODGE_GAUGE_Y = 4;
+    constexpr float DODGE_GAUGE_SCALE = 0.32f;
+
+    // 中身を入れる枠穴 枠の画像の中の位置 (px) 左の端は 1 つ目と 2 つ目 上の端は同じ
+    constexpr int DODGE_SLOT_LEFTS[DODGE_SLOT_COUNT] = { 213, 628 };
+    constexpr int DODGE_SLOT_TOP = 79;
+
+    // 戻っている途中の中身の濃さ 0〜255 溜まりきると 255 になる
+    constexpr int DODGE_CHARGING_ALPHA = 120;
+
+    // ----- 回避の残りのバー (画像が使えないときの四角のバー) -----
     // 前の体力バーと同じ場所と大きさ 続けて回避できる回数 (PlayerData の dodgeCount) に分け、1 つが 1 回分
     constexpr int DODGE_BAR_X = 40;
     constexpr int DODGE_BAR_Y = 34;
@@ -116,6 +137,8 @@ Hud::~Hud() {
     if (_specialFrameGraph != -1) DeleteGraph(_specialFrameGraph);
     if (_specialFillGraph != -1) DeleteGraph(_specialFillGraph);
     if (_specialLogoGraph != -1) DeleteGraph(_specialLogoGraph);
+    if (_dodgeFrameGraph != -1) DeleteGraph(_dodgeFrameGraph);
+    if (_dodgeFillGraph != -1) DeleteGraph(_dodgeFillGraph);
 }
 
 void Hud::Setup(Player* player, PhaseDirector* director) {
@@ -125,6 +148,8 @@ void Hud::Setup(Player* player, PhaseDirector* director) {
     _specialFrameGraph = LoadGraph(SPECIAL_FRAME_IMAGE);
     _specialFillGraph = LoadGraph(SPECIAL_FILL_IMAGE);
     _specialLogoGraph = LoadGraph(SPECIAL_LOGO_IMAGE);
+    _dodgeFrameGraph = LoadGraph(DODGE_FRAME_IMAGE);
+    _dodgeFillGraph = LoadGraph(DODGE_FILL_IMAGE);
 }
 
 void Hud::Render() {
@@ -196,6 +221,43 @@ void Hud::DrawDodgeStock() {
     int count = _player->data.dodgeCount;
     if (count <= 0) return;
 
+    float stock = _player->GetDodgeStock();
+    bool canUseImage = _dodgeFrameGraph != -1 && _dodgeFillGraph != -1 && count == DODGE_SLOT_COUNT;
+    if (canUseImage) {
+        int frameWidth = 0;
+        int frameHeight = 0;
+        GetGraphSize(_dodgeFrameGraph, &frameWidth, &frameHeight);
+        int fillWidth = 0;
+        int fillHeight = 0;
+        GetGraphSize(_dodgeFillGraph, &fillWidth, &fillHeight);
+
+        auto toScreenX = [](float x) { return DODGE_GAUGE_X + static_cast<int>(x * DODGE_GAUGE_SCALE); };
+        auto toScreenY = [](float y) { return DODGE_GAUGE_Y + static_cast<int>(y * DODGE_GAUGE_SCALE); };
+
+        DrawExtendGraph(DODGE_GAUGE_X, DODGE_GAUGE_Y, toScreenX(frameWidth), toScreenY(frameHeight), _dodgeFrameGraph, TRUE);
+
+        // 左から順に溜まる 戻っている途中の 1 つは、溜まった分だけ左から伸び、薄く出す
+        for (int i = 0; i < DODGE_SLOT_COUNT; ++i) {
+            float fill = stock - static_cast<float>(i);
+            if (fill <= 0.0f) continue;
+            if (fill > 1.0f) fill = 1.0f;
+
+            int sourceWidth = static_cast<int>(fillWidth * fill);
+            if (sourceWidth <= 0) continue;
+
+            float left = static_cast<float>(DODGE_SLOT_LEFTS[i]);
+            int x1 = toScreenX(left);
+            int y1 = toScreenY(static_cast<float>(DODGE_SLOT_TOP));
+            int x2 = toScreenX(left + sourceWidth);
+            int y2 = toScreenY(static_cast<float>(DODGE_SLOT_TOP + fillHeight));
+
+            SetDrawBlendMode(DX_BLENDMODE_ALPHA, (fill >= 1.0f) ? 255 : DODGE_CHARGING_ALPHA);
+            DrawRectExtendGraph(x1, y1, x2, y2, 0, 0, sourceWidth, fillHeight, _dodgeFillGraph, TRUE);
+        }
+        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+        return;
+    }
+
     int segmentWidth = (DODGE_BAR_WIDTH - DODGE_BAR_GAP * (count - 1)) / count;
     int bottom = DODGE_BAR_Y + DODGE_BAR_HEIGHT;
 
@@ -204,7 +266,6 @@ void Hud::DrawDodgeStock() {
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
     // 左から順に溜まる 戻っている途中の 1 つは、溜まった分だけ伸びる
-    float stock = _player->GetDodgeStock();
     for (int i = 0; i < count; ++i) {
         int left = DODGE_BAR_X + (segmentWidth + DODGE_BAR_GAP) * i;
 
@@ -368,7 +429,7 @@ void Hud::DrawControls(int screenWidth, int screenHeight) {
         "移動 WASD / 左スティック    視点 マウス / 右スティック    正面を向く C / L1",
         "攻撃 左クリック / X    ガード 右クリック / L2    ジャンプ SPACE / A",
         "溜め斬り 左右クリック / R2    回避 右クリック+SPACE / R1    対空斬り SPACE+左クリック / A+X",
-        "必殺技 F / Y (左上のバースターゲージが満タンのとき)",
+        "必殺技 F / Y (右下のバースターゲージが満タンのとき)",
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
 
