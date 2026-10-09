@@ -75,7 +75,7 @@ struct PlayerData {
     // ----- ジャスト回避 -----
 
     // 回避を始めてからこの秒数のうちに攻撃が来たら、ジャスト回避になる
-    float justDodgeWindow = 0.18f;   // 変えたら、敵の合図を出す早さ (EnemyAttackState の DODGE_CUE_LEAD_SECONDS) も見直す
+    float justDodgeWindow = 0.18f;   // 変えたら、敵の合図を出す早さ (EnemyAttackState の DODGE_CUE_LEAD_SECONDS) も、これより短くしておく
 
     // 決まったあとの無敵 秒 寄っている間と、続けて来た攻撃も受けない
     float justDodgeInvincibleTime = 0.6f;

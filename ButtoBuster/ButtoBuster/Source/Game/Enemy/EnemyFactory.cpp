@@ -87,22 +87,22 @@ namespace {
             break;
 
         case EnemyKind::Bee:
-            AddSound(animator, "Attack1", 16.5f, "Bee/needle_shot");
+            AddSound(animator, "Attack1", 16.5f, "Bee/SE_Bee_Attack");
             AddSound(animator, "Attack2", 0.5f, "Bee/Vc_Bee_Attack", 0.8f);
             AddSound(animator, "Attack2", 16.5f, "Bee/attack_sult_B");
             AddSound(animator, "Down", 0.0f, "Bee/flapDead");
             break;
 
         case EnemyKind::Golem:
-            AddSound(animator, "Attack1", 23.5f, "Golem/attack_swish_S");
+            AddSound(animator, "Attack1", 23.5f, "Golem/SE_Golem_Attack");
             AddSound(animator, "Attack1", 29.0f, "Golem/VO_attack");
-            AddSound(animator, "Attack2", 23.0f, "Golem/attack_swish_S");
+            AddSound(animator, "Attack2", 23.0f, "Golem/SE_Golem_Attack");
             AddSound(animator, "Attack2", 28.0f, "Golem/VO_attack");
             // 踏みつけの予備動作 この音を聞いたら離れるか回避する
             AddSound(animator, "Attack3", 13.0f, "Golem/attack_stompPre");
             AddSound(animator, "Attack3", 41.5f, "Golem/VO_attack_L");
             AddSound(animator, "Attack3", 50.5f, "Golem/attack_swish_L");
-            AddSound(animator, "Attack3", 57.0f, "Golem/attack_stomp");
+            AddSound(animator, "Attack3", 57.0f, "Golem/SE_Golem_SpAttack");
             AddSound(animator, "Down", 0.0f, "Golem/downing");
             break;
 

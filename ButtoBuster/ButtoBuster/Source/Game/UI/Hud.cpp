@@ -63,16 +63,19 @@ namespace {
         float beatsPerSecond;   // 1 秒に脈打つ回数
     };
     const DangerLook DANGER_LOOKS[] = {
-        { 0.5f,  30, 10,  45, 1.0f },   // 半分を越えた うっすら、ゆっくり
-        { 0.75f, 45, 30,  90, 1.6f },   // 4 分の 3 を越えた はっきり
-        { 1.0f,  64, 60, 150, 2.4f },   // 許容値に届いた 濃く、速く
+        { 0.5f,   50, 20, 110, 1.2f },   // 半分を越えた 赤みが見え始める
+        { 0.75f,  90, 40, 180, 2.0f },   // 4 分の 3 を越えた はっきり赤く点滅
+        { 1.0f,  140, 70, 240, 3.0f },   // 許容値に届いた 周りが真っ赤に、速く強く点滅
     };
     constexpr int DANGER_LOOK_COUNT = sizeof(DANGER_LOOKS) / sizeof(DANGER_LOOKS[0]);
 
-    constexpr unsigned int DANGER_COLOR = 0xC02020;
+    constexpr unsigned int DANGER_COLOR = 0xE01010;
+
+    // 点滅の鋭さ 1 でなめらかに明暗を繰り返し、大きいほど暗い時間が長くなって一瞬強く光る (点滅らしくなる)
+    constexpr float DANGER_BLINK_SHARPNESS = 2.5f;
 
     // 縁をこの数の帯に分け、内側ほど薄くしてぼかす
-    constexpr int DANGER_BANDS = 5;
+    constexpr int DANGER_BANDS = 12;
 
     // 許容値に届いている間、脈ごとに鳴らす音 空なら鳴らさない (心音の音を Data/Sound/SE に入れたら名前を書く)
     constexpr const char* DANGER_BEAT_SOUND = "";
@@ -124,9 +127,10 @@ void Hud::DrawDanger(int screenWidth, int screenHeight) {
     if (stage < 0) return;
     const DangerLook& look = DANGER_LOOKS[stage];
 
-    // 0〜1 で脈打つ
+    // 0〜1 で脈打つ 鋭さを掛けて、一瞬強く光る点滅にする
     float seconds = GetNowCount() / 1000.0f;
     float pulse = (sinf(seconds * look.beatsPerSecond * DX_TWO_PI_F) + 1.0f) * 0.5f;
+    pulse = powf(pulse, DANGER_BLINK_SHARPNESS);
     float alpha = look.alphaMin + (look.alphaMax - look.alphaMin) * pulse;
 
     // 外側から内側へ、帯ごとに薄くしてぼかす

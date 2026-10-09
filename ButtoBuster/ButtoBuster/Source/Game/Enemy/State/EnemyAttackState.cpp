@@ -14,10 +14,10 @@ namespace {
     constexpr float ANIMATION_FPS = 30.0f;
 
     // ----- ジャスト回避の合図 -----
-    // 当たり判定が出るこの秒数前に、敵を白く光らせて音を鳴らす 光ったのを見て回避すればジャスト回避になる
-    // ジャスト回避の受付 (PlayerData の justDodgeWindow 0.18 秒) より少し早く出す
-    // 人は見てから押すまでに 0.15〜0.3 秒ほどかかるので、受付ちょうどに光らせると間に合わない
-    constexpr float DODGE_CUE_LEAD_SECONDS = 0.3f;
+    // 当たり判定が出るこの秒数前に、敵を白く光らせて音を鳴らす 光った瞬間に回避すればジャスト回避になる
+    // ジャスト回避は、押してから justDodgeWindow (PlayerData 0.18 秒) のうちに当たったときなので、それより短くする
+    // 前は 0.3 秒前に光らせていたが、光った瞬間に押すと早すぎて失敗していた
+    constexpr float DODGE_CUE_LEAD_SECONDS = 0.15f;
     constexpr const char* DODGE_CUE_SOUND = "Player/equip";
     constexpr float DODGE_CUE_VOLUME = 0.6f;
 }

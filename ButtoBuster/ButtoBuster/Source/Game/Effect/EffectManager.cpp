@@ -195,15 +195,16 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _heavyGlint->color = GetColorU8(255, 50, 40, 255);
     }
 
-    // ジャスト回避の合図 振りかぶりの合図 (オレンジ・赤) と見分けがつくよう白く、短く強く
+    // ジャスト回避の合図 振りかぶりの合図 (オレンジ・赤) と見分けがつくよう白く強く
+    // 光り始めが押す瞬間 当たる瞬間を過ぎるまで光らせておき、見逃しにくくする
     _dodgeCueGlint = CreateSystem("DodgeCueGlint", _damageGraph);
     if (_dodgeCueGlint) {
         _dodgeCueGlint->startSizeMin = 170.0f;
         _dodgeCueGlint->startSizeMax = 190.0f;
         _dodgeCueGlint->startSpeedMin = 0.0f;
         _dodgeCueGlint->startSpeedMax = 0.0f;
-        _dodgeCueGlint->startLifetimeMin = 0.18f;
-        _dodgeCueGlint->startLifetimeMax = 0.2f;
+        _dodgeCueGlint->startLifetimeMin = 0.28f;
+        _dodgeCueGlint->startLifetimeMax = 0.3f;
         _dodgeCueGlint->alphaFadeRatio = 0.4f;
         _dodgeCueGlint->color = GetColorU8(255, 255, 255, 255);
     }
