@@ -32,6 +32,11 @@ namespace {
         // 壁の足元に広げる輪の大きさと色 (0xRRGGBB)
         float shockwaveRadius;
         unsigned int shockwaveColor;
+
+        // 割れた所に貼るヒビの画像 (Data/Effect/WallCrack.png) の幅と高さと、出ている秒数
+        float crackImageWidth;
+        float crackImageHeight;
+        float crackImageTime;
     };
 
     // 敵が割れたとき 何度も起きるので、気持ちよく、でも戦いの流れは止めすぎない
@@ -43,6 +48,7 @@ namespace {
         0xFFFFFF, 0.35f, 0.2f,  // flashColor flashAlpha flashTime
         1.2f, 18.0f,        // crackTime crackSpread
         600.0f, 0x96DCFF,   // shockwaveRadius shockwaveColor
+        700.0f, 394.0f, 1.2f,   // crackImageWidth crackImageHeight crackImageTime
     };
 
     // プレイヤーが割られたとき ゲームの終わりなので、長く止めて大きく見せる
@@ -54,7 +60,20 @@ namespace {
         0xFF3030, 0.5f, 0.4f,   // flashColor flashAlpha flashTime
         2.0f, 26.0f,        // crackTime crackSpread
         900.0f, 0xFF5A50,   // shockwaveRadius shockwaveColor
+        1000.0f, 562.0f, 2.0f,  // crackImageWidth crackImageHeight crackImageTime
     };
+
+    // ----- ヒビの画像の出し方 (敵とプレイヤーで同じ) -----
+
+    // 壁から内側へ浮かせる距離 光の幕に埋もれないように
+    constexpr float CRACK_IMAGE_LIFT = 20.0f;
+
+    // 出た瞬間の大きさ (1 で元の大きさ) と、元の大きさまで広がる秒数 割れた瞬間に一気に走って見えるように
+    constexpr float CRACK_IMAGE_START_SCALE = 0.4f;
+    constexpr float CRACK_IMAGE_GROW_TIME = 0.12f;
+
+    // 薄れ始める割合 出ている長さに対して 0.5 なら半分までは濃いまま
+    constexpr float CRACK_IMAGE_FADE_START = 0.5f;
 
     COLOR_U8 ToColor(unsigned int rgb) {
         return GetColorU8((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
@@ -81,6 +100,20 @@ void WallBreakEffectObserver::OnNotify(const WallBreakEvent& event) {
     if (auto* boundary = ArenaBoundary::Get()) {
         boundary->Flash(event.position, 1.0f, look.crackTime, look.crackSpread);
     }
+
+    // 割れた所の壁にヒビの画像を貼る 表を内側 (見ている側) へ向ける
+    EffectManager::SpriteDesc crack;
+    crack.position = VAdd(event.position, VScale(event.normal, CRACK_IMAGE_LIFT));
+    crack.anchorY = 0.5f;
+    crack.facing = event.normal;
+    crack.width = look.crackImageWidth;
+    crack.height = look.crackImageHeight;
+    crack.life = look.crackImageTime;
+    crack.fadeStart = CRACK_IMAGE_FADE_START;
+    crack.startScale = CRACK_IMAGE_START_SCALE;
+    crack.growTime = CRACK_IMAGE_GROW_TIME;
+    crack.blendMode = DX_BLENDMODE_ALPHA;
+    effects->PlayWallCrack(crack);
 
     // 壁の足元に輪を広げる
     VECTOR ground = event.position;
