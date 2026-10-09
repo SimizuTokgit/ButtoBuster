@@ -10,7 +10,7 @@ class GameObject;
 
 /// <summary>
 /// サウンド一元管理シングルトンクラス
-/// 起動時に Data/Sound/SE, Data/Sound/BGM 配下を再帰走査して
+/// 起動時に Data/Sound/SE, Data/Sound/BGM 配下 (と Data/Sound/ButtoBuster_SE&BGM の SE Voice BGM) を再帰走査して
 /// フォルダ込みの相対パス（拡張子なし）をキーに AudioClip を保持する。
 /// 内部に AudioSource を複数 AddComponent したプールを持ち、
 /// PlaySE / PlayBGM で未使用のものから再生する（Unity 時代の設計を踏襲）。

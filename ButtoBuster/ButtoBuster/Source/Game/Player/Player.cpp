@@ -21,6 +21,11 @@ namespace {
 
     // 頭の上のどこにジャスト回避の知らせを出すか
     constexpr float HEAD_OFFSET = 30.0f;
+
+    // 食らったときの声 吹っ飛ばされ値が許容値のこの割合以上なら、危ないときの声にする
+    constexpr const char* DAMAGE_VOICE = "Player/Vc_Damage";
+    constexpr const char* DANGER_DAMAGE_VOICE = "Player/Vc_Damage_Danger";
+    constexpr float DANGER_VOICE_RATIO = 0.75f;
 }
 
 void Player::Start() {
@@ -120,13 +125,16 @@ HitResult Player::TakeHit(const HitInfo& info) {
     // 吹っ飛ばされ値が許容値に届いていれば、弱い攻撃でも吹き飛ぶ 壁際で殴られると壁を割られて負ける
     bool isBlowHit = info.reaction == HitReaction::Blow || GetBlowRatio() >= 1.0f;
 
+    // 食らった声 吹き飛ぶときも、のけぞるときも出す
+    bool isDanger = GetBlowRatio() >= DANGER_VOICE_RATIO;
+    SoundManager::Instance().PlaySE(isDanger ? DANGER_DAMAGE_VOICE : DAMAGE_VOICE);
+
     auto* current = _states.GetCurrent();
     if (isBlowHit) {
         SoundManager::Instance().PlaySE("Player/blow_B");
         _states.Transition(current, std::make_unique<PlayerBlowState>(knockback));
     }
     else {
-        SoundManager::Instance().PlaySE("Player/VO_J_dmg");
         _states.Transition(current, std::make_unique<PlayerDamageState>(knockback));
     }
     return HitResult::Hit;
@@ -228,7 +236,7 @@ void Player::HealFull() {
         effects->PlayShockwave(GetPosition(), 500.0f, GetColorU8(120, 255, 160, 255));
         effects->FlashScreen(0x60FF90, 0.3f, 0.4f);
     }
-    SoundManager::Instance().PlaySE("Player/guard_On");
+    SoundManager::Instance().PlaySE("Game/SE_Recover");
 }
 
 VECTOR Player::FindAimDirection(VECTOR inputDirection, float searchRadius) const {

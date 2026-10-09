@@ -53,6 +53,9 @@ private:
     float _stepTimer = 0.0f;
     float _spawnTimer = 0.0f;
     int _phase = 1;
+
+    // このフェーズが始まったときに、プレイヤーが食らっていた回数 越えたときの声を選ぶのに使う
+    int _hitCountAtPhaseStart = 0;
     int _killCount = 0;
     int _nextEnemyId = 0;
     int _bestPhase = 0;
@@ -114,6 +117,8 @@ public:
 
 private:
     void StartPhase(int phase);
+    // フェーズを越えたときのプレイヤーの声 食らわなかった 危ない ふつう で変える
+    void PlayPhaseClearVoice();
     void EnterStep(Step step);
     void EnterGameOver();
     void EnterVictory();

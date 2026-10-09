@@ -26,7 +26,7 @@ void TitleScreen::Update(float deltaTime) {
     if (!InputSystem::Instance().ConfirmPressed()) return;
 
     _isRequested = true;
-    SoundManager::Instance().PlaySE("Common/system_enter");
+    SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
     // 難易度を選ぶ画面へ チュートリアルと本番はそのあと
     SceneManager::Instance().RequestLoadScene<ModeSelectScene>();
 }

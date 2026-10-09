@@ -75,6 +75,7 @@ struct EnemyData {
     const char* soundDamage = "";       // 痛がる声
     const char* soundBlow = "";
     const char* soundDead = "";
+    const char* soundSpawn = "";        // 現れたときの声
 };
 
 namespace EnemyDatabase {

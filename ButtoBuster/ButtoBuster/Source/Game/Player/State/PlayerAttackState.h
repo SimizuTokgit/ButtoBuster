@@ -59,6 +59,8 @@ public:
 
 private:
     void PlaySwingEffects(Player& player, float time);
+    // 振るときの声 技ごとに変える
+    void PlayVoice() const;
     void ApplyHit(Player& player);
     bool TryContinue(Player& player, const InputInfo& input);
 

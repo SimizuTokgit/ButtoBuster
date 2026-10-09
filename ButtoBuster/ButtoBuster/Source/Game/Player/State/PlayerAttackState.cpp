@@ -8,6 +8,7 @@
 #include "CombatSystem.h"
 #include "BlowChain.h"
 #include "EffectManager.h"
+#include "SoundManager.h"
 #include <memory>
 
 using std::make_unique;
@@ -15,6 +16,14 @@ using std::make_unique;
 namespace {
     // 技の時間はアニメのフレーム 30fps で数える (AttackData と同じ)
     constexpr float ANIMATION_FPS = 30.0f;
+
+    // 振るときの声 コンボの段ごと (空中の斬りも同じ) 溜めてから振ったとき 対空斬り
+    const char* const COMBO_VOICES[PlayerAttacks::SLASH_COUNT] = {
+        "Player/Vc_Attack1", "Player/Vc_Attack2", "Player/Vc_Attack3",
+    };
+    constexpr const char* CHARGE_VOICE = "Player/Vc_Charge_Attack";
+    constexpr const char* ANTI_AIR_VOICE = "Player/Vc_Attack2";
+    constexpr float VOICE_VOLUME = 0.8f;
 }
 
 PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, Kind kind, int chargeLevel)
@@ -140,6 +149,8 @@ void PlayerAttackState::PlaySwingEffects(Player& player, float time) {
 
     if (_hasPlayedSwing || time < _data.hitStart - SWING_LEAD) return;
     _hasPlayedSwing = true;
+
+    PlayVoice();
 
     auto* effects = EffectManager::Get();
     if (!effects) return;
@@ -273,4 +284,13 @@ bool PlayerAttackState::TryContinue(Player& player, const InputInfo& input) {
         return PlayerActions::TryStartAir(player, this, buffered);
     }
     return PlayerActions::TryStart(player, this, buffered);
+}
+
+void PlayerAttackState::PlayVoice() const {
+    const char* voice = "";
+    if (_chargeLevel >= 0) voice = CHARGE_VOICE;
+    else if (_kind == Kind::AntiAir) voice = ANTI_AIR_VOICE;
+    else if (_comboIndex >= 0 && _comboIndex < PlayerAttacks::SLASH_COUNT) voice = COMBO_VOICES[_comboIndex];
+
+    if (voice[0] != '\0') SoundManager::Instance().PlaySE(voice, VOICE_VOLUME);
 }

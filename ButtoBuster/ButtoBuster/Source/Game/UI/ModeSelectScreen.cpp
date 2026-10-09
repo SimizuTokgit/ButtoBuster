@@ -54,9 +54,9 @@ namespace {
     constexpr unsigned int NO_IMAGE_COLOR = 0x0C0C14;  // 背景の画像が 1 枚も無いときの色
 
     // ----- 音 -----
-    constexpr const char* MOVE_SE = "Common/system_counter";
+    constexpr const char* MOVE_SE = "Game/SE_ButtonSelect";
     constexpr float MOVE_SE_VOLUME = 0.5f;
-    constexpr const char* DECIDE_SE = "Common/system_enter";
+    constexpr const char* DECIDE_SE = "Game/SE_ButtonPush";
 
     // 前の画面で押しっぱなしのボタンで、すぐに決まらないように少し待つ
     constexpr float INPUT_DELAY = 0.3f;

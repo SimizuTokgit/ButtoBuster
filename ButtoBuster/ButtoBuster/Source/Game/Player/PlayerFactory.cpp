@@ -51,15 +51,11 @@ namespace {
         AddSound(animator, "Run", 0.5f, "Player/MAT_footstep_grass", 0.5f);
         AddSound(animator, "Run", 8.5f, "Player/MAT_footstep_grass", 0.5f);
 
-        AddSound(animator, "Attack1", 3.5f, "Weapon/Sabel/swish_S");
-        AddSound(animator, "Attack1", 5.5f, "Player/VO_J_attack", 0.7f);
-
-        AddSound(animator, "Attack2", 3.0f, "Player/VO_J_attack", 0.7f);
-        AddSound(animator, "Attack2", 4.0f, "Weapon/Sabel/swish_S");
-
-        AddSound(animator, "Attack3", 6.5f, "Weapon/Sabel/swish_L2");
-        AddSound(animator, "Attack3", 7.0f, "Player/VO_J_attack_L", 0.8f);
-        AddSound(animator, "Attack3", 8.0f, "Weapon/Sabel/swish_L");
+        // 振る音 コンボの 1 2 3 段目 Attack3 は溜め斬り 叩きつけ 必殺技も同じ振りを使う
+        // 声は技ごとに変えるので、アニメではなく状態から鳴らす (PlayerAttackState の PlaySwingEffects)
+        AddSound(animator, "Attack1", 3.5f, "Player/SE_Attack1");
+        AddSound(animator, "Attack2", 4.0f, "Player/SE_Attack2");
+        AddSound(animator, "Attack3", 6.5f, "Player/SE_Attack3");
 
         AddSound(animator, "GuardIn", 0.0f, "Player/guard_In");
         AddSound(animator, "GuardIn", 1.5f, "Player/guard_On", 0.6f);

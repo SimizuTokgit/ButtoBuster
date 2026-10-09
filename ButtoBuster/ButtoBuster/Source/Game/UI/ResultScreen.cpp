@@ -44,7 +44,7 @@ void ResultScreen::Update(float deltaTime) {
     if (!InputSystem::Instance().ConfirmPressed()) return;
 
     _isRequested = true;
-    SoundManager::Instance().PlaySE("Common/system_enter");
+    SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
     SceneManager::Instance().RequestLoadScene<TitleScene>();
 }
 

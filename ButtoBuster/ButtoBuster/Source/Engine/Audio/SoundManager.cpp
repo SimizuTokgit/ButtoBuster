@@ -34,6 +34,11 @@ void SoundManager::Init() {
     LoadFolder("Data/Sound/SE", "", _seClips, true);
     LoadFolder("Data/Sound/BGM", "", _bgmClips, false);
 
+    // 新しく作った音 SE と声は SE と同じように、フォルダ込みの名前で引く 例 Goblin/Vc_Goblin_Spw  Player/SE_Attack1
+    LoadFolder("Data/Sound/ButtoBuster_SE&BGM/SE", "", _seClips, true);
+    LoadFolder("Data/Sound/ButtoBuster_SE&BGM/Voice", "", _seClips, true);
+    LoadFolder("Data/Sound/ButtoBuster_SE&BGM/BGM", "", _bgmClips, false);
+
     _initialized = true;
 }
 

@@ -2,20 +2,19 @@
 #include "SoundManager.h"
 
 namespace {
-    // 雷の音はまだ無いので、近い音を借りている 雷の音を Data/Sound/SE に入れたら名前を書き換える
     // 空なら鳴らさない
 
     // ゲージが満タンになったとき
-    constexpr const char* READY_SOUND = "Common/system_counter";
-    constexpr float READY_VOLUME = 0.8f;
+    constexpr const char* READY_SOUND = "Player/SE_Thunder_Ready";
+    constexpr float READY_VOLUME = 1.0f;
 
     // 剣を掲げて雷を呼んだとき
     constexpr const char* CALL_SOUND = "Golem/attack_stompPre";
     constexpr float CALL_VOLUME = 1.0f;
 
-    // 雷が落ちたとき 2 つ重ねて鳴らす
-    constexpr const char* STRIKE_SOUND = "Golem/attack_stomp";
-    constexpr const char* STRIKE_SOUND_2 = "Player/guard_success";
+    // 雷が落ちたとき 雷の音と、必殺技の声を重ねて鳴らす
+    constexpr const char* STRIKE_SOUND = "Player/SE_Thunder";
+    constexpr const char* STRIKE_SOUND_2 = "Player/Vc_Attack_Special";
     constexpr float STRIKE_VOLUME = 1.0f;
 
     void Play(const char* name, float volume) {

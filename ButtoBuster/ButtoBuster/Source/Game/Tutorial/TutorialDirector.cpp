@@ -116,7 +116,7 @@ void TutorialDirector::Update(float deltaTime) {
 
     if (isRead) {
         if (IsWaitingConfirm() && InputSystem::Instance().ConfirmPressed()) {
-            SoundManager::Instance().PlaySE("Common/system_enter");
+            SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
             if (step.goal == TutorialGoal::Finish) GoToGame();
             else NextStep();
         }
@@ -248,7 +248,7 @@ void TutorialDirector::Clear() {
 
     _isCleared = true;
     _clearTimer = 0.0f;
-    SoundManager::Instance().PlaySE("Common/system_counter");
+    SoundManager::Instance().PlaySE("Game/SE_Success");
 }
 
 void TutorialDirector::GoToGame() {
@@ -267,7 +267,7 @@ void TutorialDirector::UpdateSkip() {
     else _skipTimer = 0.0f;
 
     if (_skipTimer >= SKIP_HOLD_TIME) {
-        SoundManager::Instance().PlaySE("Common/system_enter");
+        SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
         GoToGame();
     }
 }

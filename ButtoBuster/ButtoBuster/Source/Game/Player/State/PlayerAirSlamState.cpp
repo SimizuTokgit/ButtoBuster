@@ -111,6 +111,7 @@ void PlayerAirSlamState::Land(Player& player) {
     if (hits > 0) player.AddCombo(hits);
 
     SoundManager::Instance().PlaySE("Golem/attack_stomp");
+    SoundManager::Instance().PlaySE("Player/Vc_Attack3", 0.8f);
 
     auto* effects = EffectManager::Get();
     if (!effects) return;

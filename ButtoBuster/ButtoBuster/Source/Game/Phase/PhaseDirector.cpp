@@ -15,6 +15,9 @@
 #include <cmath>
 
 namespace {
+    // フェーズを越えたときに、吹っ飛ばされ値が許容値のこの割合以上なら「危ない」の声にする
+    constexpr float CLEAR_DANGER_RATIO = 0.75f;
+
     float RandomRange(float min, float max) {
         return min + (max - min) * (GetRand(1000) / 1000.0f);
     }
@@ -69,11 +72,16 @@ void PhaseDirector::Update(float deltaTime) {
     case Step::Battle:
         UpdateSpawning(deltaTime);
         if (_spawnQueue.empty() && GetAliveCount() == 0) {
-            SoundManager::Instance().PlaySE("Common/system_counter");
+            SoundManager::Instance().PlaySE("Game/SE_Success");
 
             // 最後のフェーズを越えたら勝ち 全回復や次のフェーズへは進まない
-            if (IsFinalPhase()) EnterVictory();
-            else EnterStep(Step::Clear);
+            if (IsFinalPhase()) {
+                EnterVictory();
+            }
+            else {
+                PlayPhaseClearVoice();
+                EnterStep(Step::Clear);
+            }
         }
         break;
 
@@ -183,6 +191,21 @@ void PhaseDirector::StartPhase(int phase) {
 
     SoundManager::Instance().PlaySE("Common/system_enter");
     EnterStep(Step::Announce);
+
+    // 始まりの声 最初のフェーズと、ボスの曲になるフェーズ (ロックマキナが出る) だけ
+    if (_player) _hitCountAtPhaseStart = _player->GetHitCount();
+    if (phase == 1) SoundManager::Instance().PlaySE("Player/Vc_Start");
+    else if (phase == data.bossBgmPhase) SoundManager::Instance().PlaySE("Player/Vc_Start_Boss");
+}
+
+void PhaseDirector::PlayPhaseClearVoice() {
+    if (!_player) return;
+
+    // 一度も食らわなかった 危ない (吹っ飛ばされ値が溜まっている) ふつう の順に選ぶ
+    const char* voice = "Player/Vc_NextPhase_Normal";
+    if (_player->GetHitCount() == _hitCountAtPhaseStart) voice = "Player/Vc_NextPhase_NoDamage";
+    else if (_player->GetBlowRatio() >= CLEAR_DANGER_RATIO) voice = "Player/Vc_NextPhase_Danger";
+    SoundManager::Instance().PlaySE(voice);
 }
 
 void PhaseDirector::EnterStep(Step step) {
@@ -308,6 +331,7 @@ Enemy* PhaseDirector::SpawnAt(const EnemyData& enemyData, VECTOR position) {
         effects->PlaySpawn(ground);
     }
     SoundManager::Instance().PlaySE("Common/enemy_Nifram", 0.6f);
+    SoundManager::Instance().PlaySE(enemyData.soundSpawn);
     return enemy;
 }
 

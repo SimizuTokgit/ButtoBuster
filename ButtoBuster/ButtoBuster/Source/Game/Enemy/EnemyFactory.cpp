@@ -75,19 +75,20 @@ namespace {
 
         switch (kind) {
         case EnemyKind::Goblin:
-            AddSound(animator, "Attack1", 18.0f, "Goblin/VO_attack", 0.8f);
-            AddSound(animator, "Attack1", 23.5f, "Weapon/Axe/swish");
+            AddSound(animator, "Attack1", 18.0f, "Goblin/Vc_Goblin_Attack", 0.8f);
+            AddSound(animator, "Attack1", 23.5f, "Goblin/SE_Goblin_Attack");
             break;
 
         case EnemyKind::RedGoblin:
-            AddSound(animator, "Attack1", 21.0f, "RedGoblin/VO_attack", 0.8f);
-            AddSound(animator, "Attack1", 23.0f, "Weapon/Sword/swish");
-            AddSound(animator, "Attack1", 33.0f, "Weapon/Sword/swish");
+            // 二段斬り 1 振り目と 2 振り目で音を変える
+            AddSound(animator, "Attack1", 21.0f, "RedGoblin/Vc_RedGoblin_Attack", 0.8f);
+            AddSound(animator, "Attack1", 23.0f, "RedGoblin/SE_RedGoblin_Attack1");
+            AddSound(animator, "Attack1", 33.0f, "RedGoblin/SE_RedGoblin_Attack2");
             break;
 
         case EnemyKind::Bee:
             AddSound(animator, "Attack1", 16.5f, "Bee/needle_shot");
-            AddSound(animator, "Attack2", 0.5f, "Bee/VO_attack", 0.8f);
+            AddSound(animator, "Attack2", 0.5f, "Bee/Vc_Bee_Attack", 0.8f);
             AddSound(animator, "Attack2", 16.5f, "Bee/attack_sult_B");
             AddSound(animator, "Down", 0.0f, "Bee/flapDead");
             break;

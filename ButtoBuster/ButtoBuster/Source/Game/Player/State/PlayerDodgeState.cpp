@@ -3,6 +3,7 @@
 #include "PlayerActions.h"
 #include "PlayerIdleState.h"
 #include "EffectManager.h"
+#include "SoundManager.h"
 #include <memory>
 
 using std::make_unique;
@@ -19,6 +20,9 @@ void PlayerDodgeState::Enter(Player& player) {
 
     // 回避の残りを 1 回分使う 回避している間は戻らない
     player.UseDodge();
+
+    SoundManager::Instance().PlaySE("Player/SE_Dodge");
+    SoundManager::Instance().PlaySE("Player/Vc_Dodge", 0.8f);
 
     player.SetInvincible(player.data.dodgeInvincibleTime);
     player.SetOpacity(0.45f);
