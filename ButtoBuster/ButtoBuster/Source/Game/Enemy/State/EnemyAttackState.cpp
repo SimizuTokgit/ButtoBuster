@@ -4,9 +4,23 @@
 #include "EnemyIdleState.h"
 #include "CombatSystem.h"
 #include "EffectManager.h"
+#include "SoundManager.h"
 #include <memory>
 
 using std::make_unique;
+
+namespace {
+    // アニメの時間は 30fps のフレームで数えている
+    constexpr float ANIMATION_FPS = 30.0f;
+
+    // ----- ジャスト回避の合図 -----
+    // 当たり判定が出るこの秒数前に、敵を白く光らせて音を鳴らす 光ったのを見て回避すればジャスト回避になる
+    // ジャスト回避の受付 (PlayerData の justDodgeWindow 0.18 秒) より少し早く出す
+    // 人は見てから押すまでに 0.15〜0.3 秒ほどかかるので、受付ちょうどに光らせると間に合わない
+    constexpr float DODGE_CUE_LEAD_SECONDS = 0.3f;
+    constexpr const char* DODGE_CUE_SOUND = "Player/equip";
+    constexpr float DODGE_CUE_VOLUME = 0.6f;
+}
 
 EnemyAttackState::EnemyAttackState(const AttackData& data, float areaRadius)
     : _data(data)
@@ -40,6 +54,7 @@ void EnemyAttackState::Execute(Enemy& enemy, const InputInfo& input, float delta
     }
 
     PlaySwing(enemy, time);
+    PlayDodgeCue(enemy, time);
     ApplyHit(enemy, time);
 
     if (enemy.IsAnimationFinished()) {
@@ -55,9 +70,6 @@ void EnemyAttackState::Exit(Enemy& enemy) {
 }
 
 void EnemyAttackState::PlayWarning(Enemy& enemy) {
-    // アニメの時間は 30fps のフレームで数えている
-    constexpr float ANIMATION_FPS = 30.0f;
-
     auto* effects = EffectManager::Get();
     if (!effects) return;
 
@@ -90,6 +102,24 @@ void EnemyAttackState::PlaySwing(Enemy& enemy, float time) {
         _hasPlayedSecondArc = true;
         PlayArc(enemy, -_data.arcSwing);
     }
+}
+
+void EnemyAttackState::PlayDodgeCue(Enemy& enemy, float time) {
+    // 合図を出すのは、判定が出るこの数だけ前のフレーム (アニメの速さで変わる)
+    float leadFrames = DODGE_CUE_LEAD_SECONDS * ANIMATION_FPS * _data.animationSpeed;
+
+    bool isFirstCue = !_hasPlayedDodgeCue && time >= _data.hitStart - leadFrames;
+    if (isFirstCue) _hasPlayedDodgeCue = true;
+
+    // 二段斬りは、二段目の前にももう一度出す
+    bool hasSecond = _data.hitStart2 >= 0.0f;
+    bool isSecondCue = hasSecond && !_hasPlayedSecondDodgeCue && time >= _data.hitStart2 - leadFrames;
+    if (isSecondCue) _hasPlayedSecondDodgeCue = true;
+
+    if (!isFirstCue && !isSecondCue) return;
+
+    if (auto* effects = EffectManager::Get()) effects->PlayDodgeCue(enemy.GetCenter());
+    SoundManager::Instance().PlaySE(DODGE_CUE_SOUND, DODGE_CUE_VOLUME);
 }
 
 void EnemyAttackState::PlayArc(Enemy& enemy, float swing) {

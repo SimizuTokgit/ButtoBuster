@@ -191,6 +191,19 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _heavyGlint->color = GetColorU8(255, 50, 40, 255);
     }
 
+    // ジャスト回避の合図 振りかぶりの合図 (オレンジ・赤) と見分けがつくよう白く、短く強く
+    _dodgeCueGlint = CreateSystem("DodgeCueGlint", _damageGraph);
+    if (_dodgeCueGlint) {
+        _dodgeCueGlint->startSizeMin = 170.0f;
+        _dodgeCueGlint->startSizeMax = 190.0f;
+        _dodgeCueGlint->startSpeedMin = 0.0f;
+        _dodgeCueGlint->startSpeedMax = 0.0f;
+        _dodgeCueGlint->startLifetimeMin = 0.18f;
+        _dodgeCueGlint->startLifetimeMax = 0.2f;
+        _dodgeCueGlint->alphaFadeRatio = 0.4f;
+        _dodgeCueGlint->color = GetColorU8(255, 255, 255, 255);
+    }
+
     // 衝撃波で跳ね上がる地面のかけら
     _shockDebris = CreateSystem("ShockDebris", _damageGraph);
     if (_shockDebris) {
@@ -327,6 +340,10 @@ void EffectManager::PlayDust(VECTOR groundPosition, int count) {
 
 void EffectManager::PlayWarning(VECTOR position, bool isHeavy) {
     Burst(isHeavy ? _heavyGlint : _warningGlint, position, 1);
+}
+
+void EffectManager::PlayDodgeCue(VECTOR position) {
+    Burst(_dodgeCueGlint, position, 1);
 }
 
 void EffectManager::PlaySteam(VECTOR position, int count) {

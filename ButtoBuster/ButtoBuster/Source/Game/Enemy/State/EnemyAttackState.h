@@ -19,6 +19,8 @@ private:
     bool _hasEnteredSecondHit = false;
     bool _hasPlayedArc = false;
     bool _hasPlayedSecondArc = false;
+    bool _hasPlayedDodgeCue = false;
+    bool _hasPlayedSecondDodgeCue = false;
 
 public:
     EnemyAttackState(const AttackData& data, float areaRadius);
@@ -31,6 +33,7 @@ public:
 private:
     void PlayWarning(Enemy& enemy);
     void PlaySwing(Enemy& enemy, float time);
+    void PlayDodgeCue(Enemy& enemy, float time);
     void PlayArc(Enemy& enemy, float swing);
     void ApplyHit(Enemy& enemy, float time);
 };
