@@ -6,11 +6,15 @@
 #include <cstdio>
 
 namespace {
-    // ----- 指示の枠 (画面の上の真ん中) -----
+    // ----- 指示の枠 (画面の上 左上のゲージの右) -----
 
-    // 枠の上の端 左上の回避ゲージ (y 4〜70 ほど) と、右上のスキップの案内より下にしてある
-    // 枠の左の端は x 290 なので、回避ゲージの右下の稲妻と少し重なるくらいで済む
+    // 枠の上の端 右上のスキップの案内より下にしてある
     constexpr int PANEL_TOP = 70;
+
+    // 枠を置く横の範囲 左上の回避ゲージとバースターゲージ (x 400 ほどまで) の右から、画面の右の端の手前まで
+    // 枠はこの範囲の真ん中に置く
+    constexpr int PANEL_AREA_LEFT = 420;
+    constexpr int PANEL_AREA_RIGHT_MARGIN = 20;
 
     // 枠の幅 説明の行がこれより長いときだけ、その行に合わせて広げる
     constexpr int PANEL_WIDTH = 700;
@@ -104,7 +108,8 @@ void TutorialScreen::DrawPanel(int screenWidth) {
     int titleHeight = GameFont::GetHeight(TITLE_SIZE);
     int lineStep = textHeight + LINE_GAP;
 
-    int left = (screenWidth - panelWidth) / 2;
+    int areaWidth = screenWidth - PANEL_AREA_RIGHT_MARGIN - PANEL_AREA_LEFT;
+    int left = PANEL_AREA_LEFT + (areaWidth - panelWidth) / 2;
     int right = left + panelWidth;
     int stepY = PANEL_TOP + PANEL_PADDING;
     int titleY = stepY + textHeight + STEP_GAP;

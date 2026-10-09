@@ -53,24 +53,25 @@ namespace {
     // バーの下に出す名前
     constexpr const char* DODGE_BAR_LABEL = "回避";
 
-    // ----- バースターゲージ (必殺技のゲージ 右下) -----
+    // ----- バースターゲージ (必殺技のゲージ 左上の回避ゲージの下) -----
     // 当てた数 (コンボ) 連鎖 壁割りで溜まる 満タンになるとパッド Y / キーボード F で必殺技を撃てる
     // どれだけ溜まるかは PlayerData の specialGain で始まる値
-    // 画像は Data/2D の BusterGauge で始まるもの 枠は左右を反転して、紋章を右にしてある
+    // 画像は Data/2D の BusterGauge で始まるものと BusterLogo 中身は枠穴の傾きに合わせて傾け直してある
     constexpr const char* SPECIAL_FRAME_IMAGE = "Data/2D/BusterGaugeFrame.png";
     constexpr const char* SPECIAL_FILL_IMAGE = "Data/2D/BusterGaugeFill.png";
     constexpr const char* SPECIAL_LOGO_IMAGE = "Data/2D/BusterLogo.png";
 
-    // 枠を置く場所 (左上) と大きさ 画像 (1000 x 133) に掛ける倍率
-    constexpr int SPECIAL_GAUGE_X = 790;
-    constexpr int SPECIAL_GAUGE_Y = 520;
-    constexpr float SPECIAL_GAUGE_SCALE = 0.45f;
+    // 枠を置く場所 (左上) と大きさ 画像 (1157 x 278) に掛ける倍率
+    // 紋章が回避ゲージの紋章の真下に来るようにしてある
+    constexpr int SPECIAL_GAUGE_X = 14;
+    constexpr int SPECIAL_GAUGE_Y = 68;
+    constexpr float SPECIAL_GAUGE_SCALE = 0.33f;
 
-    // 中身を入れる所 枠の画像の中の位置 (px) 中身の画像をこの四角に合わせて伸ばす
-    constexpr int SPECIAL_FILL_LEFT = 108;
-    constexpr int SPECIAL_FILL_TOP = 61;
-    constexpr int SPECIAL_FILL_RIGHT = 816;
-    constexpr int SPECIAL_FILL_BOTTOM = 100;
+    // 中身を入れる所 枠の画像の中の位置 (px) 中身の画像 (788 x 74) をこの四角に合わせて伸ばす
+    constexpr int SPECIAL_FILL_LEFT = 267;
+    constexpr int SPECIAL_FILL_TOP = 97;
+    constexpr int SPECIAL_FILL_RIGHT = 1055;
+    constexpr int SPECIAL_FILL_BOTTOM = 171;
 
     // 溜まっている途中の中身の濃さ 0〜255 満タンになると 255 で光る
     constexpr int SPECIAL_FILL_ALPHA = 200;
@@ -79,10 +80,11 @@ namespace {
     constexpr int SPECIAL_READY_GLOW_ALPHA = 120;
     constexpr float SPECIAL_READY_BEATS_PER_SECOND = 1.5f;
 
-    // 満タンで出る BUSTER!! の文字 枠の真ん中からずらす量 (px) と大きさ (画像 815 x 185 に掛ける倍率)
-    constexpr int SPECIAL_LOGO_OFFSET_X = -10;
-    constexpr int SPECIAL_LOGO_OFFSET_Y = -55;
-    constexpr float SPECIAL_LOGO_SCALE = 0.5f;
+    // 満タンで出る BUSTER!! の文字 イメージ図 (⑥) と同じく、紋章の右、枠の上に重ねる
+    // 文字の真ん中の位置と幅は、枠の画像の中の px で書く
+    constexpr int SPECIAL_LOGO_CENTER_X = 450;
+    constexpr int SPECIAL_LOGO_CENTER_Y = 45;
+    constexpr int SPECIAL_LOGO_WIDTH = 380;
 
     // 文字の出方 この倍率の大きさから、この秒数で元の大きさへ縮みながら現れる 出た瞬間は白く光らせる
     constexpr float SPECIAL_LOGO_POP_SCALE = 2.2f;
@@ -341,7 +343,12 @@ void Hud::DrawSpecialGauge() {
     if (_specialLogoGraph == -1) return;
 
     float elapsed = (now - _specialReadyTime) / 1000.0f;
-    float scale = SPECIAL_LOGO_SCALE;
+    int logoWidth = 0;
+    int logoHeight = 0;
+    GetGraphSize(_specialLogoGraph, &logoWidth, &logoHeight);
+    if (logoWidth <= 0) return;
+
+    float scale = SPECIAL_LOGO_WIDTH * SPECIAL_GAUGE_SCALE / logoWidth;
     int alpha = 255;
     if (elapsed < SPECIAL_LOGO_POP_TIME) {
         float t = elapsed / SPECIAL_LOGO_POP_TIME;
@@ -354,8 +361,8 @@ void Hud::DrawSpecialGauge() {
         scale *= 1.0f + SPECIAL_LOGO_PULSE * pulse;
     }
 
-    int centerX = (SPECIAL_GAUGE_X + toScreenX(frameWidth)) / 2 + SPECIAL_LOGO_OFFSET_X;
-    int centerY = SPECIAL_GAUGE_Y + SPECIAL_LOGO_OFFSET_Y;
+    int centerX = toScreenX(SPECIAL_LOGO_CENTER_X);
+    int centerY = toScreenY(SPECIAL_LOGO_CENTER_Y);
 
     SetDrawBlendMode(DX_BLENDMODE_ALPHA, alpha);
     DrawRotaGraph(centerX, centerY, scale, 0.0, _specialLogoGraph, TRUE);
@@ -429,7 +436,7 @@ void Hud::DrawControls(int screenWidth, int screenHeight) {
         "移動 WASD / 左スティック    視点 マウス / 右スティック    正面を向く C / L1",
         "攻撃 左クリック / X    ガード 右クリック / L2    ジャンプ SPACE / A",
         "溜め斬り 左右クリック / R2    回避 右クリック+SPACE / R1    対空斬り SPACE+左クリック / A+X",
-        "必殺技 F / Y (右下のバースターゲージが満タンのとき)",
+        "必殺技 F / Y (左上のバースターゲージが満タンのとき)",
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
 
