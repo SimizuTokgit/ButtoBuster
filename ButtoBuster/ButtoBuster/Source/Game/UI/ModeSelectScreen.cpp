@@ -154,7 +154,7 @@ void ModeSelectScreen::Decide() {
         SceneManager::Instance().RequestLoadScene<TitleScene>();
         return;
     }
-
+    // ModeSelectScreen.cpp  ボタンを決めたとき
     GameMode::Set(static_cast<Difficulty>(_focus));
 
     // 本番の前に、毎回チュートリアルを挟む (長押しで飛ばせる)

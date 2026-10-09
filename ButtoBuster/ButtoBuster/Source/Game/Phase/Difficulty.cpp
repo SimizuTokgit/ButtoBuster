@@ -1,7 +1,7 @@
 ﻿#include "Difficulty.h"
 
 namespace {
-    // ----- 難易度の表 調整はここだけ見ればよい -----
+    // 難易度の表 調整はここだけ見ればよい
     // 並びは Difficulty と同じ (Easy Normal Hard)
     // { 名前, 説明, 自分の許容値, 賢さの増減, 攻撃の番が増える間隔, 攻撃の番の最大, 全回復の間隔, 敵の攻撃の待ちの倍率, 背景 }
     const DifficultyData TABLE[] = {
