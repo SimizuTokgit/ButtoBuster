@@ -4,6 +4,9 @@
 #include "PhaseDirector.h"
 #include "EffectManager.h"
 #include "Hud.h"
+#include "StatePool.h"
+#include <cstdio>
+#include <string>
 
 namespace {
     const char* const INVINCIBLE = "無敵";
@@ -12,6 +15,9 @@ namespace {
 
     // スローの速さ 動きを1コマずつ確かめられるくらい
     constexpr float SLOW_TIME_SCALE = 0.25f;
+
+    // F12 で一度に出す敵の数 たくさん出して、状態のメモリと作り直しの回数を確かめる
+    constexpr int SPAWN_MANY_COUNT = 10;
 }
 
 void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
@@ -45,10 +51,40 @@ void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
     menu.AddCommand(KEY_INPUT_F9, "ロックマキナ を出す", [director]() {
         director->SpawnImmediately(EnemyKind::Golem);
     });
+    menu.AddCommand(KEY_INPUT_F12, "グレゴブリン を 10 体出す", [director]() {
+        for (int i = 0; i < SPAWN_MANY_COUNT; ++i) director->SpawnImmediately(EnemyKind::Goblin);
+    });
+
+    // 状態の作り直しと、そのメモリ (StatePool)
+    // 今までの作りなら、作り直すたびにヒープから取っていた 置き場で使い回すと、ヒープから取るのは初めのうちだけになる
+    menu.AddInfo([director, this]() {
+        char text[160];
+        snprintf(text, sizeof(text), "敵 %d 体   状態の作り直し 毎秒 %lld 回 (合計 %lld 回)",
+            static_cast<int>(director->GetEnemies().size()), _createdPerSecond, StatePool::GetStats().createdCount);
+        return std::string(text);
+    });
+    menu.AddInfo([this]() {
+        const auto& stats = StatePool::GetStats();
+        char text[160];
+        snprintf(text, sizeof(text), "うちヒープから取った 毎秒 %lld 回 (合計 %lld 回)   置き場 %.1f KB / 使用中 %.1f KB (%d 個)",
+            _heapPerSecond, stats.heapCount, stats.heapBytes / 1024.0, stats.usedBytes / 1024.0, stats.aliveCount);
+        return std::string(text);
+    });
 }
 
 void DebugCheats::Update(float deltaTime) {
     const auto& menu = DebugMenu::Instance();
+
+    // 1 秒ごとに、状態を作り直した回数とヒープから取った回数を数える
+    _poolTimer += Time::UnscaledDeltaTime();
+    if (_poolTimer >= 1.0f) {
+        const auto& stats = StatePool::GetStats();
+        _createdPerSecond = stats.createdCount - _lastCreatedCount;
+        _heapPerSecond = stats.heapCount - _lastHeapCount;
+        _lastCreatedCount = stats.createdCount;
+        _lastHeapCount = stats.heapCount;
+        _poolTimer -= 1.0f;
+    }
 
     if (_player) _player->isCheatInvincible = menu.GetToggle(INVINCIBLE);
     if (_hud) _hud->isStateVisible = menu.GetToggle(SHOW_STATE);

@@ -31,6 +31,9 @@ private:
 
     std::vector<Toggle> _toggles;
     std::vector<Command> _commands;
+
+    // 値を見るだけの行 呼ぶたびに出す文字を作る
+    std::vector<std::function<std::string()>> _infos;
     bool _visible = false;
 
     // FPS計測
@@ -57,6 +60,11 @@ public:
 
     void AddCommand(int key, const std::string& name, std::function<void()> action) {
         _commands.push_back(Command{ key, name, std::move(action) });
+    }
+
+    // 値を見るだけの行を足す 一覧の下に、毎フレーム作り直して出す
+    void AddInfo(std::function<std::string()> makeText) {
+        _infos.push_back(std::move(makeText));
     }
 
     bool GetToggle(const std::string& name) const {
@@ -113,12 +121,18 @@ public:
             DrawFormatString(10, y, 0xFFFFFF, "%-4s %s", KeyName(command.key), command.name.c_str());
             y += LINE_HEIGHT;
         }
+
+        for (const auto& makeText : _infos) {
+            DrawFormatString(10, y, 0x80FFFF, "%s", makeText().c_str());
+            y += LINE_HEIGHT;
+        }
     }
 
     // シーンを切り替えるときに呼ぶ
     // コマンドがシーン内のオブジェクトを掴んだまま残るのを防ぐ
     void Clear() {
         _commands.clear();
+        _infos.clear();
 
         // トグルは残す 当たり判定表示などはシーンをまたいで使うため
     }

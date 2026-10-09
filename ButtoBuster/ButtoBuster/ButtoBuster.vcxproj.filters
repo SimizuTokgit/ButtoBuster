@@ -306,6 +306,9 @@
     <ClCompile Include="Source\Game\Stage\WallBreakSoundObserver.cpp">
       <Filter>Source\Game\Stage</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\State\StatePool.cpp">
+      <Filter>Source\Game\State</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Tutorial\TutorialDirector.cpp">
       <Filter>Source\Game\Tutorial</Filter>
     </ClCompile>
@@ -711,6 +714,9 @@
       <Filter>Source\Game\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\State\StateManager.h">
+      <Filter>Source\Game\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\State\StatePool.h">
       <Filter>Source\Game\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Tutorial\TutorialDirector.h">

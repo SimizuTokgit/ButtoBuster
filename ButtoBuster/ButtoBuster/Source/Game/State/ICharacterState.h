@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include "InputInfo.h"
+#include "StatePool.h"
+#include <cstddef>
 
 // 状態の基底
 // Player と Enemy の両方で使うのでテンプレートにしてある
@@ -10,6 +12,12 @@ public:
     // 基底のポインタのまま消すので virtual にしておく
     // 付け忘れると派生側のデストラクタが呼ばれない
     virtual ~ICharacterState() = default;
+
+    // 状態は切り替えのたびに作って消すので、メモリは StatePool の置き場から取る
+    // 派生した状態はこれを受け継ぐので、状態のクラスは make_unique で作るだけでよい
+    // デストラクタが virtual なので、消すときの size には派生した状態の大きさが来る
+    static void* operator new(std::size_t size) { return StatePool::Allocate(size); }
+    static void operator delete(void* memory, std::size_t size) { StatePool::Free(memory, size); }
 
     virtual void Enter(T& owner) {}
     virtual void Execute(T& owner, const InputInfo& input, float deltaTime) {}

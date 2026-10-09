@@ -155,6 +155,7 @@
     <ClCompile Include="Source\Game\Stage\StageBuilder.cpp" />
     <ClCompile Include="Source\Game\Stage\WallBreakEffectObserver.cpp" />
     <ClCompile Include="Source\Game\Stage\WallBreakSoundObserver.cpp" />
+    <ClCompile Include="Source\Game\State\StatePool.cpp" />
     <ClCompile Include="Source\Game\Tutorial\TutorialDirector.cpp" />
     <ClCompile Include="Source\Game\Tutorial\TutorialSteps.cpp" />
     <ClCompile Include="Source\Game\UI\ChainCounter.cpp" />
@@ -292,6 +293,7 @@
     <ClInclude Include="Source\Game\Stage\WallBreakSoundObserver.h" />
     <ClInclude Include="Source\Game\State\ICharacterState.h" />
     <ClInclude Include="Source\Game\State\StateManager.h" />
+    <ClInclude Include="Source\Game\State\StatePool.h" />
     <ClInclude Include="Source\Game\Tutorial\TutorialDirector.h" />
     <ClInclude Include="Source\Game\Tutorial\TutorialSteps.h" />
     <ClInclude Include="Source\Game\UI\ChainCounter.h" />
