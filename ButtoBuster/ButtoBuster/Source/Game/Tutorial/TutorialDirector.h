@@ -38,6 +38,10 @@ public:
     // 「見回してみよう」で、手で回す角度の合計 度
     static constexpr float LOOK_DEGREES = 180.0f;
 
+    // 「必殺技」の段の始めに、バースターゲージをここまで溜めておく 0〜1
+    // 練習台 1 体ではなかなか溜まらないので、数回のコンボで満タンになるくらいにする
+    static constexpr float SPECIAL_START_RATIO = 0.7f;
+
     // 練習の相手を出す、プレイヤーの前 (カメラの向き) の距離 cm 大きい Golem はこの倍
     static constexpr float PARTNER_DISTANCE = 450.0f;
 
@@ -70,6 +74,7 @@ private:
     float _lookedDegrees = 0.0f;
     bool _wasJumping = false;
     bool _wasSlamming = false;
+    bool _wasSpecial = false;
     float _lastDodgeStock = 0.0f;
     int _guardCountAtStart = 0;
 

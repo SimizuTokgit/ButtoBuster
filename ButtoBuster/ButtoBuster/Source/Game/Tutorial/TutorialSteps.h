@@ -8,6 +8,7 @@ enum class TutorialGoal {
     Look,           // 視点を回す
     Jump,           // ジャンプする (count 回)
     Combo,          // 続けて当てる (count 回)
+    Special,        // 必殺技を撃つ (count 回)
     Charge,         // 溜め斬りを count 段階以上溜めて振る
     AirSlam,        // 空中から叩きつける (count 回)
     Guard,          // ガードで受ける (count 回)
@@ -40,9 +41,9 @@ struct TutorialStep {
     // 何回やったら次へ進むか 回数を数えない段では使わない
     int count = 1;
 
-    // 大きく出す見出しと、その下の説明 説明は 3 行まで 使わない行は空のまま
+    // 大きく出す見出しと、その下の説明 説明は 5 行まで 使わない行は空のまま
     const char* title = "";
-    const char* lines[3] = {};
+    const char* lines[5] = {};
 };
 
 namespace TutorialSteps {

@@ -81,7 +81,7 @@ int PlayerController::ReadHeldButtons() const {
     const auto& input = InputSystem::Instance();
     int buttons = 0;
 
-    // パッドは X で攻撃、L2 でガード、A でジャンプ、L1 で回避、R2 で溜め、Y で必殺技
+    // パッドは X で攻撃、L2 でガード、A でジャンプ、R1 で回避、R2 で溜め、Y で必殺技 (L1 は視点を戻す)
     // キーボードとマウスは攻撃 ガード ジャンプの 3 つで、回避と溜めは組み合わせで出す 必殺技だけは F に分ける
     if (input.KeyHeld(KEY_INPUT_J) || input.MouseHeld(MOUSE_INPUT_LEFT) || input.PadHeld(XINPUT_BUTTON_X)) {
         buttons |= ATTACK_BIT;
@@ -92,7 +92,7 @@ int PlayerController::ReadHeldButtons() const {
     if (input.KeyHeld(KEY_INPUT_SPACE) || input.PadHeld(XINPUT_BUTTON_A)) {
         buttons |= JUMP_BIT;
     }
-    if (input.PadHeld(XINPUT_BUTTON_LEFT_SHOULDER)) {
+    if (input.PadHeld(XINPUT_BUTTON_RIGHT_SHOULDER)) {
         buttons |= DODGE_BIT;
     }
     if (input.PadRightTriggerHeld()) {
@@ -142,8 +142,11 @@ VECTOR PlayerController::ReadMove() {
 void PlayerController::UpdateViewReset() {
     const auto& input = InputSystem::Instance();
 
-    // 視点を背中側へ戻す 右スティックの押し込み、L キー、ホイールの押し込み
-    bool isResetPressed = input.PadPressed(XINPUT_BUTTON_RIGHT_THUMB)
+    // 視点を背中側へ戻す (正面を向く) C キー、L1
+    // 画面の説明は C と L1 だけ書く L ホイール押し R3 も前からの操作として残しておく
+    bool isResetPressed = input.PadPressed(XINPUT_BUTTON_LEFT_SHOULDER)
+        || input.PadPressed(XINPUT_BUTTON_RIGHT_THUMB)
+        || input.KeyPressed(KEY_INPUT_C)
         || input.KeyPressed(KEY_INPUT_L)
         || input.MousePressed(MOUSE_INPUT_MIDDLE);
     if (isResetPressed && _camera) {

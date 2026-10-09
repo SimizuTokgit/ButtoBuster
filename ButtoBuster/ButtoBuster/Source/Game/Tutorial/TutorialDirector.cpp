@@ -4,6 +4,7 @@
 #include "PlayerController.h"
 #include "PlayerJumpState.h"
 #include "PlayerAirSlamState.h"
+#include "PlayerSpecialState.h"
 #include "CameraFollow.h"
 #include "PhaseDirector.h"
 #include "Enemy.h"
@@ -153,6 +154,7 @@ bool TutorialDirector::IsCounted() const {
     switch (GetStep().goal) {
     case TutorialGoal::Jump:
     case TutorialGoal::Combo:
+    case TutorialGoal::Special:
     case TutorialGoal::AirSlam:
     case TutorialGoal::Guard:
     case TutorialGoal::Dodge:
@@ -213,8 +215,16 @@ void TutorialDirector::BeginStep() {
     _lookedDegrees = 0.0f;
     _wasJumping = states.IsIn<PlayerJumpState>();
     _wasSlamming = states.IsIn<PlayerAirSlamState>();
+    _wasSpecial = states.IsIn<PlayerSpecialState>();
     _lastDodgeStock = _player->GetDodgeStock();
     _guardCountAtStart = _player->GetGuardCount();
+
+    // 必殺技の段は、バースターゲージを途中まで溜めた所から始める
+    if (step.goal == TutorialGoal::Special) {
+        float target = _player->data.specialGaugeMax * SPECIAL_START_RATIO;
+        float current = _player->data.specialGaugeMax * _player->GetSpecialRatio();
+        if (target > current) _player->AddSpecialGauge(target - current);
+    }
 
     // 前の段で食らった分は持ち越さない 自分の吹っ飛ばされ値を見せる段だけは、わざと許容値まで溜める
     if (step.goal == TutorialGoal::OwnHeat) _player->SetBlowRatio(1.0f);
@@ -311,6 +321,13 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
         // 続けて当てた数 食らったり途切れたりしたら数え直し
         SetProgress(_player->GetCombo());
         break;
+
+    case TutorialGoal::Special: {
+        bool isSpecial = states.IsIn<PlayerSpecialState>();
+        if (isSpecial && !_wasSpecial) AddProgress(1);
+        _wasSpecial = isSpecial;
+        break;
+    }
 
     case TutorialGoal::AirSlam: {
         bool isSlamming = states.IsIn<PlayerAirSlamState>();

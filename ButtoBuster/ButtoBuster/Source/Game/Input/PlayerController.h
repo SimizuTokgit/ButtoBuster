@@ -31,7 +31,7 @@ private:
     static constexpr int GUARD_BIT = 1 << 1;
     static constexpr int JUMP_BIT = 1 << 2;
 
-    // 専用のボタンの印 パッドの L1 と R2、必殺技の Y と F ほかと組み合わせないので、同時押しを待たずにすぐ技を出す
+    // 専用のボタンの印 パッドの R1 (回避) と R2 (溜め)、必殺技の Y と F ほかと組み合わせないので、同時押しを待たずにすぐ技を出す
     static constexpr int DODGE_BIT = 1 << 3;
     static constexpr int HEAVY_BIT = 1 << 4;
     static constexpr int SPECIAL_BIT = 1 << 5;

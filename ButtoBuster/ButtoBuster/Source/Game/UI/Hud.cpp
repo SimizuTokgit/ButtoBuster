@@ -49,8 +49,8 @@ namespace {
     constexpr float SPECIAL_READY_BEATS_PER_SECOND = 1.5f;
 
     // バーの下に出す名前 満タンのときは押すボタンも出す
-    constexpr const char* SPECIAL_BAR_LABEL = "必殺技";
-    constexpr const char* SPECIAL_READY_LABEL = "必殺技  F / Y で発動!";
+    constexpr const char* SPECIAL_BAR_LABEL = "バースターゲージ";
+    constexpr const char* SPECIAL_READY_LABEL = "バースターゲージ  F / Y で必殺技!";
 
     // ----- 吹っ飛ばされそうな危なさ (画面の縁の赤み) -----
     // 自分の吹っ飛ばされ値が許容値のこの割合を越えるごとに、縁の赤みを濃く太く、脈を速くする
@@ -272,10 +272,10 @@ void Hud::DrawCombo(int screenWidth, int screenHeight) {
 
 void Hud::DrawControls(int screenWidth, int screenHeight) {
     const char* lines[] = {
-        "移動 WASD / 左スティック    視点 マウス / Q E / 右スティック    視点を戻す L / ホイール押し / R3",
+        "移動 WASD / 左スティック    視点 マウス / 右スティック    正面を向く C / L1",
         "攻撃 左クリック / X    ガード 右クリック / L2    ジャンプ SPACE / A",
-        "溜め斬り 攻撃+ガード / R2    回避 ガード+ジャンプ / L1    対空斬り 攻撃+ジャンプ / X+A",
-        "必殺技 F / Y (左上のゲージが満タンのとき)",
+        "溜め斬り 左右クリック / R2    回避 右クリック+SPACE / R1    対空斬り SPACE+左クリック / A+X",
+        "必殺技 F / Y (左上のバースターゲージが満タンのとき)",
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
 

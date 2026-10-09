@@ -2,8 +2,10 @@
 
 namespace {
     // ----- チュートリアルの段 上から順に出す -----
-    // { 判定, 練習の相手, 回数, 見出し, { 説明 3 行まで } }
+    // { 判定, 練習の相手, 回数, 見出し, { 説明 5 行まで } }
     // 並べ替えたり文字を書き換えたりするのはここだけでよい 判定の中身は TutorialDirector.cpp
+    // 操作の説明は「キーボード / マウス」と「コントローラー」の 2 つだけ書く
+    // J K L Q E のような、キーボードだけの別の押し方は書かない (PlayerController ではそのまま使える)
     const TutorialStep STEPS[] = {
         { TutorialGoal::Read, TutorialPartner::None, 1,
             "ようこそチュートリアルへ",
@@ -13,58 +15,71 @@ namespace {
 
         { TutorialGoal::Move, TutorialPartner::None, 1,
             "動いてみよう",
-            { "WASD / 左スティック で動く",
-              "奥へ倒すと、カメラが向いている先へ進む" } },
+            { "キーボード / WASD",
+              "コントローラー / 左スティック" } },
 
         { TutorialGoal::Look, TutorialPartner::None, 1,
             "見回してみよう",
-            { "マウス / Q E / 右スティック で視点を回す",
-              "L / ホイール押し / R3 で、背中側へ戻せる" } },
+            { "キーボード / マウス",
+              "コントローラー / 右スティック で視点を回す",
+              "キーボード / C",
+              "コントローラー / L1 で、正面を向く" } },
 
         { TutorialGoal::Jump, TutorialPartner::None, 2,
             "ジャンプしてみよう",
-            { "SPACE / A でジャンプ" } },
+            { "キーボード / SPACE",
+              "コントローラー / A でジャンプ" } },
 
         { TutorialGoal::Combo, TutorialPartner::Dummy, 3,
             "練習台を斬ってみよう",
-            { "J / 左クリック / X で斬る 続けて押すと 3 段までつながる",
-              "3 回続けて当てよう" } },
+            { "キーボード / 左クリック",
+              "コントローラー / X で斬る",
+              "3 回続けてコンボにしよう" } },
 
-        { TutorialGoal::Charge, TutorialPartner::Dummy, 1,
+        { TutorialGoal::Special, TutorialPartner::Dummy, 1,
+            "必殺技で大勢の敵を倒そう",
+            { "コンボや敵を巻き込んだ攻撃を行うとバースターゲージがたまる",
+              "キーボード / F",
+              "コントローラー / Y",
+              "バースターゲージをためて必殺技を放とう" } },
+
+        { TutorialGoal::Charge, TutorialPartner::Dummy, 3,
             "溜め斬り",
-            { "攻撃 + ガード (J + K / 左右クリック) か R2 を押し続けて溜め、離して振る",
-              "光るたびに段階が上がり、遠くへ吹き飛ばせる そのぶん振ったあとの隙が大きい",
-              "1 段階以上溜めて振ろう" } },
+            { "キーボード / 左右クリック",
+              "コントローラー / R2 を押し続けて溜める",
+              "3 段階ためて敵を吹っ飛ばそう" } },
 
         { TutorialGoal::AirSlam, TutorialPartner::Dummy, 1,
             "空中の技",
-            { "ジャンプ中に攻撃で、空中の斬り",
-              "ジャンプ中に溜め斬りの操作で、真下へ叩きつける",
-              "叩きつけてみよう" } },
+            { "キーボード / SPACE + 左クリック",
+              "コントローラー / A + X",
+              "空中ため斬り",
+              "キーボード / 空中で左右クリック",
+              "コントローラー / 空中で R2" } },
 
         { TutorialGoal::Guard, TutorialPartner::Slasher, 2,
             "ガードしよう",
-            { "K / 右クリック / L2 を押している間、正面からの攻撃を防ぐ",
-              "敵の頭の上がオレンジに光ったら、普通の斬りが来る",
-              "ガードで 2 回受けよう" } },
+            { "キーボード / 右クリック",
+              "コントローラー / L2",
+              "敵の攻撃の正面に立つとガードできる",
+              "2 回攻撃を受けてみよう" } },
 
         { TutorialGoal::Dodge, TutorialPartner::Slasher, 2,
             "回避しよう",
-            { "ガード + ジャンプ (K + SPACE) か L1 で回避 かわし始めは一瞬だけ無敵",
-              "続けて 2 回まで 使った分は左上のバーで少しずつ戻る",
-              "2 回回避しよう" } },
+            { "キーボード / 右クリック + SPACE",
+              "コントローラー / R1",
+              "回避を 2 回してみよう" } },
 
-        { TutorialGoal::AvoidHeavy, TutorialPartner::Heavy, 2,
-            "赤い合図は大振り",
-            { "頭の上が赤く大きく光ったら大振り ガードできず、当たると吹き飛ばされる",
-              "見たら回避するか、離れてかわそう",
-              "2 回かわそう" } },
-
-        { TutorialGoal::JustDodge, TutorialPartner::Slasher, 1,
+        { TutorialGoal::JustDodge, TutorialPartner::Slasher, 2,
             "ジャスト回避",
             { "敵の頭の上が光った瞬間に回避すると、ジャスト回避",
               "敵がゆっくりになり、目の前へ寄って反撃できる",
-              "1 回決めよう" } },
+              "2 回決めよう" } },
+
+        { TutorialGoal::AvoidHeavy, TutorialPartner::Heavy, 2,
+            "赤い攻撃に気をつけよう",
+            { "赤い光が出る攻撃はガードしても受けれない",
+              "赤い攻撃をさせてそれを避けよう" } },
 
         { TutorialGoal::OwnHeat, TutorialPartner::None, 1,
             "自分のバースト値に気をつけよう",
@@ -75,7 +90,7 @@ namespace {
         { TutorialGoal::HeatEnemy, TutorialPartner::Dummy, 1,
             "敵のバースト値を溜めよう",
             { "敵に体力はない 攻撃を当てるとバースト値が溜まり、遠くへ飛ぶようになる",
-              "バースト値がたまると、湯気が出て赤く光る ",
+              "バースト値がたまると、湯気が出て赤く光る",
               "練習台を赤くしよう" } },
 
         { TutorialGoal::BreakWall, TutorialPartner::Dummy, 1,
@@ -87,7 +102,7 @@ namespace {
         { TutorialGoal::DropBee, TutorialPartner::Bee, 1,
             "空の ビーザトール を落とそう",
             { "ビーザトール は空にいるので、地上の斬りは届かない",
-              "攻撃 + ジャンプ (J + SPACE / X + A) の対空斬りで落としてから叩く",
+              "対空斬り (SPACE + 左クリック / A + X) で落としてから叩く",
               "本番の ビーザトール は、離れたところから針を撃ってくる" } },
 
         { TutorialGoal::AvoidStomp, TutorialPartner::Golem, 1,
