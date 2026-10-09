@@ -216,6 +216,7 @@ float EnemyAI::RandomRange(float min, float max) {
     return min + (max - min) * (GetRand(1000) / 1000.0f);
 }
 
+<<<<<<< HEAD
 // 木の形 (上の枝ほど優先する。[n] はその枝が入る賢さ)
 //
 // Selector
@@ -230,43 +231,68 @@ float EnemyAI::RandomRange(float min, float max) {
 // │       └ [1] 決めておいた技 ......................... SwingPlanned
 // ├ [1] 番が取れたら近づく ............ TakeToken   → Approach
 // └ [1] 回って待つ ([3] から背中側へ) ............. Orbit / Flank
+=======
+// ===== 行動の木 (賢さ 1 以上の敵: Goblin と RedGoblin) =====
+
+// 木の形 上の枝ほど優先する 毎フレーム上から見直し、条件のそろった最初の枝を進める
+// 賢さが足りない枝は、はじめから木に入れない
+// 枝の並びがそのまま優先の順なので、入れ替えると動きが変わる 並びは「動けない → 身を守る → 攻める → 待つ」
+//
+//  Selector (根)                                                       入る賢さ
+//  │  ----- 動けない -----
+//  ├ 振っている途中なら待つ ............ IsBusy      → Hold             1 から
+//  │  ----- 身を守る -----
+//  ├ 壁際で危ないなら離れる ............ IsCornered  → LeaveWall        4 から
+//  ├ 溜めを見たら下がる ................ SeesCharge  → BackOff          2 から
+//  │  ----- 攻める -----
+//  ├ 背中を見たら踏み込む .............. SeesBack    → RushIn           5
+//  ├ 隙を見たら踏み込む ................ SeesOpening → RushIn           3 から
+//  ├ 届くなら振る ...................... IsInReach   → 振り方の Selector 1 から
+//  │    ├ 構えていたら大振り ........... SeesGuard       → SwingHeavy   2 から
+//  │    ├ 壁を割れるなら大振り ......... IsTargetAtLimit → SwingHeavy   2 から
+//  │    └ ほかは決めておいた技 ......................... SwingPlanned 1 から
+//  ├ 番が取れたら近づく ................ TakeToken   → Approach         1 から
+//  │  ----- 待つ -----
+//  └ 回って待つ / 背中側へ回り込む ................. Orbit / Flank    1 から / 3 から
+>>>>>>> claude/friendly-hypatia-xcvm68
 void EnemyAI::BuildTree() {
-    // 選んでいる難易度で足し引きする (Difficulty.cpp の intelligenceShift) 練習相手は決めた賢さのまま
+    // ----- 1. この敵の賢さを決める -----
+    // 表 (EnemyData.cpp) の賢さに、選んでいる難易度の増減 (Difficulty.cpp の intelligenceShift) を足す
+    // 練習相手 (followsDifficulty が false) は、決めた賢さのまま
     int baseIntelligence = _enemy->GetData().intelligence;
     _intelligence = followsDifficulty ? GameMode::AdjustIntelligence(baseIntelligence) : baseIntelligence;
-    int intelligence = _intelligence;
+    const int intelligence = _intelligence;
+
+    // 賢さが need 以上のときだけ、枝を Selector に入れる
+    auto addIf = [intelligence](BehaviorSelector<EnemyAI>& selector, int need, Node branch) {
+        if (intelligence >= need) selector.Add(std::move(branch));
+    };
+
+    // ----- 2. 振り方を選ぶ Selector (届く距離に入ったときに、根の枝から使う) -----
+    // 大振りはガードできないので、構えている相手と、とどめを刺せる相手には大振り
+    auto swing = std::make_unique<BehaviorSelector<EnemyAI>>();
+    addIf(*swing, 2, When(If(&EnemyAI::SeesGuard),       Do(&EnemyAI::SwingHeavy)));
+    addIf(*swing, 2, When(If(&EnemyAI::IsTargetAtLimit), Do(&EnemyAI::SwingHeavy)));
+    addIf(*swing, 1, Do(&EnemyAI::SwingPlanned));   // ほかは、振り終わりに決めておいた技 (RollTechnique)
+
+    // ----- 3. 根の Selector 上の枝ほど優先する -----
     auto root = std::make_unique<BehaviorSelector<EnemyAI>>();
 
-    // 振っている途中や、のけぞり 吹き飛びの間は、体が入力を聞かないので何もしない
-    root->Add(When(If(&EnemyAI::IsBusy), Do(&EnemyAI::Hold)));
+    // 動けない 振っている のけぞり 吹き飛びの間は、体が入力を聞かないので何もしない
+    addIf(*root, 1, When(If(&EnemyAI::IsBusy),      Do(&EnemyAI::Hold)));
 
-    // 賢さ 4 から 自分のバースト値が溜まっていたら、壁を割られないよう壁から離れる
-    if (intelligence >= 4) root->Add(When(If(&EnemyAI::IsCornered), Do(&EnemyAI::LeaveWall)));
+    // 身を守る
+    addIf(*root, 4, When(If(&EnemyAI::IsCornered),  Do(&EnemyAI::LeaveWall)));  // バースト値が溜まって壁際なら、割られないよう離れる
+    addIf(*root, 2, When(If(&EnemyAI::SeesCharge),  Do(&EnemyAI::BackOff)));    // こちらを向いて溜めていたら、届かない所まで下がる
 
-    // 賢さ 2 から こちらを向いて溜めていたら、届かない所まで下がって待つ
-    if (intelligence >= 2) root->Add(When(If(&EnemyAI::SeesCharge), Do(&EnemyAI::BackOff)));
+    // 攻める
+    addIf(*root, 5, When(If(&EnemyAI::SeesBack),    Do(&EnemyAI::RushIn)));     // 背中を向けたら、番がなくても走って踏み込む
+    addIf(*root, 3, When(If(&EnemyAI::SeesOpening), Do(&EnemyAI::RushIn)));     // 隙 (あと隙 回避の終わり 叩きつけの着地) に踏み込む
+    addIf(*root, 1, When(If(&EnemyAI::IsInReach),   std::move(swing)));         // 届く距離なら、番がなくても振る
+    addIf(*root, 1, When(Do(&EnemyAI::TakeToken),   Do(&EnemyAI::Approach)));   // 番が取れたら近づく 届いたら上の枝で振る
 
-    // 賢さ 5 から 相手が背中を向けたら、番がなくても走って踏み込む
-    if (intelligence >= 5) root->Add(When(If(&EnemyAI::SeesBack), Do(&EnemyAI::RushIn)));
-
-    // 賢さ 3 から 相手の隙 (あと隙 回避の終わり 叩きつけの着地) に走って踏み込む
-    if (intelligence >= 3) root->Add(When(If(&EnemyAI::SeesOpening), Do(&EnemyAI::RushIn)));
-
-    // 届く距離なら、番がなくても振る 何を振るかは中の Selector で選ぶ
-    auto swing = std::make_unique<BehaviorSelector<EnemyAI>>();
-    if (intelligence >= 2) {
-        // 大振りはガードできないので、構えている相手と、とどめを刺せる相手には大振り
-        swing->Add(When(If(&EnemyAI::SeesGuard), Do(&EnemyAI::SwingHeavy)));
-        swing->Add(When(If(&EnemyAI::IsTargetAtLimit), Do(&EnemyAI::SwingHeavy)));
-    }
-    swing->Add(Do(&EnemyAI::SwingPlanned));
-    root->Add(When(If(&EnemyAI::IsInReach), std::move(swing)));
-
-    // 攻撃の番が取れたら近づく 届いたら上の枝で振る
-    root->Add(When(Do(&EnemyAI::TakeToken), Do(&EnemyAI::Approach)));
-
-    // ほかは回って待つ 賢さ 3 は相手の背中側へ回り込む
-    root->Add(Do(intelligence >= 3 ? &EnemyAI::Flank : &EnemyAI::Orbit));
+    // 待つ ほかは周りを回る 賢さ 3 からは相手の背中側へ回り込む
+    addIf(*root, 1, Do(intelligence >= 3 ? &EnemyAI::Flank : &EnemyAI::Orbit));
 
     _tree = std::move(root);
 }
