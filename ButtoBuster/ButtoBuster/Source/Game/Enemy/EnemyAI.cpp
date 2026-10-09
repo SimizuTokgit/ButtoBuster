@@ -216,7 +216,7 @@ float EnemyAI::RandomRange(float min, float max) {
     return min + (max - min) * (GetRand(1000) / 1000.0f);
 }
 
-<<<<<<< HEAD
+
 // 木の形 (上の枝ほど優先する。[n] はその枝が入る賢さ)
 //
 // Selector
@@ -231,30 +231,7 @@ float EnemyAI::RandomRange(float min, float max) {
 // │       └ [1] 決めておいた技 ......................... SwingPlanned
 // ├ [1] 番が取れたら近づく ............ TakeToken   → Approach
 // └ [1] 回って待つ ([3] から背中側へ) ............. Orbit / Flank
-=======
-// ===== 行動の木 (賢さ 1 以上の敵: Goblin と RedGoblin) =====
 
-// 木の形 上の枝ほど優先する 毎フレーム上から見直し、条件のそろった最初の枝を進める
-// 賢さが足りない枝は、はじめから木に入れない
-// 枝の並びがそのまま優先の順なので、入れ替えると動きが変わる 並びは「動けない → 身を守る → 攻める → 待つ」
-//
-//  Selector (根)                                                       入る賢さ
-//  │  ----- 動けない -----
-//  ├ 振っている途中なら待つ ............ IsBusy      → Hold             1 から
-//  │  ----- 身を守る -----
-//  ├ 壁際で危ないなら離れる ............ IsCornered  → LeaveWall        4 から
-//  ├ 溜めを見たら下がる ................ SeesCharge  → BackOff          2 から
-//  │  ----- 攻める -----
-//  ├ 背中を見たら踏み込む .............. SeesBack    → RushIn           5
-//  ├ 隙を見たら踏み込む ................ SeesOpening → RushIn           3 から
-//  ├ 届くなら振る ...................... IsInReach   → 振り方の Selector 1 から
-//  │    ├ 構えていたら大振り ........... SeesGuard       → SwingHeavy   2 から
-//  │    ├ 壁を割れるなら大振り ......... IsTargetAtLimit → SwingHeavy   2 から
-//  │    └ ほかは決めておいた技 ......................... SwingPlanned 1 から
-//  ├ 番が取れたら近づく ................ TakeToken   → Approach         1 から
-//  │  ----- 待つ -----
-//  └ 回って待つ / 背中側へ回り込む ................. Orbit / Flank    1 から / 3 から
->>>>>>> claude/friendly-hypatia-xcvm68
 void EnemyAI::BuildTree() {
     // ----- 1. この敵の賢さを決める -----
     // 表 (EnemyData.cpp) の賢さに、選んでいる難易度の増減 (Difficulty.cpp の intelligenceShift) を足す
