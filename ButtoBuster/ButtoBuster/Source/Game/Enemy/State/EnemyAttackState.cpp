@@ -17,7 +17,7 @@ namespace {
     // 当たり判定が出るこの秒数前に光らせて音を鳴らす 光った瞬間に回避すればジャスト回避になる
     // ジャスト回避は、押してから justDodgeWindow (PlayerData 0.18 秒) のうちに当たったときなので、それより短くする
     // 前は振りかぶった瞬間に光らせていたが、当たるまでが長くて回避の合図にならなかった
-    constexpr float WARNING_LEAD_SECONDS = 0.12f;
+    constexpr float WARNING_LEAD_SECONDS = 0.15f;
     constexpr const char* WARNING_SOUND = "Player/equip";
     constexpr float WARNING_VOLUME = 0.6f;
 }
