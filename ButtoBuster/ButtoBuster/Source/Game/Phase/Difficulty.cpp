@@ -13,6 +13,7 @@ namespace {
 
         { "HARD",   "腕に自信のある人向け すぐ吹き飛ばされ、敵も賢く数も多い",
           24.0f,  2, 2, 5, 5, 1.0f, "Data/2D/ModeHard.png" },
+          //マジックナンバー直す
     };
 
     static_assert(sizeof(TABLE) / sizeof(TABLE[0]) == static_cast<int>(Difficulty::Count),
