@@ -21,4 +21,9 @@ namespace CombatSystem {
     // 自分を中心にした円 Golem の踏みつけと、プレイヤーの空中からの叩きつけに使う
     int ApplyArea(Character& attacker, float radius, const AttackData& attack, std::vector<Character*>& hitList,
         const std::shared_ptr<BlowChain>& chain = nullptr);
+
+    // 場にいる相手全員 距離も高さも問わない プレイヤーの必殺技 (雷) に使う
+    // 押す向きは、自分から相手へ向かう向き
+    int ApplyAll(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList,
+        const std::shared_ptr<BlowChain>& chain = nullptr);
 }

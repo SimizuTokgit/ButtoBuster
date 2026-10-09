@@ -12,6 +12,7 @@ class CameraFollow;
 // キーボード マウス パッドは、まず操作の印にそろえてから技を決める
 // 機械のボタンと印の割り当ては ReadHeldButtons の 1 か所だけにある
 // 攻撃 ガード ジャンプの印は組み合わせで技が変わる 回避と溜めの印はパッドの専用のボタンで、押せばすぐその技になる
+// 必殺技の印はパッドの Y とキーボードの F で、これも押せばすぐ出る
 //
 // 視点を回す操作もここで読む 人の操作を読むのはこのクラスだけにしておく
 class PlayerController : public MonoBehaviour {
@@ -30,9 +31,10 @@ private:
     static constexpr int GUARD_BIT = 1 << 1;
     static constexpr int JUMP_BIT = 1 << 2;
 
-    // 専用のボタンの印 パッドの L1 と R2 ほかと組み合わせないので、同時押しを待たずにすぐ技を出す
+    // 専用のボタンの印 パッドの L1 と R2、必殺技の Y と F ほかと組み合わせないので、同時押しを待たずにすぐ技を出す
     static constexpr int DODGE_BIT = 1 << 3;
     static constexpr int HEAVY_BIT = 1 << 4;
+    static constexpr int SPECIAL_BIT = 1 << 5;
 
     // 視点を回す速さ 度/秒 マウスは 1 ドット動かしたときの度
     static constexpr float STICK_YAW_SPEED = 180.0f;

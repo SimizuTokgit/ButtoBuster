@@ -206,6 +206,19 @@ namespace {
         attack.shockwaveRadius = PlayerAttacks::AIR_SLAM_RADIUS;
         return attack;
     }
+
+    // 必殺技の雷 当たり方は溜め斬りの 3 段目と同じ (ダメージ 90 で吹き飛ばし、吹っ飛ばし 3200)
+    // 3 段目の数値を変えると、雷も一緒に変わる 雷だけ変えたいときは、ここで上書きする
+    // 雷は上から落ちるのでガードできない 振らないので前にも出ない
+    // 弧と衝撃波は出さない 見た目は SpecialEffectObserver が雷で見せる
+    AttackData CreateSpecial() {
+        AttackData attack = CreateCharged(PlayerAttacks::CHARGE_LEVEL_MAX);
+        attack.canGuard = false;
+        attack.lunge = 0.0f;
+        attack.hasArc = false;
+        attack.shockwaveRadius = 0.0f;
+        return attack;
+    }
 }
 
 const AttackData& PlayerAttacks::GetSlash(int index) {
@@ -246,6 +259,11 @@ const AttackData& PlayerAttacks::GetAirSlash(int index) {
 const AttackData& PlayerAttacks::GetAirSlam() {
     static const AttackData slam = CreateAirSlam();
     return slam;
+}
+
+const AttackData& PlayerAttacks::GetSpecial() {
+    static const AttackData special = CreateSpecial();
+    return special;
 }
 
 AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerData& playerData) {

@@ -90,3 +90,17 @@ int CombatSystem::ApplyArea(Character& attacker, float radius, const AttackData&
     }
     return count;
 }
+
+int CombatSystem::ApplyAll(Character& attacker, const AttackData& attack, std::vector<Character*>& hitList,
+    const std::shared_ptr<BlowChain>& chain) {
+    VECTOR origin = attacker.GetPosition();
+
+    int count = 0;
+    for (Character* target : CharacterRegistry::GetAll()) {
+        if (!IsTarget(attacker, target, hitList)) continue;
+
+        hitList.push_back(target);
+        if (Hit(attacker, *target, attack, VSub(target->GetPosition(), origin), chain)) count++;
+    }
+    return count;
+}

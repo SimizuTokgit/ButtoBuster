@@ -7,6 +7,7 @@
 #include "PlayerDodgeState.h"
 #include "PlayerGuardState.h"
 #include "PlayerJumpState.h"
+#include "PlayerSpecialState.h"
 #include <memory>
 
 using std::make_unique;
@@ -48,6 +49,11 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
     case Technique::Jump:
         if (!player.IsGrounded()) return false;
         return states.Transition(from, make_unique<PlayerJumpState>(true));
+
+    // 必殺技はゲージが満タンのときだけ 地上でだけ出せる
+    case Technique::Special:
+        if (!player.IsSpecialReady()) return false;
+        return states.Transition(from, make_unique<PlayerSpecialState>());
 
     default:
         break;

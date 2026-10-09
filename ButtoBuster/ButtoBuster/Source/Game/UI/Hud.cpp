@@ -32,6 +32,26 @@ namespace {
     // バーの下に出す名前
     constexpr const char* DODGE_BAR_LABEL = "回避";
 
+    // ----- 必殺技のゲージ (回避のバーの下) -----
+    // 当てた数 (コンボ) 連鎖 壁割りで溜まる 満タンになるとパッド Y / キーボード F で撃てる
+    // どれだけ溜まるかは PlayerData の specialGain で始まる値
+    constexpr int SPECIAL_BAR_X = 40;
+    constexpr int SPECIAL_BAR_Y = 96;
+    constexpr int SPECIAL_BAR_WIDTH = 380;
+    constexpr int SPECIAL_BAR_HEIGHT = 16;
+
+    // 溜まっている途中の色と、満タンの色
+    constexpr unsigned int SPECIAL_FILL_COLOR = 0x4A78D0;
+    constexpr unsigned int SPECIAL_READY_COLOR = 0xFFD060;
+
+    // 満タンの間、バーに重ねる光の濃さ 0〜255 と、1 秒に光る回数
+    constexpr int SPECIAL_READY_GLOW_ALPHA = 140;
+    constexpr float SPECIAL_READY_BEATS_PER_SECOND = 1.5f;
+
+    // バーの下に出す名前 満タンのときは押すボタンも出す
+    constexpr const char* SPECIAL_BAR_LABEL = "必殺技";
+    constexpr const char* SPECIAL_READY_LABEL = "必殺技  F / Y で発動!";
+
     // ----- 吹っ飛ばされそうな危なさ (画面の縁の赤み) -----
     // 自分の吹っ飛ばされ値が許容値のこの割合を越えるごとに、縁の赤みを濃く太く、脈を速くする
     // あとどのくらいで壁を割られてしまうかを、数字を出さずに分かるように
@@ -82,6 +102,7 @@ void Hud::Render() {
 
     DrawDanger(screenWidth, screenHeight);
     DrawDodgeStock();
+    DrawSpecialGauge();
 
     // チュートリアルの間はフェーズの表示を出さない
     if (_director->GetStep() != PhaseDirector::Step::Practice) DrawPhaseInfo(screenWidth, screenHeight);
@@ -162,6 +183,34 @@ void Hud::DrawDodgeStock() {
     GameFont::Draw(DODGE_BAR_X, bottom + 6, DODGE_BAR_LABEL, WHITE, GameFont::Size::Small);
 }
 
+void Hud::DrawSpecialGauge() {
+    float ratio = _player->GetSpecialRatio();
+    if (ratio > 1.0f) ratio = 1.0f;
+    bool isReady = _player->IsSpecialReady();
+    int bottom = SPECIAL_BAR_Y + SPECIAL_BAR_HEIGHT;
+
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, DODGE_BAR_SHADE_ALPHA);
+    DrawBox(SPECIAL_BAR_X - 4, SPECIAL_BAR_Y - 4, SPECIAL_BAR_X + SPECIAL_BAR_WIDTH + 4, bottom + 4, 0x000000, TRUE);
+    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+
+    unsigned int color = isReady ? SPECIAL_READY_COLOR : SPECIAL_FILL_COLOR;
+    int fillWidth = static_cast<int>(SPECIAL_BAR_WIDTH * ratio);
+    if (fillWidth > 0) DrawBox(SPECIAL_BAR_X, SPECIAL_BAR_Y, SPECIAL_BAR_X + fillWidth, bottom, color, TRUE);
+
+    // 満タンの間は白い光を重ねて脈打たせ、撃てることに気づけるようにする
+    if (isReady) {
+        float seconds = GetNowCount() / 1000.0f;
+        float pulse = (sinf(seconds * SPECIAL_READY_BEATS_PER_SECOND * DX_TWO_PI_F) + 1.0f) * 0.5f;
+        SetDrawBlendMode(DX_BLENDMODE_ADD, static_cast<int>(SPECIAL_READY_GLOW_ALPHA * pulse));
+        DrawBox(SPECIAL_BAR_X, SPECIAL_BAR_Y, SPECIAL_BAR_X + SPECIAL_BAR_WIDTH, bottom, WHITE, TRUE);
+        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    }
+    DrawBox(SPECIAL_BAR_X, SPECIAL_BAR_Y, SPECIAL_BAR_X + SPECIAL_BAR_WIDTH, bottom, WHITE, FALSE);
+
+    const char* label = isReady ? SPECIAL_READY_LABEL : SPECIAL_BAR_LABEL;
+    GameFont::Draw(SPECIAL_BAR_X, bottom + 6, label, isReady ? SPECIAL_READY_COLOR : WHITE, GameFont::Size::Small);
+}
+
 void Hud::DrawPhaseInfo(int screenWidth, int screenHeight) {
     int right = screenWidth - 40;
     char text[64];
@@ -222,6 +271,7 @@ void Hud::DrawControls(int screenWidth, int screenHeight) {
         "移動 WASD / 左スティック    視点 マウス / Q E / 右スティック    視点を戻す L / ホイール押し / R3",
         "攻撃 左クリック / X    ガード 右クリック / L2    ジャンプ SPACE / A",
         "溜め斬り 攻撃+ガード / R2    回避 ガード+ジャンプ / L1    対空斬り 攻撃+ジャンプ / X+A",
+        "必殺技 F / Y (左上のゲージが満タンのとき)",
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
 

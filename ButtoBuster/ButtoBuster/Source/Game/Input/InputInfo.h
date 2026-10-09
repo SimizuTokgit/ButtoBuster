@@ -11,6 +11,7 @@ enum class Technique {
     Dodge,          // ガード + ジャンプ
     Jump,           // ジャンプ
     Shoot,          // 敵だけが使う 飛び道具
+    Special,        // プレイヤーだけが使う 必殺技 ゲージが満タンのときに出る
 };
 
 // キャラへの入力

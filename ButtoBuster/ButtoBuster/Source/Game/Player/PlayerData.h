@@ -132,6 +132,25 @@ struct PlayerData {
     // コンボが途切れるまでの時間 秒
     float comboKeepTime = 2.5f;
 
+    // ----- 必殺技 (パッド Y / キーボード F) -----
+    // ゲージが満タンのときに出せる 剣を掲げて、場にいる敵全員に雷を落とす
+    // 雷の当たり方 (ダメージと吹っ飛ばし) は PlayerAttacks.cpp の CreateSpecial 見た目と音は SpecialEffectObserver と SpecialSoundObserver
+
+    // ゲージの満タンの量 下の溜まる量は、この量に対する数
+    float specialGaugeMax = 100.0f;
+
+    // ゲージが溜まる量
+    float specialGainPerHit = 2.0f;         // 当てた 1 回ごと (コンボの 1 ヒット)
+    float specialGainPerChain = 5.0f;       // 連鎖で巻き込んだ 1 体ごと
+    float specialGainPerWallBreak = 15.0f;  // 敵が壁を割ったとき
+
+    // 撃ってからこの秒数はゲージが溜まらない 雷で吹き飛んだ敵が壁を割って、すぐまた溜まらないように
+    float specialRefillDelay = 3.0f;
+
+    // 剣を掲げて雷を呼ぶ秒数と、雷が落ちてから動けるまでの秒数 この間は攻撃を受けない
+    float specialCallTime = 0.6f;
+    float specialRecoveryTime = 0.5f;
+
     // ----- 空中 -----
 
     // 着地までに空中で浮き直せる回数 空中の斬り 1 回分

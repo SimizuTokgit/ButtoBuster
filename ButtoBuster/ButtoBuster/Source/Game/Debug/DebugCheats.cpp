@@ -55,6 +55,11 @@ void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
         for (int i = 0; i < SPAWN_MANY_COUNT; ++i) director->SpawnImmediately(EnemyKind::Goblin);
     });
 
+    // F キーはすべて埋まっているので、数字の 1 にする 必殺技の演出を何度も確かめるため
+    menu.AddCommand(KEY_INPUT_1, "必殺技のゲージを満タンにする", [player]() {
+        player->FillSpecialGauge();
+    });
+
     // 状態の作り直しと、そのメモリ (StatePool)
     // 今までの作りなら、作り直すたびにヒープから取っていた 置き場で使い回すと、ヒープから取るのは初めのうちだけになる
     menu.AddInfo([director, this]() {

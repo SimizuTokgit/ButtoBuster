@@ -5,6 +5,7 @@
 #include "PlayerChargeEvent.h"
 #include "ChainEvent.h"
 #include "JustDodgeEvent.h"
+#include "SpecialEvent.h"
 #include "PlayerData.h"
 
 class SlashTrail;
@@ -29,6 +30,7 @@ private:
     Subject<PlayerChargeEvent> _chargeEvents;
     Subject<ChainEvent> _chainEvents;
     Subject<JustDodgeEvent> _justDodgeEvents;
+    Subject<SpecialEvent> _specialEvents;
 
     bool _isGuarding = false;
     bool _isGuardImpact = false;
@@ -49,6 +51,10 @@ private:
 
     // 回避の残り 1 で 1 回分 端数は戻っている途中の分
     float _dodgeStock = 0.0f;
+
+    // 必殺技のゲージ 0〜data.specialGaugeMax と、撃ってからまた溜まり始めるまでの残り 秒
+    float _specialGauge = 0.0f;
+    float _specialLockTimer = 0.0f;
 
     // ガードで受けた回数と、攻撃を食らった回数 チュートリアルが数える
     int _guardCount = 0;
@@ -88,6 +94,9 @@ public:
     // ジャスト回避が決まったことを知らせる先 画面の演出 音 画面の文字が登録する
     Subject<JustDodgeEvent>& GetJustDodgeEvents() { return _justDodgeEvents; }
 
+    // 必殺技で起きたことを知らせる先 ゲージが満タンになった 雷を呼んだ 雷が落ちた 画面の演出と音が登録する
+    Subject<SpecialEvent>& GetSpecialEvents() { return _specialEvents; }
+
     // 回避を始めたときに呼ぶ ここから少しのうちに来た攻撃はジャスト回避になる
     void OpenJustDodgeWindow() { _justDodgeTimer = data.justDodgeWindow; }
 
@@ -99,6 +108,22 @@ public:
 
     // 回避の残り 1 で 1 回分 端数は戻っている途中の分 画面のバーが読む
     float GetDodgeStock() const { return _dodgeStock; }
+
+    // 必殺技のゲージを足す 撃ってすぐの間 (data.specialRefillDelay) は溜まらない
+    // 当てた数は AddCombo から、連鎖と壁割りは SpecialGaugeObserver から足す
+    void AddSpecialGauge(float amount);
+
+    // デバッグ用 撃ってすぐでも、ゲージを満タンにする
+    void FillSpecialGauge();
+
+    // 必殺技のゲージが満タンか 満タンでなければ必殺技は出ない
+    bool IsSpecialReady() const { return _specialGauge >= data.specialGaugeMax; }
+
+    // 必殺技を撃つときに呼ぶ ゲージを空にし、しばらく溜まらないようにする
+    void UseSpecial();
+
+    // 必殺技のゲージの溜まり具合 0〜1 画面のゲージが読む
+    float GetSpecialRatio() const;
 
     // ジャスト回避のあとの反撃を使い切る 使えたら true
     // 締めの一振りを始めるときに呼び、使えたらその技を反撃の吹き飛ばしにする 敵の時間も元に戻る

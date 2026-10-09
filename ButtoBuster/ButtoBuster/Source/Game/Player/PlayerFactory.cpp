@@ -7,6 +7,10 @@
 #include "ChainEffectObserver.h"
 #include "JustDodgeSoundObserver.h"
 #include "JustDodgeEffectObserver.h"
+#include "SpecialGaugeObserver.h"
+#include "SpecialSoundObserver.h"
+#include "SpecialEffectObserver.h"
+#include "ArenaWall.h"
 #include "CharacterBuilder.h"
 #include "SlashTrail.h"
 #include "ColliderGizmo.h"
@@ -105,6 +109,16 @@ Player* PlayerFactory::Create(VECTOR position) {
     // ジャスト回避の音と画面の演出も同じ形でつなぐ
     player->GetJustDodgeEvents().AddObserver(root->AddComponent<JustDodgeSoundObserver>());
     player->GetJustDodgeEvents().AddObserver(root->AddComponent<JustDodgeEffectObserver>());
+
+    // 必殺技のゲージは、連鎖と壁割りの知らせを受けて溜める 当てた数で溜まる分は Player の AddCombo
+    auto* specialGauge = root->AddComponent<SpecialGaugeObserver>();
+    specialGauge->Setup(player);
+    player->GetChainEvents().AddObserver(specialGauge);
+    ArenaWall::GetBreakEvents().AddObserver(specialGauge);
+
+    // 必殺技の音と画面の演出も同じ形でつなぐ
+    player->GetSpecialEvents().AddObserver(root->AddComponent<SpecialSoundObserver>());
+    player->GetSpecialEvents().AddObserver(root->AddComponent<SpecialEffectObserver>());
 
     auto* model = root->AddChild("PlayerModel");
 

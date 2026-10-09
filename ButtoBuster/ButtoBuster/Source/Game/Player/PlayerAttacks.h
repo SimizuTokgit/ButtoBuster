@@ -24,6 +24,9 @@ namespace PlayerAttacks {
     constexpr float AIR_SLAM_RADIUS = 380.0f;
     const AttackData& GetAirSlam();
 
+    // 必殺技の雷 1 発分 全部の敵に、プレイヤーから外へ向けて当てる
+    const AttackData& GetSpecial();
+
     // PlayerData の倍率 (強化で上がる分) を掛けた技にする 技を振り始めるときに通す
     AttackData ApplyRates(const AttackData& base, const PlayerData& playerData);
 

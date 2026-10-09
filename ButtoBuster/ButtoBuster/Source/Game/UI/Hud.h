@@ -5,9 +5,9 @@ class Player;
 class PhaseDirector;
 
 // 戦闘中の表示
-// 回避の残り フェーズ 残りの敵 次の全回復 コンボ 割られそうなときの画面の縁
+// 回避の残り 必殺技のゲージ フェーズ 残りの敵 次の全回復 コンボ 割られそうなときの画面の縁
 // 体力はなく、吹っ飛ばされ値も数字では出さない 溜まり具合は体の赤みと湯気で見せる
-// 回避の残りのバーの場所と色は .cpp の先頭に並べてある
+// 回避の残りのバーと必殺技のゲージの場所と色は .cpp の先頭に並べてある
 class Hud : public UIImage {
 private:
     Player* _player = nullptr;
@@ -29,6 +29,7 @@ public:
 private:
     void DrawDanger(int screenWidth, int screenHeight);
     void DrawDodgeStock();
+    void DrawSpecialGauge();
     void DrawPhaseInfo(int screenWidth, int screenHeight);
     void DrawCombo(int screenWidth, int screenHeight);
     void DrawControls(int screenWidth, int screenHeight);

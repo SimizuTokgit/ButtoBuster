@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "MonoBehaviour.h"
 #include "ShapeEffectRenderer.h"
+#include "SpriteEffectRenderer.h"
 #include "DxLib.h"
 
 class ParticleSystem;
@@ -15,6 +16,7 @@ class ScreenFlash;
 class EffectManager : public MonoBehaviour {
 public:
     using ArcDesc = ShapeEffectRenderer::ArcDesc;
+    using SpriteDesc = SpriteEffectRenderer::SpriteDesc;
 
 private:
     static inline EffectManager* _instance = nullptr;
@@ -24,6 +26,10 @@ private:
 
     int _damageGraph = -1;
     int _deadGraph = -1;
+
+    // 板に貼って出す画像 必殺技の雷と、壁が割れたときのヒビ
+    int _lightningGraph = -1;
+    int _wallCrackGraph = -1;
 
     // 種類ごとに1つずつ持ち、出す場所を動かして使い回す
     // 粒は放った時点の位置で動くので、あとから場所を動かしても前の粒は崩れない
@@ -44,6 +50,7 @@ private:
     ParticleSystem* _wallShard = nullptr;
 
     ShapeEffectRenderer* _shapes = nullptr;
+    SpriteEffectRenderer* _sprites = nullptr;
     ScreenFlash* _screenFlash = nullptr;
     CameraFollow* _camera = nullptr;
 
@@ -93,6 +100,15 @@ public:
 
     // 範囲攻撃が来る場所を先に見せる 輪が広がりきった瞬間に当たる
     void PlayAreaWarning(VECTOR groundPosition, float radius, float seconds);
+
+    // ----- 画像の板 -----
+    // 画像はここで読んだものを使い、場所 大きさ 長さ 濃さは desc で決める (desc.graph は入れなくてよい)
+
+    // 必殺技の雷 (Data/Effect/Lightning.png) 画像の下端が雷の落ちた所になる
+    void PlayLightning(SpriteDesc desc);
+
+    // 壁のヒビ (Data/Effect/WallCrack.png)
+    void PlayWallCrack(SpriteDesc desc);
 
     // ----- 画面 -----
 

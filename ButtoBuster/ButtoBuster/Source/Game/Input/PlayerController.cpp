@@ -67,9 +67,9 @@ Technique PlayerController::UpdateCombination(int pressed, int held) {
     // L2 や右クリックを握ったまま攻撃で強斬り、ジャンプで回避
     int combined = _collectedButtons | (held & GUARD_BIT);
 
-    // 回避と溜めの専用のボタンは組み合わせを待たない
+    // 回避 溜め 必殺技の専用のボタンは組み合わせを待たない
     // 2つ揃ったときもそれ以上は待たない 先にガードを握っていれば、押した瞬間に揃う
-    bool isDedicated = (combined & (DODGE_BIT | HEAVY_BIT)) != 0;
+    bool isDedicated = (combined & (DODGE_BIT | HEAVY_BIT | SPECIAL_BIT)) != 0;
     bool isPair = CountBits(combined) >= 2;
     if (!isDedicated && !isPair && _waitedFrames < COMBINE_WAIT_FRAMES) return Technique::None;
 
@@ -81,8 +81,8 @@ int PlayerController::ReadHeldButtons() const {
     const auto& input = InputSystem::Instance();
     int buttons = 0;
 
-    // パッドは X で攻撃、L2 でガード、A でジャンプ、L1 で回避、R2 で溜め
-    // キーボードとマウスは攻撃 ガード ジャンプの 3 つで、回避と溜めは組み合わせで出す
+    // パッドは X で攻撃、L2 でガード、A でジャンプ、L1 で回避、R2 で溜め、Y で必殺技
+    // キーボードとマウスは攻撃 ガード ジャンプの 3 つで、回避と溜めは組み合わせで出す 必殺技だけは F に分ける
     if (input.KeyHeld(KEY_INPUT_J) || input.MouseHeld(MOUSE_INPUT_LEFT) || input.PadHeld(XINPUT_BUTTON_X)) {
         buttons |= ATTACK_BIT;
     }
@@ -97,6 +97,9 @@ int PlayerController::ReadHeldButtons() const {
     }
     if (input.PadRightTriggerHeld()) {
         buttons |= HEAVY_BIT;
+    }
+    if (input.KeyHeld(KEY_INPUT_F) || input.PadHeld(XINPUT_BUTTON_Y)) {
+        buttons |= SPECIAL_BIT;
     }
     return buttons;
 }
@@ -179,9 +182,12 @@ Technique PlayerController::Resolve(int buttons) {
     bool isJump = (buttons & JUMP_BIT) != 0;
     bool isDodge = (buttons & DODGE_BIT) != 0;
     bool isHeavy = (buttons & HEAVY_BIT) != 0;
+    bool isSpecial = (buttons & SPECIAL_BIT) != 0;
 
     // いくつも同時に押されたら守りを優先する 危ない場面で慌てて全部押しがちなので
+    // 必殺技は専用のボタンなので、守りの次に見る
     if (isDodge || (isGuard && isJump)) return Technique::Dodge;
+    if (isSpecial) return Technique::Special;
     if (isAttack && isJump) return Technique::AntiAir;
     if (isHeavy || (isAttack && isGuard)) return Technique::StrongSlash;
     if (isAttack) return Technique::Slash;

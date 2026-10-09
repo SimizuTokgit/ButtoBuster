@@ -162,6 +162,9 @@
     <ClCompile Include="Source\Game\Effect\SlowShade.cpp">
       <Filter>Source\Game\Effect</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Effect\SpriteEffectRenderer.cpp">
+      <Filter>Source\Game\Effect</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Enemy\Enemy.cpp">
       <Filter>Source\Game\Enemy</Filter>
     </ClCompile>
@@ -240,6 +243,15 @@
     <ClCompile Include="Source\Game\Player\PlayerFactory.cpp">
       <Filter>Source\Game\Player</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Player\SpecialEffectObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\SpecialGaugeObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\SpecialSoundObserver.cpp">
+      <Filter>Source\Game\Player</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Player\State\PlayerActions.cpp">
       <Filter>Source\Game\Player\State</Filter>
     </ClCompile>
@@ -277,6 +289,9 @@
       <Filter>Source\Game\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Player\State\PlayerRushState.cpp">
+      <Filter>Source\Game\Player\State</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Game\Player\State\PlayerSpecialState.cpp">
       <Filter>Source\Game\Player\State</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Projectile\Needle.cpp">
@@ -536,6 +551,9 @@
     <ClInclude Include="Source\Game\Effect\SlowShade.h">
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Effect\SpriteEffectRenderer.h">
+      <Filter>Source\Game\Effect</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Enemy\AttackTokenPool.h">
       <Filter>Source\Game\Enemy</Filter>
     </ClInclude>
@@ -635,6 +653,18 @@
     <ClInclude Include="Source\Game\Player\PlayerData.h">
       <Filter>Source\Game\Player</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Player\SpecialEffectObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\SpecialEvent.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\SpecialGaugeObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\SpecialSoundObserver.h">
+      <Filter>Source\Game\Player</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerActions.h">
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>
@@ -672,6 +702,9 @@
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Player\State\PlayerRushState.h">
+      <Filter>Source\Game\Player\State</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Player\State\PlayerSpecialState.h">
       <Filter>Source\Game\Player\State</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Projectile\Needle.h">

@@ -39,6 +39,7 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
     UpdateCombo(deltaTime);
     UpdateJustDodge(deltaTime);
     UpdateDodgeStock(deltaTime);
+    if (_specialLockTimer > 0.0f) _specialLockTimer -= deltaTime;
 
     // 着地したら、空中で浮き直せる回数を戻す
     if (IsGrounded()) _airHangLeft = data.airHangCount;
@@ -47,6 +48,9 @@ void Player::Execute(const InputInfo& input, float deltaTime) {
     // 振っている途中に押した回避を覚えておき、残りが戻ったときに出てしまわないように
     InputInfo playerInput = input;
     if (playerInput.technique == Technique::Dodge && !CanDodge()) playerInput.technique = Technique::None;
+
+    // 必殺技も同じ ゲージが満タンでない間に押したものは覚えておかない
+    if (playerInput.technique == Technique::Special && !IsSpecialReady()) playerInput.technique = Technique::None;
 
     _states.Update(*this, playerInput, deltaTime);
 
@@ -180,6 +184,40 @@ void Player::AddCombo(int hits) {
     _combo += hits;
     _comboTimer = data.comboKeepTime;
     if (_combo > _maxCombo) _maxCombo = _combo;
+
+    // 当てた数だけ必殺技のゲージが溜まる
+    AddSpecialGauge(data.specialGainPerHit * hits);
+}
+
+void Player::AddSpecialGauge(float amount) {
+    if (amount <= 0.0f || _specialLockTimer > 0.0f) return;
+
+    bool wasReady = IsSpecialReady();
+    _specialGauge += amount;
+    if (_specialGauge > data.specialGaugeMax) _specialGauge = data.specialGaugeMax;
+
+    // 満タンになった瞬間を 1 回だけ知らせる 撃てるようになったと分かるように
+    if (!wasReady && IsSpecialReady()) {
+        SpecialEvent event;
+        event.type = SpecialEvent::Type::Ready;
+        event.position = GetPosition();
+        _specialEvents.Notify(event);
+    }
+}
+
+void Player::FillSpecialGauge() {
+    _specialLockTimer = 0.0f;
+    AddSpecialGauge(data.specialGaugeMax);
+}
+
+void Player::UseSpecial() {
+    _specialGauge = 0.0f;
+    _specialLockTimer = data.specialRefillDelay;
+}
+
+float Player::GetSpecialRatio() const {
+    if (data.specialGaugeMax <= 0.0f) return 0.0f;
+    return _specialGauge / data.specialGaugeMax;
 }
 
 void Player::HealFull() {

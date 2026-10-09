@@ -24,6 +24,8 @@ EffectManager::~EffectManager() {
 
     if (_damageGraph != -1) DeleteGraph(_damageGraph);
     if (_deadGraph != -1) DeleteGraph(_deadGraph);
+    if (_lightningGraph != -1) DeleteGraph(_lightningGraph);
+    if (_wallCrackGraph != -1) DeleteGraph(_wallCrackGraph);
 }
 
 void EffectManager::Initialize(CameraFollow* camera) {
@@ -32,6 +34,8 @@ void EffectManager::Initialize(CameraFollow* camera) {
 
     _damageGraph = LoadGraph("Data/Effect/Damage.png");
     _deadGraph = LoadGraph("Data/Effect/Dead.png");
+    _lightningGraph = LoadGraph("Data/Effect/Lightning.png");
+    _wallCrackGraph = LoadGraph("Data/Effect/WallCrack.png");
 
     // 斬った瞬間に散る火花
     _hitSpark = CreateSystem("HitSpark", _damageGraph);
@@ -262,6 +266,10 @@ void EffectManager::Initialize(CameraFollow* camera) {
     _shapes = gameObject->AddChild("ShapeEffects")->AddComponent<ShapeEffectRenderer>();
     _shapes->Setup("Data/Effect/SlashLocus.png", "Data/Effect/SphereLocus.png");
 
+    // 雷と壁のヒビ 画像を 1 枚の板に貼って出す
+    _sprites = gameObject->AddChild("SpriteEffects")->AddComponent<SpriteEffectRenderer>();
+    _sprites->Setup();
+
     // 敵の足元の影と輪 地面に溶けて見えにくい敵を目立たせる
     gameObject->AddChild("EnemyMarkers")->AddComponent<EnemyMarkerRenderer>()->Setup();
 
@@ -410,6 +418,20 @@ void EffectManager::PlayAreaWarning(VECTOR groundPosition, float radius, float s
     edge.alphaStart = 0.5f;
     edge.alphaEnd = 0.9f;
     _shapes->AddRing(edge);
+}
+
+// ----- 画像の板 -----
+
+void EffectManager::PlayLightning(SpriteDesc desc) {
+    if (!_sprites) return;
+    desc.graph = _lightningGraph;
+    _sprites->Add(desc);
+}
+
+void EffectManager::PlayWallCrack(SpriteDesc desc) {
+    if (!_sprites) return;
+    desc.graph = _wallCrackGraph;
+    _sprites->Add(desc);
 }
 
 // ----- 画面 -----

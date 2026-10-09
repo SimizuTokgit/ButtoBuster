@@ -167,6 +167,7 @@ private:
         case KEY_INPUT_F10: return "F10";
         case KEY_INPUT_F11: return "F11";
         case KEY_INPUT_F12: return "F12";
+        case KEY_INPUT_1:   return "1";
         default:            return "";
         }
     }
