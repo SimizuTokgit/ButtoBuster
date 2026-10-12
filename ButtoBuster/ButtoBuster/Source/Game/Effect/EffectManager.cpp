@@ -3,7 +3,6 @@
 #include "Transform.h"
 #include "ParticleSystem.h"
 #include "ScreenFlash.h"
-#include "EnemyMarkerRenderer.h"
 #include "CameraFollow.h"
 #include "StageBuilder.h"
 #include "ArenaBoundary.h"
@@ -83,18 +82,6 @@ namespace {
         10.0f, 55.0f, 14,               // debrisHeight debrisSpread debrisCount
         10,                             // dustCount
     };
-
-    // 範囲攻撃の予兆 (PlayAreaWarning) 中から満ちていく赤と、縁の線 色 (0xRRGGBB) と始めと終わりの濃さ
-    struct AreaWarningLook {
-        unsigned int fillColor;
-        float fillAlphaStart;
-        float fillAlphaEnd;
-        float edgeWidth;
-        unsigned int edgeColor;
-        float edgeAlphaStart;
-        float edgeAlphaEnd;
-    };
-    const AreaWarningLook AREA_WARNING_LOOK = { 0xFF281E, 0.15f, 0.6f, 40.0f, 0xFF3C28, 0.5f, 0.9f };
 
     // フェーズの最後の 1 体を倒したとき (PlayFinalBlow) 普通のとどめとははっきり違う重さにする
     struct FinalBlowLook {
@@ -421,7 +408,8 @@ void EffectManager::Initialize(CameraFollow* camera) {
     _sprites->Setup();
 
     // 敵の足元の影と輪 地面に溶けて見えにくい敵を目立たせる
-    gameObject->AddChild("EnemyMarkers")->AddComponent<EnemyMarkerRenderer>()->Setup();
+    _markers = gameObject->AddChild("Markers")->AddComponent<MarkerRenderer>();
+    _markers->Setup();
 
     _screenFlash = gameObject->AddChild("ScreenFlash")->AddComponent<ScreenFlash>();
 }
@@ -539,36 +527,6 @@ void EffectManager::PlayShockwave(VECTOR groundPosition, float radius, COLOR_U8 
     VECTOR debrisPosition = VAdd(groundPosition, VGet(0.0f, look.debrisHeight, 0.0f));
     BurstToward(_shockDebris, debrisPosition, UP, look.debrisSpread, look.debrisCount);
     PlayDust(groundPosition, look.dustCount);
-}
-
-void EffectManager::PlayAreaWarning(VECTOR groundPosition, float radius, float seconds) {
-    if (!_shapes || radius <= 0.0f || seconds <= 0.0f) return;
-
-    const AreaWarningLook& look = AREA_WARNING_LOOK;
-
-    // 中から外へ満ちていく赤 満ちきったときに当たる
-    ShapeEffectRenderer::RingDesc fill;
-    fill.center = groundPosition;
-    fill.startRadius = 0.0f;
-    fill.endRadius = radius;
-    fill.width = radius;
-    fill.color = ToColor(look.fillColor);
-    fill.life = seconds;
-    fill.alphaStart = look.fillAlphaStart;
-    fill.alphaEnd = look.fillAlphaEnd;
-    _shapes->AddRing(fill);
-
-    // 範囲の縁は最初から見せておく どこまで逃げればよいか分かるように
-    ShapeEffectRenderer::RingDesc edge;
-    edge.center = groundPosition;
-    edge.startRadius = radius;
-    edge.endRadius = radius;
-    edge.width = look.edgeWidth;
-    edge.color = ToColor(look.edgeColor);
-    edge.life = seconds;
-    edge.alphaStart = look.edgeAlphaStart;
-    edge.alphaEnd = look.edgeAlphaEnd;
-    _shapes->AddRing(edge);
 }
 
 // ----- 画像の板 -----

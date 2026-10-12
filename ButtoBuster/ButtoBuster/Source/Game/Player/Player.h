@@ -179,6 +179,10 @@ public:
     // 頭の上 ジャスト回避の知らせや溜めの光を出す所
     VECTOR GetHeadPosition() const;
 
+    // 振る前に、技の当たる範囲 (届く距離と左右の角度) を青で地面に出す 溜めと叩きつけが毎フレーム呼ぶ
+    // 宙にいるときは真下の地面に出す
+    void ShowAttackRange(const AttackData& attack) const;
+
 protected:
     const BlowSettings& GetBlowSettings() const override { return data.blow; }
 

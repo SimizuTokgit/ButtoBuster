@@ -38,6 +38,9 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
         _level++;
         Notify(player, PlayerChargeEvent::Type::LevelUp);
     }
+
+    // 今の段階で離したときに当たる範囲 段階が上がると広がり、向きを変えると付いてくる
+    player.ShowAttackRange(PlayerAttacks::GetHeavy(_level));
 }
 
 void PlayerChargeState::Exit(Player& player) {

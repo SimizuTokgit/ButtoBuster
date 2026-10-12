@@ -48,8 +48,6 @@ void EnemyAttackState::Enter(Enemy& enemy) {
     enemy.PlayAnimation(_data.animationName, _data.animationSpeed, true);
     enemy.FaceImmediately(EnemyActions::ToTarget(enemy));
     enemy.StopHorizontal();
-
-    PlayAreaWarning(enemy);
 }
 
 void EnemyAttackState::Execute(Enemy& enemy, const InputInfo& input, float deltaTime) {
@@ -69,6 +67,7 @@ void EnemyAttackState::Execute(Enemy& enemy, const InputInfo& input, float delta
         enemy.StopHorizontal();
     }
 
+    ShowRange(enemy, time);
     PlayWarning(enemy, time);
     PlaySwing(enemy, time);
     ApplyHit(enemy, time);
@@ -85,16 +84,23 @@ void EnemyAttackState::Exit(Enemy& enemy) {
     enemy.NotifyAttackFinished();
 }
 
-void EnemyAttackState::PlayAreaWarning(Enemy& enemy) {
-    // 踏みつけは当たる範囲を先に地面へ出す 赤が満ちきったときに当たる
-    // 輪は普段の時間で満ちるので、反撃の間に敵がゆっくりになっていると、満ちたあと少ししてから当たる
-    if (_areaRadius <= 0.0f) return;
+void EnemyAttackState::ShowRange(Enemy& enemy, float time) {
+    // 当たる範囲を赤で出し、中から満ちていく 満ちきったときに当たる
+    // アニメの進みで満ちるので、反撃の間に敵がゆっくりになっても、満ちる速さが合ったまま
+    bool isStomp = _areaRadius > 0.0f;
+    if ((!isStomp && _data.canGuard) || time >= _data.hitStart) return;
 
     auto* effects = EffectManager::Get();
     if (!effects) return;
 
-    float seconds = _data.hitStart / (ANIMATION_FPS * _data.animationSpeed);
-    effects->PlayAreaWarning(enemy.GetPosition(), _areaRadius, seconds);
+    // 踏みつけは周り全部、大振りは振る向きの扇 振りかぶりの間は相手を追って向きが変わるので、毎フレーム合わせる
+    MarkerRenderer::RangeDesc range;
+    range.center = enemy.GetPosition();
+    range.forward = enemy.GetForward();
+    range.radius = isStomp ? _areaRadius : _data.reach;
+    range.arcDegree = isStomp ? 180.0f : _data.arcDegree;
+    range.fill = time / _data.hitStart;
+    effects->ShowRange(range);
 }
 
 void EnemyAttackState::PlayWarning(Enemy& enemy, float time) {

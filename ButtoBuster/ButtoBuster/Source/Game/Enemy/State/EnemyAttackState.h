@@ -31,8 +31,8 @@ public:
     const char* GetName() const override { return _areaRadius > 0.0f ? "Stomp" : "Attack"; }
 
 private:
-    // 踏みつけの当たる範囲を、振りかぶった瞬間に地面へ出す
-    void PlayAreaWarning(Enemy& enemy);
+    // 踏みつけと大振り (ガードできない技) は、振りかぶっている間、当たる範囲を地面に出す
+    void ShowRange(Enemy& enemy, float time);
 
     // 当たる少し前に頭の上を光らせ、音を鳴らす 光った瞬間に回避すればジャスト回避になる
     void PlayWarning(Enemy& enemy, float time);
