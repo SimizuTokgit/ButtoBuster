@@ -8,6 +8,12 @@ struct PlayerData;
 namespace PlayerAttacks {
     constexpr int SLASH_COUNT = 3;
 
+    // 振るときの声 コンボの段ごと 空中の斬りも同じ 叩きつけは締め (3 段目) と同じ声
+    // 声の大きさは PlayerData::VOICE_VOLUME
+    constexpr const char* SLASH_VOICES[SLASH_COUNT] = {
+        "Player/Vc_Attack1", "Player/Vc_Attack2", "Player/Vc_Attack3",
+    };
+
     // 通常の斬り 0〜2 段目
     const AttackData& GetSlash(int index);
     const AttackData& GetStrong();

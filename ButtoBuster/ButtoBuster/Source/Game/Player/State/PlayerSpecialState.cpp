@@ -18,7 +18,9 @@ void PlayerSpecialState::Enter(Player& player) {
 
     player.SetTrailEmitting(false);
     player.StopHorizontal();
-    HoldPose(player);
+
+    // 溜めと同じ姿勢で剣を掲げたまま止める
+    player.HoldChargePose();
 
     SpecialEvent event;
     event.type = SpecialEvent::Type::Call;
@@ -35,19 +37,18 @@ void PlayerSpecialState::Execute(Player& player, const InputInfo& input, float d
 
     switch (_phase) {
     case Phase::Call:
-        HoldPose(player);
+        player.HoldChargePose();
         if (_timer >= player.data.specialCallTime) Strike(player);
         break;
 
     case Phase::Recover: {
-        player.SetTrailEmitting(player.GetAnimationTime() <= SWING_END_TIME);
+        player.SetTrailEmitting(player.GetAnimationTime() <= player.data.chargeSwingEndTime);
 
-        if (input.technique != Technique::None) _queued = input.technique;
+        _queued.Remember(input);
         if (_timer < player.data.specialRecoveryTime) break;
 
-        InputInfo buffered = input;
-        if (_queued != Technique::None) buffered.technique = _queued;
-        if (PlayerActions::TryStart(player, this, buffered)) return;
+        // 必殺技は地上で撃つので、押してあった技も地上の入口から出す
+        if (PlayerActions::TryStart(player, this, _queued.ToInput(input))) return;
 
         player.GetStates().Transition(this, make_unique<PlayerIdleState>());
         break;
@@ -80,10 +81,4 @@ void PlayerSpecialState::Strike(Player& player) {
     event.position = player.GetPosition();
     for (const Character* target : hitList) event.targets.push_back(target->GetPosition());
     player.GetSpecialEvents().Notify(event);
-}
-
-void PlayerSpecialState::HoldPose(Player& player) const {
-    // 溜めと同じ姿勢で剣を掲げたまま止める 姿勢は PlayerData の chargePose で始まる値
-    player.PlayAnimation(player.data.chargePoseAnimation, 0.0f);
-    player.SetAnimationTime(player.data.chargePoseTime);
 }

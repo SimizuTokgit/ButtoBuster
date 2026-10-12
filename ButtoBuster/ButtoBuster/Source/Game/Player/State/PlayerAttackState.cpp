@@ -14,13 +14,38 @@
 using std::make_unique;
 
 namespace {
-    // 振るときの声 コンボの段ごと (空中の斬りも同じ) 溜めてから振ったとき 対空斬り
-    const char* const COMBO_VOICES[PlayerAttacks::SLASH_COUNT] = {
-        "Player/Vc_Attack1", "Player/Vc_Attack2", "Player/Vc_Attack3",
-    };
+    // 振るときの声 溜めてから振ったときと対空斬り コンボの段ごとの声は PlayerAttacks の SLASH_VOICES
     constexpr const char* CHARGE_VOICE = "Player/Vc_Charge_Attack";
     constexpr const char* ANTI_AIR_VOICE = "Player/Vc_Attack2";
-    constexpr float VOICE_VOLUME = 0.8f;
+
+    // 振ったときの見た目 刃の軌跡 弧 足元の衝撃波
+    struct SwingLook {
+        // 刃の軌跡を判定の何フレーム前から、何フレーム後まで出すか
+        // 判定より少しだけ長く出すと、振りの頭と終わりが自然に見える
+        float trailLead = 1.0f;
+        float trailTail = 1.5f;
+
+        // 弧を判定の何フレーム前に出すか 少し前に出すと、刃の動きと弧が重なって見える
+        float arcLead = 0.5f;
+
+        // 弧の開きの上限 度 開きすぎると背中側まで回り込んで、どこを斬ったのか分からなくなる
+        float arcMaxDegree = 220.0f;
+
+        // 弧の半径と太さ 技の届く距離に掛ける割合
+        float arcRadiusRate = 0.9f;
+        float arcWidthRate = 0.4f;
+
+        // 弧が出ている秒数 衝撃波も出す重い技は長く残す
+        float arcLife = 0.2f;
+        float heavyArcLife = 0.3f;
+
+        // 衝撃波を広げる所 体の前へ、技の届く距離に掛ける割合だけ出た所
+        float shockwaveForwardRate = 0.4f;
+    };
+    constexpr SwingLook SWING_LOOK{};
+
+    // 当てたときに画面を揺らす長さ 秒 強さは技の shake
+    constexpr float HIT_SHAKE_TIME = 0.2f;
 }
 
 PlayerAttackState::PlayerAttackState(const AttackData& data, int comboIndex, Kind kind, int chargeLevel)
@@ -92,14 +117,14 @@ void PlayerAttackState::Execute(Player& player, const InputInfo& input, float de
         player.SetVerticalVelocity(-fallSpeed);
     }
 
-    // 軌跡は判定より少しだけ長く出すと、振りの頭と終わりが自然に見える
-    bool isTrailTime = time >= _data.hitStart - 1.0f && time <= _data.hitEnd + 1.5f;
+    // 刃の軌跡は判定より少しだけ長く出す
+    bool isTrailTime = time >= _data.hitStart - SWING_LOOK.trailLead && time <= _data.hitEnd + SWING_LOOK.trailTail;
     player.SetTrailEmitting(isTrailTime);
 
     PlaySwingEffects(player, time);
     ApplyHit(player);
 
-    if (input.technique != Technique::None) _queued = input.technique;
+    _queued.Remember(input);
 
     // あと隙の間は、回避もガードも次の技も出せない 押された技は覚えておき、明けたら出す
     if (!UpdateRecovery(player, deltaTime)) return;
@@ -139,13 +164,7 @@ const char* PlayerAttackState::GetName() const {
 }
 
 void PlayerAttackState::PlaySwingEffects(Player& player, float time) {
-    // 判定が出る少し前に出すと、刃の動きと弧が重なって見える
-    constexpr float SWING_LEAD = 0.5f;
-
-    // 開きすぎると背中側まで回り込んで、どこを斬ったのか分からなくなる
-    constexpr float MAX_ARC_DEGREE = 220.0f;
-
-    if (_hasPlayedSwing || time < _data.hitStart - SWING_LEAD) return;
+    if (_hasPlayedSwing || time < _data.hitStart - SWING_LOOK.arcLead) return;
     _hasPlayedSwing = true;
 
     PlayVoice();
@@ -159,23 +178,23 @@ void PlayerAttackState::PlaySwingEffects(Player& player, float time) {
         EffectManager::ArcDesc arc;
         arc.center = VAdd(player.GetPosition(), VGet(0.0f, player.bodyHeight * 0.5f, 0.0f));
         arc.forward = player.GetForward();
-        arc.radius = _data.reach * 0.9f;
-        arc.width = _data.reach * 0.4f;
+        arc.radius = _data.reach * SWING_LOOK.arcRadiusRate;
+        arc.width = _data.reach * SWING_LOOK.arcWidthRate;
 
         // 当たり判定の扇は正面から左右に arcDegree ずつ 見た目もそれに合わせる
         arc.arcDegree = _data.arcDegree * 2.0f;
-        if (arc.arcDegree > MAX_ARC_DEGREE) arc.arcDegree = MAX_ARC_DEGREE;
+        if (arc.arcDegree > SWING_LOOK.arcMaxDegree) arc.arcDegree = SWING_LOOK.arcMaxDegree;
 
         arc.tiltDegree = _data.arcTilt;
         arc.swing = _data.arcSwing;
         arc.color = _data.arcColor;
-        arc.life = hasShockwave ? 0.3f : 0.2f;
+        arc.life = hasShockwave ? SWING_LOOK.heavyArcLife : SWING_LOOK.arcLife;
         effects->PlaySlashArc(arc);
     }
 
     // 空中で振ったときは地面を叩いていないので出さない
     if (hasShockwave && player.IsGrounded()) {
-        VECTOR front = VAdd(player.GetPosition(), VScale(player.GetForward(), _data.reach * 0.4f));
+        VECTOR front = VAdd(player.GetPosition(), VScale(player.GetForward(), _data.reach * SWING_LOOK.shockwaveForwardRate));
         effects->PlayShockwave(front, _data.shockwaveRadius, _data.arcColor);
     }
 }
@@ -206,13 +225,8 @@ void PlayerAttackState::ApplyHit(Player& player) {
     auto* effects = EffectManager::Get();
     if (!effects) return;
     effects->HitStop(_data.hitStop);
-    if (_data.shake > 0.0f) effects->Shake(_data.shake, 0.2f);
-
-    // 寄る技ほど重いので、画面も強く光らせる
-    if (_data.zoomPunch > 0.0f) {
-        effects->ZoomPunch(_data.zoomPunch, 0.35f);
-        effects->FlashScreen(0xFFFFFF, _data.zoomPunch * 0.04f, 0.12f);
-    }
+    if (_data.shake > 0.0f) effects->Shake(_data.shake, HIT_SHAKE_TIME);
+    PlayerActions::PlayZoomFlash(_data.zoomPunch);
 }
 
 bool PlayerAttackState::UpdateRecovery(Player& player, float deltaTime) {
@@ -249,46 +263,40 @@ bool PlayerAttackState::TryGuard(Player& player, const InputInfo& input) {
 }
 
 bool PlayerAttackState::TryContinue(Player& player, const InputInfo& input) {
-    if (_queued == Technique::None) return false;
+    Technique queued = _queued.technique;
+    if (queued == Technique::None) return false;
 
-    float time = player.GetAnimationTime();
-
-    // 回避だけは振り終わった直後から受け付ける 危ないときに逃げられるように
-    // 受け付ける時間の無い技も、振り終われば押してあった技を出す 対空斬りから空中の斬りへつなげるため
-    bool canDodge = _queued == Technique::Dodge && time > _data.hitEnd;
-    bool canCancel = (_data.cancelTime > 0.0f && time >= _data.cancelTime) || player.IsAnimationFinished();
+    // ここへ来るのはあと隙が明けてから 回避はすぐ出す 危ないときに逃げられるように
+    // ほかの技は受け付ける時間から 受け付ける時間の無い技も、振り終われば押してあった技を出す 対空斬りから空中の斬りへつなげるため
+    bool canDodge = queued == Technique::Dodge;
+    bool canCancel = (_data.cancelTime > 0.0f && player.GetAnimationTime() >= _data.cancelTime)
+        || player.IsAnimationFinished();
     if (!canDodge && !canCancel) return false;
 
-    auto& states = player.GetStates();
     bool isAirborne = !player.IsGrounded();
 
     // 段を進めるのは同じ場所で振り続けたときだけ 着地したり宙に出たりしたら、そこの 1 段目から振り直す
     Kind nextKind = isAirborne ? Kind::Air : Kind::Ground;
-    bool isNextSlash = _queued == Technique::Slash
+    bool isNextSlash = queued == Technique::Slash
         && _kind == nextKind
         && _comboIndex >= 0
         && _comboIndex + 1 < PlayerAttacks::SLASH_COUNT;
     if (isNextSlash) {
         int next = _comboIndex + 1;
         const AttackData& data = isAirborne ? PlayerAttacks::GetAirSlash(next) : PlayerAttacks::GetSlash(next);
-        return states.Transition(this, make_unique<PlayerAttackState>(data, next, nextKind));
+        return player.GetStates().Transition(this, make_unique<PlayerAttackState>(data, next, nextKind));
     }
 
-    InputInfo buffered = input;
-    buffered.technique = _queued;
-
-    // 空中では空中の技を出す 回避は今までどおり地上と同じ入口から出す
-    if (isAirborne && _queued != Technique::Dodge) {
-        return PlayerActions::TryStartAir(player, this, buffered);
-    }
-    return PlayerActions::TryStart(player, this, buffered);
+    // 回避は宙でも、今までどおり地上と同じ入口から出す ほかの技は、宙なら空中の技になる
+    if (queued == Technique::Dodge) return PlayerActions::TryStart(player, this, _queued.ToInput(input));
+    return _queued.TryStart(player, this, input);
 }
 
 void PlayerAttackState::PlayVoice() const {
     const char* voice = "";
     if (_chargeLevel >= 0) voice = CHARGE_VOICE;
     else if (_kind == Kind::AntiAir) voice = ANTI_AIR_VOICE;
-    else if (_comboIndex >= 0 && _comboIndex < PlayerAttacks::SLASH_COUNT) voice = COMBO_VOICES[_comboIndex];
+    else if (_comboIndex >= 0 && _comboIndex < PlayerAttacks::SLASH_COUNT) voice = PlayerAttacks::SLASH_VOICES[_comboIndex];
 
-    if (voice[0] != '\0') SoundManager::Instance().PlaySE(voice, VOICE_VOLUME);
+    if (voice[0] != '\0') SoundManager::Instance().PlaySE(voice, PlayerData::VOICE_VOLUME);
 }

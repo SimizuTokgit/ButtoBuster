@@ -8,13 +8,21 @@
 
 using std::make_unique;
 
+namespace {
+    // 抜ける向きと正面の向きの内積 これより大きければ前や横へ抜け、小さければ後ろへ下がる
+    constexpr float BACK_DOT = -0.5f;
+
+    // 踏み切りのアニメ (JumpIn) を流す速さ 1 でふだんどおり
+    constexpr float ANIMATION_SPEED = 1.6f;
+}
+
 void PlayerDodgeState::Enter(Player& player) {
     _direction.y = 0.0f;
     float length = VSize(_direction);
     _direction = (length > 0.001f) ? VScale(_direction, 1.0f / length) : VScale(player.GetForward(), -1.0f);
 
     // 前や横へ抜けるときはそちらを向く 後ろへ下がるときは相手を見たまま
-    if (VDot(_direction, player.GetForward()) > -0.5f) {
+    if (VDot(_direction, player.GetForward()) > BACK_DOT) {
         player.FaceImmediately(_direction);
     }
 
@@ -22,21 +30,21 @@ void PlayerDodgeState::Enter(Player& player) {
     player.UseDodge();
 
     SoundManager::Instance().PlaySE("Player/SE_Dodge");
-    SoundManager::Instance().PlaySE("Player/Vc_Dodge", 0.8f);
+    SoundManager::Instance().PlaySE("Player/Vc_Dodge", PlayerData::VOICE_VOLUME);
 
     player.SetInvincible(player.data.dodgeInvincibleTime);
-    player.SetOpacity(0.45f);
+    player.SetOpacity(player.data.dodgeOpacity);
 
     // 踏み切った直後に攻撃が来たら、ジャスト回避になる
     player.OpenJustDodgeWindow();
 
     // 地面を蹴った土煙 どちらへ抜けたかが残る
     auto* effects = EffectManager::Get();
-    if (effects && player.IsGrounded()) effects->PlayDust(player.GetPosition(), 6);
+    if (effects && player.IsGrounded()) effects->PlayDust(player.GetPosition(), player.data.dodgeDustCount);
 
     // 回避専用のアニメが無いので、踏み切りの動きを速く流して代わりにする
     // 音もこのアニメに付けてあるものが鳴る
-    player.PlayAnimation("JumpIn", 1.6f, true);
+    player.PlayAnimation("JumpIn", ANIMATION_SPEED, true);
 }
 
 void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float deltaTime) {
@@ -53,7 +61,7 @@ void PlayerDodgeState::Execute(Player& player, const InputInfo& input, float del
         return;
     }
 
-    player.DampHorizontal(18.0f, deltaTime);
+    player.DampHorizontal(data.dodgeDamp, deltaTime);
     player.SetOpacity(1.0f);
 
     if (_timer < data.dodgeTime + data.dodgeRecoveryTime) return;

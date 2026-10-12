@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ICharacterState.h"
 #include "AttackData.h"
+#include "PlayerActions.h"
 #include <memory>
 #include <vector>
 
@@ -43,7 +44,7 @@ private:
     bool _isHanging = false;
 
     // 振っている最中に押された次の技 振り終わったら出す
-    Technique _queued = Technique::None;
+    PlayerActions::QueuedTechnique _queued;
 
     // 最後の判定が消えてから経った時間 アニメのフレームで数える あと隙が明けたかを見る
     float _recoveryCount = 0.0f;

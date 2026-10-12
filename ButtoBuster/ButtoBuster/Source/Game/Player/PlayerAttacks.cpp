@@ -1,10 +1,17 @@
 ﻿#include "PlayerAttacks.h"
 #include "PlayerData.h"
+#include "JustDodgeEvent.h"
+#include "EffectManager.h"
 
 namespace {
-    // 反撃の弧の色 ジャスト回避と同じ水色にして、反撃だと分かるようにする
-    COLOR_U8 GetCounterArcColor() {
-        return GetColorU8(120, 230, 255, 255);
+    // 1 2 段目の斬りの弧の色 (0xRRGGBB)
+    constexpr unsigned int SLASH_ARC_COLOR = 0xAAD7FF;
+
+    // 段の番号を 0〜SLASH_COUNT - 1 に収める
+    int ClampSlashIndex(int index) {
+        if (index < 0) return 0;
+        if (index >= PlayerAttacks::SLASH_COUNT) return PlayerAttacks::SLASH_COUNT - 1;
+        return index;
     }
 
     AttackData CreateSlash1() {
@@ -23,7 +30,7 @@ namespace {
         attack.hasArc = true;
         attack.arcTilt = 25.0f;
         attack.arcSwing = 1.0f;
-        attack.arcColor = GetColorU8(170, 215, 255, 255);
+        attack.arcColor = EffectManager::ToColor(SLASH_ARC_COLOR);
         return attack;
     }
 
@@ -44,7 +51,7 @@ namespace {
         attack.hasArc = true;
         attack.arcTilt = -25.0f;
         attack.arcSwing = -1.0f;
-        attack.arcColor = GetColorU8(170, 215, 255, 255);
+        attack.arcColor = EffectManager::ToColor(SLASH_ARC_COLOR);
         return attack;
     }
 
@@ -241,9 +248,7 @@ namespace {
 
 const AttackData& PlayerAttacks::GetSlash(int index) {
     static const AttackData slashes[SLASH_COUNT] = { CreateSlash1(), CreateSlash2(), CreateSlash3() };
-    if (index < 0) index = 0;
-    if (index >= SLASH_COUNT) index = SLASH_COUNT - 1;
-    return slashes[index];
+    return slashes[ClampSlashIndex(index)];
 }
 
 const AttackData& PlayerAttacks::GetStrong() {
@@ -269,9 +274,7 @@ const AttackData& PlayerAttacks::GetAirSlash(int index) {
     static const AttackData slashes[SLASH_COUNT] = {
         CreateAirSlash(CreateSlash1()), CreateAirSlash(CreateSlash2()), CreateAirSlash(CreateSlash3()),
     };
-    if (index < 0) index = 0;
-    if (index >= SLASH_COUNT) index = SLASH_COUNT - 1;
-    return slashes[index];
+    return slashes[ClampSlashIndex(index)];
 }
 
 const AttackData& PlayerAttacks::GetAirSlam() {
@@ -318,7 +321,7 @@ AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerData
     attack.hitStop = base.hitStop + playerData.counterHitStopAdd;
     attack.shake = base.shake + playerData.counterShakeAdd;
     attack.zoomPunch = base.zoomPunch + playerData.counterZoomAdd;
-    attack.arcColor = GetCounterArcColor();
+    attack.arcColor = EffectManager::ToColor(JUST_DODGE_COLOR);
     return attack;
 }
 
@@ -328,6 +331,6 @@ AttackData PlayerAttacks::CreateCounterCombo(const AttackData& base, const Playe
     // のけぞりと浮かせはそのまま残し、締めまでつなげられるようにする 弧の色で反撃の続きだと分かるように
     // 重くした分で許容値に届けば、のけぞりの技でも吹き飛ぶ (Enemy::TakeHit)
     attack.damage = static_cast<int>(base.damage * playerData.counterDamageRate);
-    attack.arcColor = GetCounterArcColor();
+    attack.arcColor = EffectManager::ToColor(JUST_DODGE_COLOR);
     return attack;
 }

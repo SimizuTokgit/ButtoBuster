@@ -37,7 +37,7 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
     case Phase::Windup: {
         player.SetVerticalVelocity(0.0f);
 
-        bool isPoseReached = player.GetAnimationTime() >= POSE_TIME || player.IsAnimationFinished();
+        bool isPoseReached = player.GetAnimationTime() >= player.data.chargePoseTime || player.IsAnimationFinished();
         if (isPoseReached) StartDive(player);
         break;
     }
@@ -53,9 +53,9 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
         break;
 
     case Phase::Land: {
-        player.SetTrailEmitting(player.GetAnimationTime() <= SWING_END_TIME);
+        player.SetTrailEmitting(player.GetAnimationTime() <= player.data.chargeSwingEndTime);
 
-        if (input.technique != Technique::None) _queued = input.technique;
+        _queued.Remember(input);
         if (_timer < _recoveryTime) break;
 
         // 地面に着かないまま叩きつけたときは、そのまま着地まで落ちる
@@ -64,9 +64,7 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
             return;
         }
 
-        InputInfo buffered = input;
-        if (_queued != Technique::None) buffered.technique = _queued;
-        if (PlayerActions::TryStart(player, this, buffered)) return;
+        if (_queued.TryStart(player, this, input)) return;
 
         if (player.IsAnimationFinished() || PlayerActions::HasMoveInput(input)) {
             player.GetStates().Transition(this, make_unique<PlayerIdleState>());
@@ -97,7 +95,7 @@ void PlayerAirSlamState::StartDive(Player& player) {
 
     // 振りかぶった姿勢のまま落ちる 刃の軌跡で、落ちていく線を見せる
     player.SetAnimationSpeed(0.0f);
-    player.SetAnimationTime(POSE_TIME);
+    player.SetAnimationTime(player.data.chargePoseTime);
     player.SetVerticalVelocity(-player.data.airSlamDiveSpeed);
     player.SetTrailEmitting(true);
 }
@@ -127,8 +125,9 @@ void PlayerAirSlamState::Land(Player& player) {
     int hits = CombatSystem::ApplyMelee(player, _data, _caught, chain);
     if (hits > 0) player.AddCombo(hits);
 
+    // 地面を叩く音と、締めの斬りと同じ声
     SoundManager::Instance().PlaySE("Golem/attack_stomp");
-    SoundManager::Instance().PlaySE("Player/Vc_Attack3", 0.8f);
+    SoundManager::Instance().PlaySE(PlayerAttacks::SLASH_VOICES[PlayerAttacks::SLASH_COUNT - 1], PlayerData::VOICE_VOLUME);
 
     auto* effects = EffectManager::Get();
     if (!effects) return;
@@ -136,11 +135,10 @@ void PlayerAirSlamState::Land(Player& player) {
     // 外しても地面は揺らす 叩きつけた重さが伝わるように
     VECTOR position = player.GetPosition();
     effects->PlayShockwave(position, _data.shockwaveRadius, _data.arcColor);
-    effects->PlayDust(position, 16);
-    effects->Shake(_data.shake, 0.3f);
+    effects->PlayDust(position, player.data.airSlamDustCount);
+    effects->Shake(_data.shake, LAND_SHAKE_TIME);
     if (hits <= 0) return;
 
     effects->HitStop(_data.hitStop);
-    effects->ZoomPunch(_data.zoomPunch, 0.35f);
-    effects->FlashScreen(0xFFFFFF, _data.zoomPunch * 0.04f, 0.12f);
+    PlayerActions::PlayZoomFlash(_data.zoomPunch);
 }

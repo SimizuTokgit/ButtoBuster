@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "ICharacterState.h"
+#include "PlayerActions.h"
 #include "DxLib.h"
 
 class Player;
@@ -17,7 +18,7 @@ private:
     float _timer = 0.0f;
 
     // 寄っている間に押された技 着いたら出す
-    Technique _queued = Technique::None;
+    PlayerActions::QueuedTechnique _queued;
 
 public:
     PlayerRushState(VECTOR targetPosition, float targetRadius)

@@ -15,7 +15,7 @@ void PlayerGuardState::Enter(Player& player) {
 
 void PlayerGuardState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     // 押された分だけ滑って止まる
-    player.DampHorizontal(10.0f, deltaTime);
+    player.DampHorizontal(player.data.guardDamp, deltaTime);
 
     // 構えたまま向きだけは変えられる 回り込んでくる敵に向き直るため
     float turnSpeed = player.data.turnSpeed * player.data.holdTurnRate;
@@ -26,14 +26,10 @@ void PlayerGuardState::Execute(Player& player, const InputInfo& input, float del
         _phase = Phase::Impact;
     }
 
-    // 構えたまま押した攻撃とジャンプは、同時押しと同じ技にする
-    // ガードを先に押してから少し遅れて押しても、組み合わせの技が出るように
+    // 構えたまま押した技を出す ガードを握ったまま押した攻撃とジャンプは、PlayerController が強攻撃と回避にしてある
+    // 握っていることは渡さない 出せない技だったときに、ガードへ入り直さないように
     InputInfo fromGuard = input;
     fromGuard.isGuardHeld = false;
-    if (input.isGuardHeld) {
-        if (fromGuard.technique == Technique::Slash) fromGuard.technique = Technique::StrongSlash;
-        if (fromGuard.technique == Technique::Jump) fromGuard.technique = Technique::Dodge;
-    }
     if (fromGuard.technique != Technique::None
         && PlayerActions::TryStart(player, this, fromGuard)) {
         return;

@@ -42,6 +42,9 @@ private:
     static constexpr float KEY_YAW_SPEED = 150.0f;
     static constexpr float MOUSE_SENSITIVITY = 0.15f;
 
+    // 1 フレームにこれより大きく回したら、手で視点を回したとみなす 度
+    static constexpr float VIEW_INPUT_MIN_DEGREE = 0.01f;
+
     Player* _player = nullptr;
     CameraFollow* _camera = nullptr;
 

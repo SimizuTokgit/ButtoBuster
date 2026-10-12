@@ -30,14 +30,14 @@ void PlayerRushState::Enter(Player& player) {
     player.FaceImmediately(VScale(outward, -1.0f));
     player.PlayAnimation("Run", RUN_ANIMATION_SPEED, true);
 
-    // 踏み切った土煙
+    // 踏み切った土煙 回避と同じ
     auto* effects = EffectManager::Get();
-    if (effects && player.IsGrounded()) effects->PlayDust(player.GetPosition(), 6);
+    if (effects && player.IsGrounded()) effects->PlayDust(player.GetPosition(), player.data.dodgeDustCount);
 }
 
 void PlayerRushState::Execute(Player& player, const InputInfo& input, float deltaTime) {
     _timer += deltaTime;
-    if (input.technique != Technique::None) _queued = input.technique;
+    _queued.Remember(input);
 
     VECTOR toDestination = VSub(_destination, player.GetPosition());
     toDestination.y = 0.0f;
@@ -58,15 +58,13 @@ void PlayerRushState::Execute(Player& player, const InputInfo& input, float delt
 
     // 寄っている間に押してあった技を出す 宙で着いたら空中の技にする
     // 押していなければ、地上なら構えて待ち、宙なら落ちる
-    InputInfo queuedInput = input;
-    queuedInput.technique = _queued;
+    if (_queued.TryStart(player, this, input)) return;
+
     auto& states = player.GetStates();
     if (player.IsGrounded()) {
-        if (PlayerActions::TryStart(player, this, queuedInput)) return;
         states.Transition(this, make_unique<PlayerIdleState>());
         return;
     }
-    if (PlayerActions::TryStartAir(player, this, queuedInput)) return;
     states.Transition(this, make_unique<PlayerJumpState>(false));
 }
 
