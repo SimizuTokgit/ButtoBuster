@@ -28,7 +28,11 @@ namespace PlayerAttacks {
     const AttackData& GetSpecial();
 
     // PlayerData の倍率 (強化で上がる分) を掛けた技にする 技を振り始めるときに通す
-    AttackData ApplyRates(const AttackData& base, const PlayerData& playerData);
+    // staleCount は直近に同じ技を振った回数 (Player::UseMove) その分だけ威力を下げ、あと隙を伸ばす (OP 相殺)
+    AttackData ApplyRates(const AttackData& base, const PlayerData& playerData, int staleCount = 0);
+
+    // OP 相殺で、あと隙を元の何倍にするか あと隙を AttackData の外に持つ技 (叩きつけ) が使う
+    float GetStaleRecoveryRate(int staleCount, const PlayerData& playerData);
 
     // ジャスト回避のあとの反撃の締め 元の技を、必ず吹き飛ばす重い一撃にする どれだけ重くするかは PlayerData
     AttackData CreateCounter(const AttackData& base, const PlayerData& playerData);

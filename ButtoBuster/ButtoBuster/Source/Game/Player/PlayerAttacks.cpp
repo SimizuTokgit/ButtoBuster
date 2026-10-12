@@ -266,11 +266,18 @@ const AttackData& PlayerAttacks::GetSpecial() {
     return special;
 }
 
-AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerData& playerData) {
+AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerData& playerData, int staleCount) {
+    float stalePower = 1.0f - playerData.stalePowerDownPerUse * staleCount;
+
     AttackData attack = base;
-    attack.damage = static_cast<int>(base.damage * playerData.damageRate + 0.5f);
-    attack.knockback = base.knockback * playerData.knockbackRate;
+    attack.damage = static_cast<int>(base.damage * playerData.damageRate * stalePower + 0.5f);
+    attack.knockback = base.knockback * playerData.knockbackRate * stalePower;
+    attack.recovery = base.recovery * GetStaleRecoveryRate(staleCount, playerData);
     return attack;
+}
+
+float PlayerAttacks::GetStaleRecoveryRate(int staleCount, const PlayerData& playerData) {
+    return 1.0f + playerData.staleRecoveryUpPerUse * staleCount;
 }
 
 AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerData& playerData) {

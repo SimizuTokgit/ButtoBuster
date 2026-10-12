@@ -28,6 +28,9 @@ private:
     // 強化の倍率を掛けたり、ジャスト回避のあとなら反撃に書き換えたりするので、技の数値は写しを持つ
     AttackData _data;
 
+    // 着地してから動けるまで 秒 OP 相殺で伸びた分も入れてある
+    float _recoveryTime = 0.0f;
+
     Phase _phase = Phase::Windup;
     float _timer = 0.0f;
 

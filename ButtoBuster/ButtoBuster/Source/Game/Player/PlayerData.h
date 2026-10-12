@@ -122,6 +122,13 @@ struct PlayerData {
     float damageRate = 1.0f;
     float knockbackRate = 1.0f;
 
+    // OP 相殺 直近に振った技 (Player::RECENT_MOVE_COUNT 回分) の中に同じ技が 1 回あるごとに、
+    // ダメージと吹っ飛ばしをこの割合ずつ下げ、あと隙をこの割合ずつ伸ばす
+    // 段や溜めの段階が違えば別の技 必殺技は数えない 違う技を混ぜると、古い分から押し出されて戻る
+    // 9 回とも同じ技なら、威力は 0.55 倍、あと隙は 1.9 倍
+    float stalePowerDownPerUse = 0.05f;
+    float staleRecoveryUpPerUse = 0.1f;
+
     // 振り始めに近くの敵へ向きを吸い付ける範囲と、正面から左右に何度までの敵を見るか (0.5 で 60 度)
     float aimRadius = 420.0f;
     float aimDot = 0.5f;

@@ -49,6 +49,11 @@ private:
     // 着地までに、あと何回空中で浮き直せるか
     int _airHangLeft = 0;
 
+    // OP 相殺 直近に振った技の名前 (状態の GetName) 埋まったら古いものから上書きする
+    static constexpr int RECENT_MOVE_COUNT = 9;
+    const char* _recentMoves[RECENT_MOVE_COUNT] = {};
+    int _recentMoveNext = 0;
+
     // 回避の残り 1 で 1 回分 端数は戻っている途中の分
     float _dodgeStock = 0.0f;
 
@@ -134,6 +139,10 @@ public:
 
     // 空中で浮き直す 着地までの回数が残っていれば 1 回使って true
     bool TryUseAirHang();
+
+    // OP 相殺 技を振り始めるときに呼ぶ 直近に同じ技を振った回数を返し、この技を覚える
+    // 当たったかどうかは問わない 回数は PlayerAttacks::ApplyRates に渡す
+    int UseMove(const char* name);
 
     void SetGuarding(bool isGuarding) { _isGuarding = isGuarding; }
     bool IsGuarding() const override { return _isGuarding; }

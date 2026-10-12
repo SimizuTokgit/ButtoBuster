@@ -13,6 +13,7 @@
 #include "SkinnedMeshRenderer.h"
 #include "GameObject.h"
 #include "Transform.h"
+#include <cstring>
 #include <memory>
 
 namespace {
@@ -182,6 +183,17 @@ bool Player::TryUseAirHang() {
 
     _airHangLeft--;
     return true;
+}
+
+int Player::UseMove(const char* name) {
+    int count = 0;
+    for (const char* recent : _recentMoves) {
+        if (recent && strcmp(recent, name) == 0) count++;
+    }
+
+    _recentMoves[_recentMoveNext] = name;
+    _recentMoveNext = (_recentMoveNext + 1) % RECENT_MOVE_COUNT;
+    return count;
 }
 
 void Player::UseDodge() {

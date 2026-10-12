@@ -14,8 +14,11 @@
 using std::make_unique;
 
 void PlayerAirSlamState::Enter(Player& player) {
-    // 強化で上がった倍率を掛ける ジャスト回避のあとなら、さらにこの叩きつけが反撃になる
-    _data = PlayerAttacks::ApplyRates(PlayerAttacks::GetAirSlam(), player.data);
+    // 強化で上がった倍率と OP 相殺を掛ける ジャスト回避のあとなら、さらにこの叩きつけが反撃になる
+    // 着地の隙は AttackData の外 (PlayerData) にあるので、OP 相殺で伸ばす分はここで掛ける
+    int staleCount = player.UseMove(GetName());
+    _data = PlayerAttacks::ApplyRates(PlayerAttacks::GetAirSlam(), player.data, staleCount);
+    _recoveryTime = player.data.airSlamRecoveryTime * PlayerAttacks::GetStaleRecoveryRate(staleCount, player.data);
     if (player.ConsumeCounter()) _data = PlayerAttacks::CreateCounter(_data, player.data);
 
     // 宙で止まって振りかぶる 跳んだ勢いも横の勢いも消して、真下へ落ちられるようにする
@@ -48,7 +51,7 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
         player.SetTrailEmitting(player.GetAnimationTime() <= SWING_END_TIME);
 
         if (input.technique != Technique::None) _queued = input.technique;
-        if (_timer < player.data.airSlamRecoveryTime) break;
+        if (_timer < _recoveryTime) break;
 
         // 地面に着かないまま叩きつけたときは、そのまま着地まで落ちる
         if (!player.IsGrounded()) {
@@ -72,7 +75,7 @@ float PlayerAirSlamState::GetOpeningTime(const Player& player) const {
     // 着地してから動けるまでの残り 宙にいる間は地上の敵の振りが届かないので数えない
     if (_phase != Phase::Land) return 0.0f;
 
-    float left = player.data.airSlamRecoveryTime - _timer;
+    float left = _recoveryTime - _timer;
     return (left > 0.0f) ? left : 0.0f;
 }
 
