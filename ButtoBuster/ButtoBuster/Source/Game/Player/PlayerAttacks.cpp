@@ -191,9 +191,11 @@ namespace {
         return attack;
     }
 
-    // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつけ、着地した場所から衝撃波で周りの敵を吹き飛ばす
-    // 振りかぶりはヘビーアタックと同じ大振りを使う
+    // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつけ、着地したら前の敵を吹き飛ばす
+    // 振りかぶりはヘビーアタックと同じ大振りを使う 当たる範囲 (届く距離と角度) は溜め斬りの 3 段目と同じ
     AttackData CreateAirSlam() {
+        const AttackData charged = CreateCharged(PlayerAttacks::CHARGE_LEVEL_MAX);
+
         AttackData attack;
         attack.animationName = "Attack3";
         attack.damage = 30;
@@ -202,8 +204,24 @@ namespace {
         attack.hitStop = 0.12f;
         attack.shake = 14.0f;
         attack.zoomPunch = 6.0f;
+        attack.reach = charged.reach;
+        attack.arcDegree = charged.arcDegree;
         attack.arcColor = GetColorU8(255, 190, 110, 255);
-        attack.shockwaveRadius = PlayerAttacks::AIR_SLAM_RADIUS;
+
+        // 着地した場所に広げる衝撃波 見た目だけで、当たりは上の扇形
+        attack.shockwaveRadius = 380.0f;
+        return attack;
+    }
+
+    // 叩きつけで落ちる途中に、宙の敵 (空中の斬りで浮かせた敵) を捕まえる
+    // のけぞらせて、自分と同じ速さで真下へ落とす (PlayerAirSlamState) 敵は地面で跳ね上がる (EnemyDamageState)
+    // 届く高さは、足元より下と、自分の体の高さまで
+    AttackData CreateAirSlamCatch() {
+        AttackData attack;
+        attack.damage = 20;
+        attack.knockback = 0.0f;
+        attack.heightMin = -1000.0f;
+        attack.isAirOnly = true;
         return attack;
     }
 
@@ -259,6 +277,11 @@ const AttackData& PlayerAttacks::GetAirSlash(int index) {
 const AttackData& PlayerAttacks::GetAirSlam() {
     static const AttackData slam = CreateAirSlam();
     return slam;
+}
+
+const AttackData& PlayerAttacks::GetAirSlamCatch() {
+    static const AttackData slamCatch = CreateAirSlamCatch();
+    return slamCatch;
 }
 
 const AttackData& PlayerAttacks::GetSpecial() {

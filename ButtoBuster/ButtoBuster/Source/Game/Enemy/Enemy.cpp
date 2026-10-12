@@ -95,8 +95,10 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     }
 
     // 吹き飛ばすとき以外は、怯み値が上限に届くまでのけぞらない
+    // 浮かせる技と叩き落とす技 (lift が 0 でない) だけは、上限を待たずにのけぞらせる 空中で続けて斬れるように
     bool isBlowing = isBlowHit && isBlown;
-    if (!isBlowing && !AddFlinch(static_cast<float>(info.damage))) return HitResult::Hit;
+    bool isLiftHit = info.lift != 0.0f;
+    if (!isBlowing && !isLiftHit && !AddFlinch(static_cast<float>(info.damage))) return HitResult::Hit;
 
     auto* current = _states.GetCurrent();
     if (isBlowing) {
@@ -109,10 +111,10 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     else {
         SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
 
-        // 空中の斬りは相手を浮かせ、続けて斬れる高さに留める
-        // 浮いている敵は羽ばたきで高さを戻すので、地上の敵だけが浮く
-        if (info.lift > 0.0f) SetVerticalVelocity(info.lift);
-        _states.Transition(current, std::make_unique<EnemyDamageState>(knockback));
+        // 空中の斬りは相手を浮かせ、続けて斬れる高さに留める 叩きつけは真下へ落とし、地面で跳ね上げる
+        // 浮いている敵は羽ばたきで高さを戻すので、地上の敵だけが浮く (落ちる)
+        if (isLiftHit) SetVerticalVelocity(info.lift);
+        _states.Transition(current, std::make_unique<EnemyDamageState>(knockback, info.lift < 0.0f));
     }
     return HitResult::Hit;
 }

@@ -20,9 +20,13 @@ namespace PlayerAttacks {
     // 空中の斬り 0〜2 段目 地上と同じ振りで、1 2 段目は相手を浮かせ、3 段目で吹き飛ばす
     const AttackData& GetAirSlash(int index);
 
-    // 空中から真下への叩きつけ 着地した場所から、この半径の敵を吹き飛ばす
-    constexpr float AIR_SLAM_RADIUS = 380.0f;
+    // 空中から真下への叩きつけ
+    // 落ちる途中で、この半径にいる宙の敵を捕まえて地面へ叩き落とす (GetAirSlamCatch) 敵は地面で跳ね上がる
+    // 着地したら、前の扇形の敵を吹き飛ばす (GetAirSlam)
+    // 半径は空中の斬りが届く距離と同じくらいにして、浮かせた敵を取りこぼさないようにする
+    constexpr float AIR_SLAM_CATCH_RADIUS = 220.0f;
     const AttackData& GetAirSlam();
+    const AttackData& GetAirSlamCatch();
 
     // 必殺技の雷 1 発分 全部の敵に、プレイヤーから外へ向けて当てる
     const AttackData& GetSpecial();

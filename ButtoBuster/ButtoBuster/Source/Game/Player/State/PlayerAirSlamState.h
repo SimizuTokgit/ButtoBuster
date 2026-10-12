@@ -1,11 +1,14 @@
 ﻿#pragma once
 #include "ICharacterState.h"
 #include "AttackData.h"
+#include <vector>
 
 class Player;
+class Character;
 
 // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつける
-// 宙で一瞬振りかぶってから一気に落ち、着地した場所から衝撃波を広げて周りの敵を吹き飛ばす
+// 宙で一瞬振りかぶってから一気に落ちる 落ちる途中で宙の敵を捕まえ、一緒に地面へ叩き落とす (敵は地面で跳ね上がる)
+// 着地したら、前の扇形 (溜め斬りと同じ範囲) の敵を吹き飛ばす
 // 吹き飛ばした敵は連鎖の砲弾になり、群れの外へも広がっていく
 class PlayerAirSlamState : public ICharacterState<Player> {
 private:
@@ -31,6 +34,12 @@ private:
     // 着地してから動けるまで 秒 OP 相殺で伸びた分も入れてある
     float _recoveryTime = 0.0f;
 
+    // OP 相殺で数えた回数 捕まえる当たりにも、同じだけ掛ける
+    int _staleCount = 0;
+
+    // 落ちる途中で捕まえた敵 同じ敵を 2 回捕まえず、着地の吹き飛ばしでも跳ね上がりを邪魔しないように覚えておく
+    std::vector<Character*> _caught;
+
     Phase _phase = Phase::Windup;
     float _timer = 0.0f;
 
@@ -46,5 +55,6 @@ public:
 
 private:
     void StartDive(Player& player);
+    void Catch(Player& player);
     void Land(Player& player);
 };

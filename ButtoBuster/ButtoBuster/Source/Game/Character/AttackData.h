@@ -27,8 +27,8 @@ struct AttackData {
     HitReaction reaction = HitReaction::Flinch;
     float knockback = 200.0f;
 
-    // 0 より大きければ、のけぞらせた相手をこの速さで真上へ浮かせる
-    // 空中の斬りで相手を宙に留め、続けて斬れるようにする
+    // 0 より大きければ、のけぞらせた相手をこの速さで真上へ浮かせる 負なら真下へ落とす
+    // 空中の斬りで相手を宙に留め、続けて斬れるようにする 叩きつけは捕まえた相手を一緒に落とす
     float lift = 0.0f;
 
     // 自分の正面の扇形で当てる
@@ -39,6 +39,9 @@ struct AttackData {
     // 地上の技は空の Bee に届かないようにしてある
     float heightMin = -60.0f;
     float heightMax = 200.0f;
+
+    // 宙にいる相手にだけ当てる 叩きつけで、浮かせた相手を捕まえるのに使う
+    bool isAirOnly = false;
 
     // 振りながら前に出る速さ
     float lunge = 0.0f;

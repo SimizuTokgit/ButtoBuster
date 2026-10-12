@@ -13,8 +13,10 @@ namespace {
         return std::find(hitList.begin(), hitList.end(), target) == hitList.end();
     }
 
-    // 相手の体の上下の幅が、攻撃の届く高さと重なっているか
+    // 相手の体の上下の幅が、攻撃の届く高さと重なっているか 宙の相手にだけ当てる技は、地面にいる相手には届かない
     bool IsInHeightRange(const Character& attacker, const Character& target, const AttackData& attack) {
+        if (attack.isAirOnly && target.IsGrounded()) return false;
+
         float baseY = attacker.GetPosition().y;
         float bottom = target.GetCenter().y - target.bodyHeight * 0.5f;
         float top = bottom + target.bodyHeight;
