@@ -80,6 +80,6 @@ namespace ArenaWall {
     // 壁が割れたことを知らせる先 演出を出す Observer はここに登録する
     Subject<WallBreakEvent>& GetBreakEvents();
 
-    // 位置が壁の外なら、壁から margin だけ内側へ寄せて返す 敵が向かう先を決めるときに使う
+    // 位置が壁の外なら、壁から margin だけ内側へ寄せて返す 敵が向かう先や、敵を出す場所を決めるときに使う
     VECTOR ClampInside(VECTOR position, float margin);
 }

@@ -6,6 +6,10 @@
 #include "Transform.h"
 
 namespace {
+    // 跳ね返るときの音の大きさ 0〜1 弱くぶつかったときから、FULL_IMPACT_SPEED でぶつかったときまで
+    constexpr float HIT_SOUND_VOLUME_MIN = 0.5f;
+    constexpr float HIT_SOUND_VOLUME_MAX = 1.0f;
+
     // ぶつかった強さ 0〜1 FULL_IMPACT_SPEED で 1
     float ImpactPower(const ArenaWall::Hit& hit) {
         float power = hit.speed / ArenaWall::FULL_IMPACT_SPEED;
@@ -17,8 +21,7 @@ bool ArenaWall::KeepInside(Character& character, Hit& outHit) {
     VECTOR center = StageBuilder::GetArenaCenter();
     VECTOR position = character.transform->localPosition;
 
-    VECTOR offset = VSub(position, center);
-    offset.y = 0.0f;
+    VECTOR offset = StageBuilder::GetFlatOffsetFromCenter(position);
     float distance = VSize(offset);
 
     // 体の太さの分だけ手前で止める 体が光の幕にめり込んで見えないように
@@ -63,11 +66,9 @@ ArenaWall::Reaction ArenaWall::React(Character& character, const Hit& hit) {
         character.Defeat(VScale(hit.normal, -flySpeed));
 
         WallBreakEvent event;
-        event.character = &character;
         event.isPlayer = character.team == Team::Player;
         event.position = impact;
         event.normal = hit.normal;
-        event.speed = hit.speed;
         GetBreakEvents().Notify(event);
         return Reaction::Break;
     }
@@ -75,7 +76,8 @@ ArenaWall::Reaction ArenaWall::React(Character& character, const Hit& hit) {
     // 跳ね返す速さは、張り付いたあとに Bounce で入れる ここではぶつかった手応えだけ出す
     float power = ImpactPower(hit);
     if (auto* effects = EffectManager::Get()) effects->PlayWallHit(impact, hit.normal, power);
-    SoundManager::Instance().PlaySE("Golem/downing", 0.5f + 0.5f * power);
+    SoundManager::Instance().PlaySE("Golem/downing",
+        HIT_SOUND_VOLUME_MIN + (HIT_SOUND_VOLUME_MAX - HIT_SOUND_VOLUME_MIN) * power);
     return Reaction::Bounce;
 }
 
@@ -97,8 +99,7 @@ Subject<WallBreakEvent>& ArenaWall::GetBreakEvents() {
 
 VECTOR ArenaWall::ClampInside(VECTOR position, float margin) {
     VECTOR center = StageBuilder::GetArenaCenter();
-    VECTOR offset = VSub(position, center);
-    offset.y = 0.0f;
+    VECTOR offset = StageBuilder::GetFlatOffsetFromCenter(position);
     float distance = VSize(offset);
 
     float limit = StageBuilder::ARENA_RADIUS - margin;

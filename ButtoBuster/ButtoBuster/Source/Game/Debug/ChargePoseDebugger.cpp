@@ -9,9 +9,17 @@
 #include <cstdio>
 
 namespace {
-    // コンボの表示と重ならない、画面の左の中ほどに出す
-    constexpr int LEFT = 40;
-    constexpr int PADDING = 10;
+    // 表示の見た目 コンボの表示と重ならない、画面の左の中ほどに出す
+    struct PanelLook {
+        int left;
+        int padding;
+        int lineGap;                // 文字の高さに足す行の間
+        int backAlpha;              // 後ろを暗くする濃さ 0〜255
+        unsigned int backColor;
+        unsigned int textColor;
+        unsigned int valueColor;    // 今の値 (アニメとフレーム) の行
+    };
+    constexpr PanelLook PANEL = { 40, 10, 6, 170, 0x000000, 0xE8E8E8, 0xFFD060 };
 
     // ほかの表示より手前に出す
     constexpr int SORTING_ORDER = 100;
@@ -42,20 +50,13 @@ void ChargePoseDebugger::Render() {
     int screenHeight = 0;
     GetDrawScreenSize(&screenWidth, &screenHeight);
 
-    // 何番目のアニメかも出す 全部見終わったかが分かるように
-    int index = 0;
+    // 何番目のアニメかも出す 全部見終わったかが分かるように 1 から数え、無ければ 0
     int count = 0;
-    if (Animator* animator = _player->GetAnimator()) {
-        const auto& names = animator->GetClipNames();
-        count = static_cast<int>(names.size());
-        for (int i = 0; i < count; ++i) {
-            if (names[i] == _player->data.chargePoseAnimation) index = i + 1;
-        }
-    }
+    if (Animator* animator = _player->GetAnimator()) count = static_cast<int>(animator->GetClipNames().size());
 
     char animationLine[128];
     snprintf(animationLine, sizeof(animationLine), "アニメ    %s  (%d / %d)",
-        _player->data.chargePoseAnimation.c_str(), index, count);
+        _player->data.chargePoseAnimation.c_str(), FindClipIndex() + 1, count);
 
     char timeLine[128];
     snprintf(timeLine, sizeof(timeLine), "フレーム  %.1f / %.1f", _player->data.chargePoseTime, GetTotalTime());
@@ -71,7 +72,7 @@ void ChargePoseDebugger::Render() {
     };
     constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
 
-    int lineHeight = GameFont::GetHeight(GameFont::Size::Small) + 6;
+    int lineHeight = GameFont::GetHeight(GameFont::Size::Small) + PANEL.lineGap;
     int top = screenHeight / 2 - lineHeight * LINE_COUNT / 2;
 
     // 背景の幅は一番長い行に合わせる
@@ -82,13 +83,14 @@ void ChargePoseDebugger::Render() {
     }
 
     // 3D の上でも読めるよう、後ろを暗くする
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-    DrawBox(LEFT - PADDING, top - PADDING, LEFT + width + PADDING, top + lineHeight * LINE_COUNT + PADDING, 0x000000, TRUE);
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, PANEL.backAlpha);
+    DrawBox(PANEL.left - PANEL.padding, top - PANEL.padding,
+        PANEL.left + width + PANEL.padding, top + lineHeight * LINE_COUNT + PANEL.padding, PANEL.backColor, TRUE);
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 
     for (int i = 0; i < LINE_COUNT; ++i) {
-        unsigned int color = (i == 1 || i == 2) ? 0xFFD060 : 0xE8E8E8;
-        GameFont::Draw(LEFT, top + lineHeight * i, lines[i], color, GameFont::Size::Small);
+        bool isValue = lines[i] == animationLine || lines[i] == timeLine;
+        GameFont::Draw(PANEL.left, top + lineHeight * i, lines[i], isValue ? PANEL.valueColor : PANEL.textColor, GameFont::Size::Small);
     }
 }
 
@@ -100,19 +102,14 @@ void ChargePoseDebugger::ChangeAnimation(int direction) {
     int count = static_cast<int>(names.size());
     if (count == 0) return;
 
-    int index = 0;
-    for (int i = 0; i < count; ++i) {
-        if (names[i] == _player->data.chargePoseAnimation) {
-            index = i;
-            break;
-        }
-    }
+    // 今のアニメが一覧に無ければ、先頭から数える
+    int index = FindClipIndex();
+    if (index < 0) index = 0;
     index = (index + direction + count) % count;
     _player->data.chargePoseAnimation = names[index];
 
-    // 長さの違うアニメに替えたとき、止める時間がアニメの終わりを越えないようにする
-    float totalTime = GetTotalTime();
-    if (totalTime > 0.0f && _player->data.chargePoseTime > totalTime) _player->data.chargePoseTime = totalTime;
+    // 長さの違うアニメに替えたときも、止める時間がアニメの終わりを越えないように
+    _player->data.chargePoseTime = ClampToClip(_player->data.chargePoseTime);
 
     _isActive = true;
 }
@@ -121,10 +118,7 @@ void ChargePoseDebugger::StepTime(float amount) {
     float time = _player->data.chargePoseTime + amount;
     if (time < 0.0f) time = 0.0f;
 
-    float totalTime = GetTotalTime();
-    if (totalTime > 0.0f && time > totalTime) time = totalTime;
-
-    _player->data.chargePoseTime = time;
+    _player->data.chargePoseTime = ClampToClip(time);
     _isActive = true;
 }
 
@@ -161,4 +155,20 @@ float ChargePoseDebugger::GetTotalTime() const {
 
     const AnimationClip* clip = animator->GetClip(_player->data.chargePoseAnimation);
     return clip ? clip->TotalTime : 0.0f;
+}
+
+int ChargePoseDebugger::FindClipIndex() const {
+    Animator* animator = _player->GetAnimator();
+    if (!animator) return -1;
+
+    const auto& names = animator->GetClipNames();
+    for (int i = 0; i < static_cast<int>(names.size()); ++i) {
+        if (names[i] == _player->data.chargePoseAnimation) return i;
+    }
+    return -1;
+}
+
+float ChargePoseDebugger::ClampToClip(float time) const {
+    float totalTime = GetTotalTime();
+    return (totalTime > 0.0f && time > totalTime) ? totalTime : time;
 }

@@ -300,6 +300,9 @@
     <ClCompile Include="Source\Game\Projectile\NeedlePool.cpp">
       <Filter>Source\Game\Projectile</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Scene\ArenaSceneBuilder.cpp">
+      <Filter>Source\Game\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Scene\GameScene.cpp">
       <Filter>Source\Game\Scene</Filter>
     </ClCompile>
@@ -715,6 +718,9 @@
     </ClInclude>
     <ClInclude Include="Source\Game\Projectile\NeedlePool.h">
       <Filter>Source\Game\Projectile</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\Scene\ArenaSceneBuilder.h">
+      <Filter>Source\Game\Scene</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Scene\GameScene.h">
       <Filter>Source\Game\Scene</Filter>

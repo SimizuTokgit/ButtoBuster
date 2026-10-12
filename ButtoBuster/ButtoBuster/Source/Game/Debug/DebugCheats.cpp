@@ -16,13 +16,15 @@ namespace {
     // スローの速さ 動きを1コマずつ確かめられるくらい
     constexpr float SLOW_TIME_SCALE = 0.25f;
 
+    // F6 で一度に進めるフェーズの数
+    constexpr int SKIP_MANY_PHASES = 5;
+
     // F12 で一度に出す敵の数 たくさん出して、状態のメモリと作り直しの回数を確かめる
     constexpr int SPAWN_MANY_COUNT = 10;
 }
 
 void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
     _player = player;
-    _director = director;
     _hud = hud;
 
     auto& menu = DebugMenu::Instance();
@@ -39,8 +41,8 @@ void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
     menu.AddCommand(KEY_INPUT_F5, "次のフェーズへ", [director]() {
         director->SkipPhases(1);
     });
-    menu.AddCommand(KEY_INPUT_F6, "5フェーズ進める", [director]() {
-        director->SkipPhases(5);
+    menu.AddCommand(KEY_INPUT_F6, std::to_string(SKIP_MANY_PHASES) + "フェーズ進める", [director]() {
+        director->SkipPhases(SKIP_MANY_PHASES);
     });
     menu.AddCommand(KEY_INPUT_F7, "グレゴブリン を出す", [director]() {
         director->SpawnImmediately(EnemyKind::Goblin);
@@ -51,7 +53,7 @@ void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud) {
     menu.AddCommand(KEY_INPUT_F9, "ロックマキナ を出す", [director]() {
         director->SpawnImmediately(EnemyKind::Golem);
     });
-    menu.AddCommand(KEY_INPUT_F12, "グレゴブリン を 10 体出す", [director]() {
+    menu.AddCommand(KEY_INPUT_F12, "グレゴブリン を " + std::to_string(SPAWN_MANY_COUNT) + " 体出す", [director]() {
         for (int i = 0; i < SPAWN_MANY_COUNT; ++i) director->SpawnImmediately(EnemyKind::Goblin);
     });
 

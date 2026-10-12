@@ -340,9 +340,8 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
         break;
 
     case TutorialGoal::Dodge: {
-        // 回避すると残りが 1 回分減る 戻る途中の少しずつの増え方とは見分けられる
         float stock = _player->GetDodgeStock();
-        if (stock < _lastDodgeStock - 0.5f) AddProgress(1);
+        if (stock < _lastDodgeStock - DODGE_STOCK_DROP) AddProgress(1);
         _lastDodgeStock = stock;
         break;
     }
@@ -418,7 +417,7 @@ void TutorialDirector::SpawnPartner() {
 
     // カメラの向いている先、プレイヤーの前に出す 出たところが見えるように
     VECTOR forward = _camera ? _camera->GetGroundForward() : _player->GetForward();
-    float distance = (_partnerKind == TutorialPartner::Golem) ? PARTNER_DISTANCE * 2.0f : PARTNER_DISTANCE;
+    float distance = (_partnerKind == TutorialPartner::Golem) ? GOLEM_PARTNER_DISTANCE : PARTNER_DISTANCE;
     VECTOR center = VAdd(_player->GetPosition(), VScale(forward, distance));
 
     if (_partnerKind != TutorialPartner::Crowd) {
@@ -444,7 +443,7 @@ Enemy* TutorialDirector::SpawnPartnerAt(const EnemyData& data, VECTOR position) 
 
     float groundY = _player->GetPosition().y;
     StageBuilder::FindGroundHeight(position.x, position.z, groundY);
-    position.y = groundY + (data.isFlying ? data.hoverHeight : 40.0f);
+    position.y = groundY + _phases->GetSpawnHeight(data);
 
     Enemy* enemy = _phases->SpawnAt(data, position);
     if (!enemy) return nullptr;

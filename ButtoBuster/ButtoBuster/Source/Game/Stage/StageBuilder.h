@@ -22,4 +22,7 @@ namespace StageBuilder {
     VECTOR SnapToGround(VECTOR position);
 
     VECTOR GetArenaCenter();
+
+    // 戦える範囲の真ん中から position への水平の差 (y は 0) 長さが真ん中からの距離
+    VECTOR GetFlatOffsetFromCenter(VECTOR position);
 }

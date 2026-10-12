@@ -49,6 +49,9 @@ namespace {
     // 判定は毎フレーム全部と比べるので、届かない場所のものまで持つと重くなる
     constexpr float COLLISION_RANGE = StageBuilder::ARENA_RADIUS + 600.0f;
 
+    // 地面を探すときに、この高さから同じだけ下まで線を引く 地形の高さはこの間に収まる
+    constexpr float GROUND_RAY_HEIGHT = 5000.0f;
+
     int g_terrainCollisionModel = -1;
 
     std::string MakeObjectPath(int index, bool isCollision) {
@@ -154,8 +157,8 @@ bool StageBuilder::Build(Camera* camera) {
 bool StageBuilder::FindGroundHeight(float x, float z, float& outY) {
     if (g_terrainCollisionModel == -1) return false;
 
-    VECTOR top = VGet(x, 5000.0f, z);
-    VECTOR bottom = VGet(x, -5000.0f, z);
+    VECTOR top = VGet(x, GROUND_RAY_HEIGHT, z);
+    VECTOR bottom = VGet(x, -GROUND_RAY_HEIGHT, z);
     MV1_COLL_RESULT_POLY hit = MV1CollCheck_Line(g_terrainCollisionModel, -1, top, bottom);
     if (!hit.HitFlag) return false;
 
@@ -170,4 +173,10 @@ VECTOR StageBuilder::SnapToGround(VECTOR position) {
 
 VECTOR StageBuilder::GetArenaCenter() {
     return VGet(0.0f, 0.0f, 0.0f);
+}
+
+VECTOR StageBuilder::GetFlatOffsetFromCenter(VECTOR position) {
+    VECTOR offset = VSub(position, GetArenaCenter());
+    offset.y = 0.0f;
+    return offset;
 }

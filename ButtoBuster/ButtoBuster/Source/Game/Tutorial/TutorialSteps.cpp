@@ -2,8 +2,10 @@
 
 namespace {
     // ----- チュートリアルの段 上から順に出す -----
-    // { 判定, 練習の相手, 回数, 見出し, { 説明 5 行まで } }
+    // { 判定, 練習の相手, 回数, 見出し, { 説明 TutorialStep::MAX_LINES 行まで } }
     // 並べ替えたり文字を書き換えたりするのはここだけでよい 判定の中身は TutorialDirector.cpp
+    // 説明の中の数は手で書いてある 表の回数、全回復の間隔 (Difficulty.cpp の healInterval)、
+    // 勝ちのフェーズ (PhaseData の finalPhase) を変えたら、ここの文字もそろえる
     // 操作の説明は「キーボード / マウス」と「コントローラー」の 2 つだけ書く
     // J K L Q E のような、キーボードだけの別の押し方は書かない (PlayerController ではそのまま使える)
     const TutorialStep STEPS[] = {

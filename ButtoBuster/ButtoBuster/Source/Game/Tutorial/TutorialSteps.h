@@ -42,9 +42,10 @@ struct TutorialStep {
     // 何回やったら次へ進むか 回数を数えない段では使わない
     int count = 1;
 
-    // 大きく出す見出しと、その下の説明 説明は 5 行まで 使わない行は空のまま
+    // 大きく出す見出しと、その下の説明 説明は MAX_LINES 行まで 使わない行は空のまま
+    static constexpr int MAX_LINES = 5;
     const char* title = "";
-    const char* lines[5] = {};
+    const char* lines[MAX_LINES] = {};
 };
 
 namespace TutorialSteps {

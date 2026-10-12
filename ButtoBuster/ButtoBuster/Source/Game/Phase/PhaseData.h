@@ -4,6 +4,7 @@
 // PhaseDirector が data として 1 つ持ち、進め方の処理と画面の表示はここから読む
 //
 // 敵ごとの強さと出てくる時期 (cost unlockPhase maxPerPhase pickWeight) は EnemyData.cpp に置く
+// 同時に攻撃してくる数と全回復の間隔は、難易度ごとに違うので Difficulty.cpp の表に置く
 struct PhaseData {
     // ----- 敵の数と強さの伸び方 -----
 
@@ -12,21 +13,14 @@ struct PhaseData {
     float baseBudget = 3.0f;
     float budgetPerPhase = 1.6f;
 
-    // 同時に場に出す数 = minConcurrent + フェーズ ÷ 2 (maxConcurrent まで)
+    // 同時に場に出す数 = minConcurrent + フェーズ ÷ concurrentStepPhases (maxConcurrent まで)
     // これ以上は処理が重くなり、画面も見えなくなる
     int minConcurrent = 5;
     int maxConcurrent = 10;
+    int concurrentStepPhases = 2;
 
-    // 同時に攻撃してくる数 = 1 + (フェーズ - 1) ÷ tokenStepPhases (maxTokens まで)
-    // ほかの敵は周りを回って順番を待つ
-    // 本番では、この 2 つは選んだ難易度の値で置き換わる (Difficulty.cpp の表) ここの値はノーマルと同じ
-    int tokenStepPhases = 3;
-    int maxTokens = 4;
-
-    // ----- 全回復 -----
-
-    // 何フェーズごとに全回復して休ませるか 本番では選んだ難易度の値で置き換わる (Difficulty.cpp の表)
-    int healInterval = 5;
+    // チュートリアル (練習の段) で同時に攻撃してくる数 本番の数は難易度で決める (Difficulty.cpp の表)
+    int practiceTokens = 1;
 
     // ----- 勝ち -----
 
@@ -71,13 +65,22 @@ struct PhaseData {
     // 範囲の端へ戻したせいで、プレイヤーにこれより近くなったら選び直す
     float spawnMinGap = 500.0f;
 
-    // ----- BGM -----
+    // 範囲の外に出たときに戻す、壁からの距離
+    float spawnWallMargin = 150.0f;
+
+    // どこにも出せなかったときは、真ん中を挟んでプレイヤーの反対側の、真ん中からこの距離に出す
+    float fallbackSpawnDistance = 900.0f;
+
+    // 地上の敵は地面からこれだけ上に出して、落として立たせる 飛ぶ敵は EnemyData の hoverHeight
+    float groundSpawnHeight = 40.0f;
+
+    // ----- 曲と声 -----
 
     // このフェーズから終盤の曲 (HeroArrived!) に替える それまでは BGM_stg0
     int stage2BgmPhase = 5;
 
     // ボスのフェーズ ロックマキナが出る 始まりの声をボスの声にする 曲は終盤の曲のまま
-    int bossBgmPhase = 10;
+    int bossVoicePhase = 10;
 
     // 曲を替えるときに重ねる時間 秒
     float bgmCrossfadeTime = 2.0f;
