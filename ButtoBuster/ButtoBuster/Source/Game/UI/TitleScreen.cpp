@@ -1,5 +1,6 @@
 ﻿#include "TitleScreen.h"
 #include "GameFont.h"
+#include "ControlsList.h"
 #include "ModeSelectScene.h"
 #include "InputSystem.h"
 #include "SceneManager.h"
@@ -52,33 +53,20 @@ void TitleScreen::Render() {
 
     // 最高記録は難易度ごとに分けたので、モード選択のボタンの横に出す
 
-    // 操作の一覧 { 1 列目, 2 列目, 3 列目 } 空の行は 1 行あける
+    // 操作の一覧 (ControlsList.h) 操作 ボタン 補足の 3 列
     // 文字の幅がばらばらのフォントなので、空白ではそろわない 列ごとに x を決めて描く
-    struct ControlRow {
-        const char* columns[3];
-    };
-    const ControlRow controls[] = {
-        { { "移動",              "WASD / 左スティック", "" } },
-        { { "攻撃",              "J,左クリック / X",    "3 段までつながる" } },
-        { { "ガード",            "K / L2",              "押している間 正面を守る" } },
-        { { "ジャンプ",          "SPACE / A",           "" } },
-        { { "",                  "",                    "" } },
-        { { "攻撃 + ジャンプ",   "対空斬り",            "" } },
-        { { "攻撃 + ガード",     "溜め斬り",            "R2  押し続けて溜める" } },
-        { { "ガード + ジャンプ", "回避",                "R1  一瞬だけ無敵" } },
-    };
-
     // 列の左の端 一覧の左の端からの距離
     constexpr int COLUMN_X[] = { 0, 170, 330 };
 
     int lineHeight = GameFont::GetHeight(GameFont::Size::Small) + 8;
     int left = centerX - 300;
-    int top = 340;
-    for (int i = 0; i < static_cast<int>(sizeof(controls) / sizeof(controls[0])); ++i) {
+    int top = 320;
+    for (int i = 0; i < ControlsList::ROW_COUNT; ++i) {
+        const ControlsList::Row& row = ControlsList::ROWS[i];
+        const char* columns[] = { row.name, row.keys, row.note };
         for (int column = 0; column < 3; ++column) {
-            const char* text = controls[i].columns[column];
-            if (text[0] == '\0') continue;
-            GameFont::Draw(left + COLUMN_X[column], top + lineHeight * i, text, 0xE8E8E8, GameFont::Size::Small);
+            if (columns[column][0] == '\0') continue;
+            GameFont::Draw(left + COLUMN_X[column], top + lineHeight * i, columns[column], 0xE8E8E8, GameFont::Size::Small);
         }
     }
 

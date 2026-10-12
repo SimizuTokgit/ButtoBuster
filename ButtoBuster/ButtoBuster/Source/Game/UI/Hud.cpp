@@ -1,5 +1,6 @@
 ﻿#include "Hud.h"
 #include "GameFont.h"
+#include "ControlsList.h"
 #include "Player.h"
 #include "PhaseDirector.h"
 #include "Enemy.h"
@@ -109,6 +110,9 @@ namespace {
 
     // 濃さ 0〜255 少し透かして、後ろの戦いが見えるようにする
     constexpr int CONTROLS_ALPHA = 230;
+
+    // 画像が読めないときの文字の説明で、ボタンの列を出す所 操作の名前の左の端からの距離
+    constexpr int CONTROLS_KEYS_X = 150;
 
     // ----- 吹っ飛ばされそうな危なさ (画面の縁の赤み) -----
     // 自分の吹っ飛ばされ値が許容値のこの割合を越えるごとに、縁の赤みを濃く太く、脈を速くする
@@ -462,21 +466,16 @@ void Hud::DrawControls(int screenWidth, int screenHeight) {
         }
     }
 
-    // 画像が読めないときの文字の説明
-    const char* lines[] = {
-        "移動 WASD / 左スティック    視点 マウス / 右スティック    正面を向く C / L1",
-        "攻撃 左クリック / X    ガード 右クリック / L2    ジャンプ SPACE / A",
-        "溜め斬り 左右クリック / R2    回避 右クリック+SPACE / R1    対空斬り SPACE+左クリック / A+X",
-        "必殺技 F / Y (左上のバースターゲージが満タンのとき)",
-    };
-    constexpr int LINE_COUNT = sizeof(lines) / sizeof(lines[0]);
+    // 画像が読めないときは、タイトルと同じ操作の一覧 (ControlsList.h) を、操作とボタンの 2 列で左下に出す
+    int lineHeight = GameFont::GetHeight(GameFont::Size::Tiny);
+    int top = screenHeight - CONTROLS_BOTTOM_MARGIN - lineHeight * ControlsList::ROW_COUNT;
 
-    int lineHeight = GameFont::GetHeight(GameFont::Size::Small) + 6;
-    int top = screenHeight - 24 - lineHeight * LINE_COUNT;
-
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 170);
-    for (int i = 0; i < LINE_COUNT; ++i) {
-        GameFont::Draw(40, top + lineHeight * i, lines[i], 0xE8E8E8, GameFont::Size::Small);
+    SetDrawBlendMode(DX_BLENDMODE_ALPHA, CONTROLS_ALPHA);
+    for (int i = 0; i < ControlsList::ROW_COUNT; ++i) {
+        const ControlsList::Row& row = ControlsList::ROWS[i];
+        int y = top + lineHeight * i;
+        GameFont::Draw(CONTROLS_LEFT_MARGIN, y, row.name, WHITE, GameFont::Size::Tiny);
+        GameFont::Draw(CONTROLS_LEFT_MARGIN + CONTROLS_KEYS_X, y, row.keys, WHITE, GameFont::Size::Tiny);
     }
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }

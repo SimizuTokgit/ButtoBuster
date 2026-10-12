@@ -761,6 +761,9 @@
     <ClInclude Include="Source\Game\UI\ChainCounter.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\UI\ControlsList.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\UI\GameFont.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>

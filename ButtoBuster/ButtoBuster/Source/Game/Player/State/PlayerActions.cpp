@@ -50,9 +50,9 @@ bool PlayerActions::TryStart(Player& player, const ICharacterState<Player>* from
         if (!player.IsGrounded()) return false;
         return states.Transition(from, make_unique<PlayerJumpState>(true));
 
-    // 必殺技はゲージが満タンのときだけ 地上でだけ出せる
+    // 必殺技はゲージが満タンのときだけ 地上でだけ出せる (空中で回避したあとに押しても出ない)
     case Technique::Special:
-        if (!player.IsSpecialReady()) return false;
+        if (!player.IsSpecialReady() || !player.IsGrounded()) return false;
         return states.Transition(from, make_unique<PlayerSpecialState>());
 
     default:

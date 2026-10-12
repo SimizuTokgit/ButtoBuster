@@ -308,6 +308,7 @@
     <ClInclude Include="Source\Game\Tutorial\TutorialDirector.h" />
     <ClInclude Include="Source\Game\Tutorial\TutorialSteps.h" />
     <ClInclude Include="Source\Game\UI\ChainCounter.h" />
+    <ClInclude Include="Source\Game\UI\ControlsList.h" />
     <ClInclude Include="Source\Game\UI\GameFont.h" />
     <ClInclude Include="Source\Game\UI\Hud.h" />
     <ClInclude Include="Source\Game\UI\JustDodgeBanner.h" />
