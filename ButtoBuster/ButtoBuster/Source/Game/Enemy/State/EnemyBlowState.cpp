@@ -13,22 +13,21 @@ void EnemyBlowState::Enter(Enemy& enemy) {
     enemy.SetKnockback(_knockback);
     enemy.ForgetWallHit();
 
-    // 吹っ飛ぶ角度 (Character::LAUNCH_ANGLE) で斜め上へ飛ばす 弱く飛ばされても、下の速さだけは跳ねる
+    // 吹っ飛ぶ角度 (Character::LAUNCH_ANGLE) で斜め上へ飛ばす 弱く飛ばされても、BLOW_JUMP_SPEED か LOW_JUMP_SPEED だけは跳ねる
     if (data.isFlying) {
         // 羽ばたきを止めて落とす
         enemy.SetHovering(false);
         enemy.PlayAnimation("Damage", 1.0f, true);
-        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, 250.0f));
+        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, LOW_JUMP_SPEED));
     }
     else if (data.canBlow) {
-        enemy.PlayAnimation("BlowIn", 1.0f, true);
-        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, 380.0f));
-        enemy.FaceImmediately(VScale(_knockback, -1.0f));
+        enemy.PlayBlowIn(_knockback);
+        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, BLOW_JUMP_SPEED));
     }
     else {
         // 吹き飛ぶアニメを持たない重い敵は、構えたまま押し飛ばされる
         enemy.PlayAnimation("Idle", 1.0f, true);
-        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, HEAVY_JUMP_SPEED));
+        enemy.SetVerticalVelocity(Character::GetLaunchUpSpeed(_knockback, LOW_JUMP_SPEED));
     }
 
     if (_chain) _chain->BeginFlight(enemy);
@@ -45,27 +44,17 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
         enemy.HoldBlow();
 
         // 壁にぶつかったら、吹っ飛ばされ値が許容値に届いていれば壁を割り、届いていなければ張り付いてから跳ね返る
-        ArenaWall::Hit wallHit;
-        if (enemy.ConsumeWallHit(wallHit)) {
-            ArenaWall::Reaction reaction = ArenaWall::React(enemy, wallHit);
+        // 割ったときは場外へ飛んでいく状態に移るので、ここから先はいらない
+        ArenaWall::Reaction reaction = enemy.StickToWall();
+        if (reaction == ArenaWall::Reaction::Break) break;
 
-            // 割ったときは場外へ飛んでいく状態に移るので、ここから先はいらない
-            if (reaction == ArenaWall::Reaction::Break) break;
-
-            if (reaction == ArenaWall::Reaction::Bounce) {
-                // ぶつかった姿のまま壁に止める 砲弾はやめずにおき、跳ね返ったあとも連鎖を続ける
-                _wallHit = wallHit;
-                _stickTime = ArenaWall::GetStickTime(wallHit);
-                _timer = 0.0f;
-                enemy.StopHorizontal();
-                enemy.SetVerticalVelocity(0.0f);
-                enemy.SetAnimationSpeed(0.0f);
-                _phase = Phase::Stick;
-                break;
-            }
+        // 張り付いても砲弾はやめずにおき、跳ね返ったあとも連鎖を続ける
+        if (reaction == ArenaWall::Reaction::Bounce) {
+            _phase = Phase::Stick;
+            break;
         }
 
-        enemy.DampHorizontal(1.5f, deltaTime);
+        enemy.DampHorizontal(DAMP_RATE, deltaTime);
 
         // 速いうちは砲弾として、触れた敵を巻き込む
         if (_chain && !_chain->Sweep(enemy, deltaTime)) LeaveChain(enemy);
@@ -76,36 +65,23 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
             LeaveChain(enemy);
             enemy.StopHorizontal();
             if (!isFlying && data.canBlow) enemy.PlayAnimation("DownLoop");
-            if (auto* effects = EffectManager::Get()) effects->PlayDust(enemy.GetPosition(), 8);
+            if (auto* effects = EffectManager::Get()) effects->PlayDust(enemy.GetPosition(), Enemy::LAND_DUST_COUNT);
             _phase = Phase::Down;
             _timer = 0.0f;
         }
         break;
     }
 
-    case Phase::Stick: {
-        enemy.HoldBlow();
-
+    case Phase::Stick:
         // 張り付いている間は壁に止めておく ここで追い打ちを当てられる
-        enemy.StopHorizontal();
-        enemy.SetVerticalVelocity(0.0f);
-
-        _timer += deltaTime;
-        if (_timer < _stickTime) break;
+        if (!enemy.HoldOnWall(deltaTime)) break;
 
         // 速く跳ね返れば、戻ってくる間も砲弾のままなので、群れの中へ連鎖が続く
-        ArenaWall::Bounce(enemy, _wallHit);
-        if (!isFlying && data.canBlow) {
-            // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
-            enemy.PlayAnimation("BlowIn", 1.0f, true);
-            enemy.FaceImmediately(VScale(enemy.GetVelocity(), -1.0f));
-        }
-        else {
-            enemy.SetAnimationSpeed(1.0f);
-        }
+        // 飛ばされた向きの逆を向いて飛ぶのは、跳ね返ったあとも同じ
+        if (!isFlying && data.canBlow) enemy.PlayBlowIn(enemy.GetVelocity());
+        else enemy.SetAnimationSpeed(1.0f);
         _phase = Phase::Fly;
         break;
-    }
 
     case Phase::Down: {
         _timer += deltaTime;
@@ -121,7 +97,7 @@ void EnemyBlowState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
             enemy.GetStates().Transition(this, make_unique<EnemyIdleState>());
         }
         else {
-            enemy.PlayAnimation("BlowOut", 1.2f, true);
+            enemy.PlayAnimation("BlowOut", GET_UP_ANIMATION_SPEED, true);
             _phase = Phase::GetUp;
         }
         break;

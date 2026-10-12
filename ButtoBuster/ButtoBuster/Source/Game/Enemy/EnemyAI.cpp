@@ -1,5 +1,6 @@
 ﻿#include "EnemyAI.h"
 #include "Enemy.h"
+#include "EnemyActions.h"
 #include "EnemyIdleState.h"
 #include "EnemyMoveState.h"
 #include "ArenaWall.h"
@@ -40,7 +41,7 @@ void EnemyAI::Start() {
     _enemy = GetComponent<Enemy>();
 
     // 出てきた全員が同時に殴りに来ないよう、最初の番の取り方をばらけさせる
-    _cooldown = Mathf::RandomRange(0.3f, 1.5f);
+    _cooldown = RandomIn(FIRST_COOLDOWN);
 
     // 賢さが 1 以上なら行動の木で動く
     if (_enemy && _enemy->GetData().intelligence > 0) {
@@ -65,6 +66,98 @@ void EnemyAI::Update(float deltaTime) {
     _enemy->Execute(input, scaledDeltaTime);
 }
 
+// ===== どちらの動きでも使う =====
+
+bool EnemyAI::HasLiveTarget() {
+    const Character* target = _enemy->GetTarget();
+    if (_enemy->IsDead() || !target || target->IsDead()) {
+        ReleaseToken();
+        return false;
+    }
+    return true;
+}
+
+bool EnemyAI::AcquireToken() {
+    auto* director = PhaseDirector::Get();
+    if (!director || !director->GetTokens().TryAcquire(_enemy)) return false;
+
+    _hasToken = true;
+    _tokenTimer = 0.0f;
+    return true;
+}
+
+void EnemyAI::ReleaseToken() {
+    if (!_hasToken) return;
+    _hasToken = false;
+
+    if (auto* director = PhaseDirector::Get()) {
+        director->GetTokens().Release(_enemy);
+    }
+}
+
+bool EnemyAI::TickTokenTimer(float deltaTime) {
+    _tokenTimer += deltaTime;
+    return _tokenTimer > TOKEN_TIMEOUT;
+}
+
+float EnemyAI::RollCooldown() const {
+    const EnemyData& data = _enemy->GetData();
+    float rate = followsDifficulty ? GameMode::GetData().enemyCooldownRate : 1.0f;
+    return Mathf::RandomRange(data.cooldownMin, data.cooldownMax) * rate;
+}
+
+bool EnemyAI::RollHeavy() const {
+    const EnemyData& data = _enemy->GetData();
+    return data.hasHeavy && GetRand(99) < static_cast<int>(data.heavyChance * 100.0f);
+}
+
+float EnemyAI::RandomIn(TimeRange range) {
+    return Mathf::RandomRange(range.min, range.max);
+}
+
+void EnemyAI::Surround(float deltaTime) {
+    // 最初は今いる方角から回り始める 反対側へ横切って群れがぶつからないように
+    if (!_isOrbitReady) {
+        _orbitAngle = atan2f(-_toTarget.z, -_toTarget.x);
+        _orbitDirection = (GetRand(1) == 0) ? 1.0f : -1.0f;
+        _orbitSwitchTimer = RandomIn(ORBIT_SWITCH_TIME);
+        _isOrbitReady = true;
+    }
+
+    // ときどき回る向きを変える ずっと同じ向きだと動きが読めてしまう
+    _orbitSwitchTimer -= deltaTime;
+    if (_orbitSwitchTimer <= 0.0f) {
+        if (GetRand(ORBIT_FLIP_ODDS - 1) == 0) _orbitDirection = -_orbitDirection;
+        _orbitSwitchTimer = RandomIn(ORBIT_SWITCH_TIME);
+    }
+    _orbitAngle += _orbitDirection * ORBIT_SPEED * deltaTime;
+
+    float radius = _enemy->GetData().surroundRadius;
+    VECTOR targetPosition = VAdd(_enemy->GetPosition(), _toTarget);
+    VECTOR slot = VAdd(targetPosition, VGet(cosf(_orbitAngle) * radius, 0.0f, sinf(_orbitAngle) * radius));
+
+    // プレイヤーが壁際にいると待つ場所が壁の外に出るので、壁の手前に寄せる 壁に向かって足踏みしないように
+    slot = ArenaWall::ClampInside(slot, _enemy->bodyRadius + SLOT_WALL_MARGIN);
+
+    VECTOR toSlot = VSub(slot, _enemy->GetPosition());
+    toSlot.y = 0.0f;
+    float slotDistance = VSize(toSlot);
+    if (slotDistance < SLOT_ARRIVE_DISTANCE) return;
+
+    // 遠ければ走って追いつき、近ければ歩いて回り込む 賢さ 4 からは、いつも走ってキビキビ動く
+    // 賢さ 0 の敵 (行動の木を使わない) は _intelligence が 0 のまま
+    bool isRunning = _intelligence >= LEVEL_ENCIRCLE || slotDistance > SLOT_RUN_DISTANCE;
+    float amount = isRunning ? 1.0f : WALK_AMOUNT;
+    _input.move = VScale(toSlot, amount / slotDistance);
+}
+
+BehaviorStatus EnemyAI::SwingAt(Technique technique) {
+    // 相手のほうを向いてから振る 向きは look で毎フレーム相手へ向けてある
+    VECTOR targetPosition = VAdd(_enemy->GetPosition(), _toTarget);
+    if (_enemy->GetFacingDot(targetPosition) > FACE_DOT_TO_ATTACK) _input.technique = technique;
+    return BehaviorStatus::Running;
+}
+
 InputInfo EnemyAI::Stand() {
     InputInfo input;
 
@@ -76,38 +169,25 @@ InputInfo EnemyAI::Stand() {
     const Character* target = _enemy->GetTarget();
     if (_enemy->IsDead() || !target) return input;
 
-    VECTOR toTarget = VSub(target->GetPosition(), _enemy->GetPosition());
-    toTarget.y = 0.0f;
-    input.look = toTarget;
+    input.look = EnemyActions::ToTarget(*_enemy);
     return input;
 }
 
-// ===== 今までの動き (賢さ 0 の敵: Bee と Golem) =====
+// ===== 木を使わない動き (賢さ 0 の敵: Bee と Golem) =====
 
 InputInfo EnemyAI::Think(float deltaTime) {
-    InputInfo input;
+    _input = InputInfo();
+    if (!HasLiveTarget()) return _input;
 
-    if (_enemy->IsDead()) {
-        ReleaseToken();
-        return input;
-    }
+    _toTarget = EnemyActions::ToTarget(*_enemy);
+    _distance = VSize(_toTarget);
+    _input.look = _toTarget;
 
-    const Character* target = _enemy->GetTarget();
-    if (!target || target->IsDead()) {
-        ReleaseToken();
-        return input;
-    }
-
-    VECTOR toTarget = VSub(target->GetPosition(), _enemy->GetPosition());
-    toTarget.y = 0.0f;
-    float distance = VSize(toTarget);
-    input.look = toTarget;
-
+    // 振り終わったか、番を持ったまま振れずにいたら返し、次に番を欲しがるまで待つ
     if (_hasToken) {
-        _tokenTimer += deltaTime;
-        if (_enemy->ConsumeAttackFinished() || _tokenTimer > TOKEN_TIMEOUT) {
+        bool isTimedOut = TickTokenTimer(deltaTime);
+        if (_enemy->ConsumeAttackFinished() || isTimedOut) {
             ReleaseToken();
-            const EnemyData& data = _enemy->GetData();
             _cooldown = RollCooldown();
         }
     }
@@ -118,80 +198,31 @@ InputInfo EnemyAI::Think(float deltaTime) {
 
     _cooldown -= deltaTime;
 
-    bool wantsToken = !_hasToken && _cooldown <= 0.0f && distance < ENGAGE_DISTANCE;
-    if (wantsToken) {
-        auto* director = PhaseDirector::Get();
-        if (director && director->GetTokens().TryAcquire(_enemy)) {
-            _hasToken = true;
-            _tokenTimer = 0.0f;
-            _plannedTechnique = ChooseTechnique(distance);
-        }
-    }
+    bool wantsToken = !_hasToken && _cooldown <= 0.0f && _distance < ENGAGE_DISTANCE;
+    if (wantsToken && AcquireToken()) _plannedTechnique = ChooseTechnique();
 
-    if (_hasToken) return Engage(input, toTarget, distance);
-    return Surround(input, toTarget, deltaTime);
+    if (_hasToken) Engage();
+    else Surround(deltaTime);
+    return _input;
 }
 
-InputInfo EnemyAI::Engage(InputInfo input, VECTOR toTarget, float distance) {
-    if (distance > GetRange(_plannedTechnique)) {
-        input.move = VScale(toTarget, 1.0f / distance);
-        return input;
+void EnemyAI::Engage() {
+    if (_distance > GetRange(_plannedTechnique)) {
+        _input.move = VScale(_toTarget, 1.0f / _distance);
+        return;
     }
-
-    VECTOR targetPosition = VAdd(_enemy->GetPosition(), toTarget);
-    if (_enemy->GetFacingDot(targetPosition) > FACE_DOT_TO_ATTACK) {
-        input.technique = _plannedTechnique;
-    }
-    return input;
+    SwingAt(_plannedTechnique);
 }
 
-InputInfo EnemyAI::Surround(InputInfo input, VECTOR toTarget, float deltaTime) {
-    // 最初は今いる方角から回り始める 反対側へ横切って群れがぶつからないように
-    if (!_isOrbitReady) {
-        _orbitAngle = atan2f(-toTarget.z, -toTarget.x);
-        _orbitDirection = (GetRand(1) == 0) ? 1.0f : -1.0f;
-        _orbitSwitchTimer = Mathf::RandomRange(2.0f, 4.0f);
-        _isOrbitReady = true;
-    }
-
-    // ときどき回る向きを変える ずっと同じ向きだと動きが読めてしまう
-    _orbitSwitchTimer -= deltaTime;
-    if (_orbitSwitchTimer <= 0.0f) {
-        if (GetRand(2) == 0) _orbitDirection = -_orbitDirection;
-        _orbitSwitchTimer = Mathf::RandomRange(2.0f, 4.0f);
-    }
-    _orbitAngle += _orbitDirection * ORBIT_SPEED * deltaTime;
-
-    float radius = _enemy->GetData().surroundRadius;
-    VECTOR targetPosition = VAdd(_enemy->GetPosition(), toTarget);
-    VECTOR slot = VAdd(targetPosition, VGet(cosf(_orbitAngle) * radius, 0.0f, sinf(_orbitAngle) * radius));
-
-    // プレイヤーが壁際にいると待つ場所が壁の外に出るので、壁の手前に寄せる 壁に向かって足踏みしないように
-    slot = ArenaWall::ClampInside(slot, _enemy->bodyRadius + SLOT_WALL_MARGIN);
-
-    VECTOR toSlot = VSub(slot, _enemy->GetPosition());
-    toSlot.y = 0.0f;
-    float slotDistance = VSize(toSlot);
-    if (slotDistance < SLOT_ARRIVE_DISTANCE) return input;
-
-    // 遠ければ走って追いつき、近ければ歩いて回り込む 賢さ 4 からは、いつも走ってキビキビ動く
-    // 賢さ 0 の敵 (行動の木を使わない) は _intelligence が 0 のまま
-    bool isRunning = _intelligence >= LEVEL_ENCIRCLE || slotDistance > SLOT_RUN_DISTANCE;
-    float amount = isRunning ? 1.0f : 0.5f;
-    input.move = VScale(toSlot, amount / slotDistance);
-    return input;
-}
-
-Technique EnemyAI::ChooseTechnique(float distance) const {
+Technique EnemyAI::ChooseTechnique() const {
     const EnemyData& data = _enemy->GetData();
 
     // 離れていれば撃つことが多い 近づいて刺すこともある
-    if (data.canShoot && distance > data.attackRange * 1.5f && GetRand(99) < 70) {
+    bool isFar = _distance > data.attackRange * SHOOT_CHOICE.rangeRate;
+    if (data.canShoot && isFar && GetRand(99) < SHOOT_CHOICE.percent) {
         return Technique::Shoot;
     }
-    if (data.hasHeavy && GetRand(99) < static_cast<int>(data.heavyChance * 100.0f)) {
-        return Technique::StrongSlash;
-    }
+    if (RollHeavy()) return Technique::StrongSlash;
     return Technique::Slash;
 }
 
@@ -202,18 +233,9 @@ float EnemyAI::GetRange(Technique technique) const {
 
     // 踏みつけは周りに当たるので、真下まで入らなくてよい
     if (technique == Technique::StrongSlash && data.heavyAreaRadius > 0.0f) {
-        return data.heavyAreaRadius * 0.6f;
+        return data.heavyAreaRadius * STOMP_REACH_RATE;
     }
     return data.attackRange;
-}
-
-void EnemyAI::ReleaseToken() {
-    if (!_hasToken) return;
-    _hasToken = false;
-
-    if (auto* director = PhaseDirector::Get()) {
-        director->GetTokens().Release(_enemy);
-    }
 }
 
 
@@ -282,12 +304,7 @@ void EnemyAI::BuildTree() {
 InputInfo EnemyAI::ThinkWithTree(float deltaTime) {
     _input = InputInfo();
     _enemy->SetThinking("");
-
-    const Character* target = _enemy->GetTarget();
-    if (_enemy->IsDead() || !target || target->IsDead()) {
-        ReleaseToken();
-        return _input;
-    }
+    if (!HasLiveTarget()) return _input;
 
     Sense(deltaTime);
     UpdateAttackCycle(deltaTime);
@@ -300,8 +317,7 @@ InputInfo EnemyAI::ThinkWithTree(float deltaTime) {
 
 void EnemyAI::Sense(float deltaTime) {
     const Character* target = _enemy->GetTarget();
-    _toTarget = VSub(target->GetPosition(), _enemy->GetPosition());
-    _toTarget.y = 0.0f;
+    _toTarget = EnemyActions::ToTarget(*_enemy);
     _distance = VSize(_toTarget);
 
     // 続いている間だけ数え、途切れたら 0 に戻す reactionTime を越えたら「気づいた」
@@ -318,25 +334,16 @@ void EnemyAI::Sense(float deltaTime) {
 
 void EnemyAI::UpdateAttackCycle(float deltaTime) {
     // 振り終わったら番を返し、次に振るまで待つ 次に振る技もここで決めておく
+    // 番を持たずに振ったとき (届く距離で振った) も同じ
     if (_enemy->ConsumeAttackFinished()) {
         ReleaseToken();
-        const EnemyData& data = _enemy->GetData();
         _cooldown = RollCooldown();
         _nextTechnique = RollTechnique();
     }
     _cooldown -= deltaTime;
 
-    // 番を持ったまま振れずにいたら返す
-    if (_hasToken) {
-        _tokenTimer += deltaTime;
-        if (_tokenTimer > TOKEN_TIMEOUT) ReleaseToken();
-    }
-}
-
-float EnemyAI::RollCooldown() const {
-    const EnemyData& data = _enemy->GetData();
-    float rate = followsDifficulty ? GameMode::GetData().enemyCooldownRate : 1.0f;
-    return Mathf::RandomRange(data.cooldownMin, data.cooldownMax) * rate;
+    // 番を持ったまま振れずにいたら返す 振っていないので、次に振るまでの待ちは始めない
+    if (_hasToken && TickTokenTimer(deltaTime)) ReleaseToken();
 }
 
 bool EnemyAI::Notices(float seenTime) const {
@@ -348,13 +355,18 @@ bool EnemyAI::Notices(float seenTime) const {
 
 Technique EnemyAI::RollTechnique() const {
     // ときどき大振り 毎フレーム引くと偏るので、振り終わりに 1 回だけ決める
-    const EnemyData& data = _enemy->GetData();
-
     // 賢さ 1 は大振りを振らない 読みやすい斬りだけで来る
     if (_intelligence < LEVEL_HEAVY) return Technique::Slash;
+    return RollHeavy() ? Technique::StrongSlash : Technique::Slash;
+}
 
-    bool isHeavy = data.hasHeavy && GetRand(99) < static_cast<int>(data.heavyChance * 100.0f);
-    return isHeavy ? Technique::StrongSlash : Technique::Slash;
+float EnemyAI::GetTargetFacingDot() const {
+    return _enemy->GetTarget()->GetFacingDot(_enemy->GetPosition());
+}
+
+float EnemyAI::GetTargetBackAngle() const {
+    VECTOR back = VScale(_enemy->GetTarget()->GetForward(), -1.0f);
+    return atan2f(back.z, back.x);
 }
 
 // ----- 条件の葉 -----
@@ -380,13 +392,13 @@ bool EnemyAI::IsTargetAtLimit() const {
 bool EnemyAI::SeesCharge() const {
     // こちらを向いて溜めている相手が近くにいるとき 背中側にいる敵は下がらない
     // 下がる先 (RETREAT_DISTANCE) より広く見ておく 下がりきった所で、また近づいて下がるのを繰り返さないように
-    bool isFacingMe = _enemy->GetTarget()->GetFacingDot(_enemy->GetPosition()) > CHARGE_FACE_DOT;
+    bool isFacingMe = GetTargetFacingDot() > CHARGE_FACE_DOT;
     return Notices(_chargeTime) && isFacingMe && _distance < CHARGE_WATCH_DISTANCE;
 }
 
 bool EnemyAI::SeesChargeAside() const {
     // 溜めている相手の横か後ろにいるとき 正面にいる仲間は下がる (SeesCharge) ので、横からは裏へ回って離した所を狙う
-    bool isFacingMe = _enemy->GetTarget()->GetFacingDot(_enemy->GetPosition()) > CHARGE_FACE_DOT;
+    bool isFacingMe = GetTargetFacingDot() > CHARGE_FACE_DOT;
     return Notices(_chargeTime) && !isFacingMe && _distance < CHARGE_WATCH_DISTANCE;
 }
 
@@ -401,7 +413,7 @@ bool EnemyAI::IsCornered() const {
 
 bool EnemyAI::SeesBack() const {
     // 相手の正面がこちらを向いていない (背中かほぼ横を向けている) とき
-    bool isBackTurned = _enemy->GetTarget()->GetFacingDot(_enemy->GetPosition()) < BACK_TURNED_DOT;
+    bool isBackTurned = GetTargetFacingDot() < BACK_TURNED_DOT;
     return _cooldown <= 0.0f && isBackTurned && _distance < BACKSTAB_DISTANCE;
 }
 
@@ -416,13 +428,7 @@ BehaviorStatus EnemyAI::TakeToken(float deltaTime) {
     // 番を取るのは値を変えるので、条件ではなく行動の葉にしてある
     if (_hasToken) return BehaviorStatus::Success;
     if (_cooldown > 0.0f || _distance > ENGAGE_DISTANCE) return BehaviorStatus::Failure;
-
-    auto* director = PhaseDirector::Get();
-    if (!director || !director->GetTokens().TryAcquire(_enemy)) return BehaviorStatus::Failure;
-
-    _hasToken = true;
-    _tokenTimer = 0.0f;
-    return BehaviorStatus::Success;
+    return AcquireToken() ? BehaviorStatus::Success : BehaviorStatus::Failure;
 }
 
 BehaviorStatus EnemyAI::Approach(float deltaTime) {
@@ -470,7 +476,7 @@ BehaviorStatus EnemyAI::RushIn(float deltaTime) {
 
 BehaviorStatus EnemyAI::Orbit(float deltaTime) {
     _enemy->SetThinking("回って待つ");
-    _input = Surround(_input, _toTarget, deltaTime);
+    Surround(deltaTime);
     return BehaviorStatus::Running;
 }
 
@@ -478,10 +484,9 @@ BehaviorStatus EnemyAI::Flank(float deltaTime) {
     _enemy->SetThinking("背中側へ回り込む");
 
     // 相手の背中側の角度へ回る 個体ごとに少しずらして重ならないようにする
-    VECTOR back = VScale(_enemy->GetTarget()->GetForward(), -1.0f);
-    CircleTo(atan2f(back.z, back.x) + _flankOffset);
+    CircleTo(GetTargetBackAngle() + _flankOffset);
 
-    _input = Surround(_input, _toTarget, deltaTime);
+    Surround(deltaTime);
     return BehaviorStatus::Running;
 }
 
@@ -492,7 +497,7 @@ BehaviorStatus EnemyAI::Encircle(float deltaTime) {
     int stepCount = static_cast<int>(GetNowCount() / (STEP_TIME * 1000.0f)) + _enemy->GetId();
     CircleTo(FindGapAngle() + ((stepCount % 2 == 0) ? STEP_ANGLE : -STEP_ANGLE));
 
-    _input = Surround(_input, _toTarget, deltaTime);
+    Surround(deltaTime);
     return BehaviorStatus::Running;
 }
 
@@ -511,8 +516,7 @@ void EnemyAI::CircleTo(float angle) {
 }
 
 float EnemyAI::FindGapAngle() const {
-    const Character* target = _enemy->GetTarget();
-    VECTOR center = target->GetPosition();
+    VECTOR center = _enemy->GetTarget()->GetPosition();
     float myAngle = atan2f(-_toTarget.z, -_toTarget.x);
 
     // 相手から見た仲間の方角を、自分から左回りに 0〜2π で測る
@@ -532,18 +536,14 @@ float EnemyAI::FindGapAngle() const {
         if (diff > farthest) farthest = diff;
     }
 
-    VECTOR back = VScale(target->GetForward(), -1.0f);
-    float backAngle = atan2f(back.z, back.x);
+    float backAngle = GetTargetBackAngle();
     if (nearest >= DX_TWO_PI_F) return backAngle;
 
     // 左隣と右隣の間のすき間の真ん中 そこからすき間の中で、背中側へ少し寄せる
     float gap = nearest + DX_TWO_PI_F - farthest;
     float middle = myAngle + nearest - gap * 0.5f;
     float lean = gap * 0.5f * ENCIRCLE_BACK_LEAN;
-    float toBack = Mathf::WrapRadian(backAngle - middle);
-    if (toBack > lean) toBack = lean;
-    if (toBack < -lean) toBack = -lean;
-    return middle + toBack;
+    return middle + Mathf::Clamp(Mathf::WrapRadian(backAngle - middle), -lean, lean);
 }
 
 BehaviorStatus EnemyAI::LeaveWall(float deltaTime) {
@@ -558,12 +558,5 @@ BehaviorStatus EnemyAI::LeaveWall(float deltaTime) {
     toCenter.y = 0.0f;
     float length = VSize(toCenter);
     if (length > 1.0f) _input.move = VScale(toCenter, 1.0f / length);
-    return BehaviorStatus::Running;
-}
-
-BehaviorStatus EnemyAI::SwingAt(Technique technique) {
-    // 相手のほうを向いてから振る 向きは look で毎フレーム相手へ向けてある
-    VECTOR targetPosition = VAdd(_enemy->GetPosition(), _toTarget);
-    if (_enemy->GetFacingDot(targetPosition) > FACE_DOT_TO_ATTACK) _input.technique = technique;
     return BehaviorStatus::Running;
 }

@@ -72,6 +72,7 @@ struct AttackData {
     // 1 で左から右へ -1 で右から左へ 縦のときは 1 で下から上へ
     float arcSwing = 1.0f;
 
+    // 弧の色 足元から広げる衝撃波 (下の shockwaveRadius と、敵の踏みつけ) もこの色
     COLOR_U8 arcColor = GetColorU8(255, 255, 255, 255);
 
     // 0 より大きければ、振り下ろした瞬間に足元から衝撃波を広げる

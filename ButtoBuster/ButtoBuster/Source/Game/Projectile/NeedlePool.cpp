@@ -25,20 +25,12 @@ void NeedlePool::Initialize(int count) {
     }
 }
 
-bool NeedlePool::Fire(VECTOR position, VECTOR direction, int damage) {
+bool NeedlePool::Fire(VECTOR position, VECTOR direction, int damage, const char* hitSound) {
     for (auto* needle : _needles) {
         if (needle->IsFlying()) continue;
 
-        needle->Launch(position, direction, damage);
+        needle->Launch(position, direction, damage, hitSound);
         return true;
     }
     return false;
-}
-
-int NeedlePool::GetFlyingCount() const {
-    int count = 0;
-    for (const auto* needle : _needles) {
-        if (needle->IsFlying()) count++;
-    }
-    return count;
 }

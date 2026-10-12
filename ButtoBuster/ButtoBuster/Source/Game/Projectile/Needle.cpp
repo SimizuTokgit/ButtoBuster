@@ -6,7 +6,7 @@
 #include "Transform.h"
 #include "MeshRenderer.h"
 
-void Needle::Launch(VECTOR position, VECTOR direction, int damage) {
+void Needle::Launch(VECTOR position, VECTOR direction, int damage, const char* hitSound) {
     float length = VSize(direction);
     if (length < 0.001f) return;
 
@@ -14,6 +14,7 @@ void Needle::Launch(VECTOR position, VECTOR direction, int damage) {
     _velocity = VScale(forward, SPEED);
     _life = LIFE_TIME;
     _damage = damage;
+    _hitSound = hitSound;
     _isFlying = true;
 
     transform->localPosition = position;
@@ -65,12 +66,12 @@ bool Needle::TryHitPlayer(VECTOR position) {
 
         HitInfo info;
         // 撃った Bee はもう倒れているかもしれないので、針が来た方向を向きの判定に使う
-        info.sourcePosition = VSub(position, VScale(_velocity, 0.2f));
+        info.sourcePosition = VSub(position, VScale(_velocity, SOURCE_LOOKBACK_TIME));
         info.damage = _damage;
         info.reaction = HitReaction::Flinch;
         info.knockback = push;
         info.canGuard = true;
-        info.hitSound = "Player/dmg_byNeedle";
+        info.hitSound = _hitSound;
 
         character->TakeHit(info);
         return true;

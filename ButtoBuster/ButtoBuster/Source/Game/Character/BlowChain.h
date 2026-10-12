@@ -61,8 +61,6 @@ public:
     // まだ相手を巻き込める速さなら true 遅くなったら false
     bool Sweep(Character& projectile, float deltaTime);
 
-    int GetHitCount() const { return _hitCount; }
-
 private:
     bool Contains(const Character* character) const;
     void Notify(ChainEvent::Type type, VECTOR position);

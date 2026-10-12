@@ -17,6 +17,26 @@ namespace {
     constexpr float WARNING_LEAD_SECONDS = 0.12f;
     constexpr const char* WARNING_SOUND = "Player/equip";
     constexpr float WARNING_VOLUME = 0.6f;
+
+    // 振りかぶっている間に相手を追って向きを変える速さ EnemyData の turnSpeed に掛ける
+    // 当たり判定が出るこのフレーム数前からは、向きを固めて踏み込む
+    constexpr float WINDUP_TURN_RATE = 0.6f;
+    constexpr float COMMIT_BEFORE_HIT = 4.0f;
+
+    // 斬撃の弧を出すのは、当たり判定が出るこのフレーム数前
+    constexpr float SWING_LEAD = 0.5f;
+
+    // 斬撃の弧の形 半径と太さは技の届く距離 (reach) に掛ける割合 消えるまでの秒数
+    struct ArcLook {
+        float radiusRate;
+        float widthRate;
+        float life;
+    };
+    constexpr ArcLook ARC_LOOK = { 0.9f, 0.3f, 0.2f };
+
+    // 画面の揺れの長さ 秒 踏みつけが地面を揺らすときと、振りが当たったとき
+    constexpr float STOMP_SHAKE_TIME = 0.4f;
+    constexpr float HIT_SHAKE_TIME = 0.25f;
 }
 
 EnemyAttackState::EnemyAttackState(const AttackData& data, float areaRadius)
@@ -37,9 +57,8 @@ void EnemyAttackState::Execute(Enemy& enemy, const InputInfo& input, float delta
 
     // 振りかぶっている間は相手を追って向きを変える
     // 振り始める少し前に向きを固めて、避ける余地を残す
-    constexpr float COMMIT_BEFORE_HIT = 4.0f;
     if (time < _data.hitStart - COMMIT_BEFORE_HIT) {
-        enemy.FaceTowards(EnemyActions::ToTarget(enemy), enemy.GetData().turnSpeed * 0.6f, deltaTime);
+        enemy.FaceTowards(EnemyActions::ToTarget(enemy), enemy.GetData().turnSpeed * WINDUP_TURN_RATE, deltaTime);
     }
 
     bool isLunging = time >= _data.hitStart - COMMIT_BEFORE_HIT && time <= _data.hitEnd;
@@ -95,16 +114,13 @@ void EnemyAttackState::PlayWarning(Enemy& enemy, float time) {
     // 頭の上を光らせる 囲まれていても、誰の攻撃が来るか分かるように 大振りと踏みつけは赤く大きく
     if (auto* effects = EffectManager::Get()) {
         bool isHeavy = _areaRadius > 0.0f || !_data.canGuard;
-        VECTOR head = VAdd(enemy.GetCenter(), VGet(0.0f, enemy.bodyHeight * 0.5f, 0.0f));
-        effects->PlayWarning(head, isHeavy);
+        effects->PlayWarning(enemy.GetTopPosition(), isHeavy);
     }
     SoundManager::Instance().PlaySE(WARNING_SOUND, WARNING_VOLUME);
 }
 
 void EnemyAttackState::PlaySwing(Enemy& enemy, float time) {
     // 判定が出る少し前に出すと、振りと弧が重なって見える
-    constexpr float SWING_LEAD = 0.5f;
-
     if (!_hasPlayedArc && time >= _data.hitStart - SWING_LEAD) {
         _hasPlayedArc = true;
         PlayArc(enemy, _data.arcSwing);
@@ -127,13 +143,13 @@ void EnemyAttackState::PlayArc(Enemy& enemy, float swing) {
     EffectManager::ArcDesc arc;
     arc.center = VAdd(enemy.GetPosition(), VGet(0.0f, enemy.bodyHeight * 0.5f, 0.0f));
     arc.forward = enemy.GetForward();
-    arc.radius = _data.reach * 0.9f;
-    arc.width = _data.reach * 0.3f;
+    arc.radius = _data.reach * ARC_LOOK.radiusRate;
+    arc.width = _data.reach * ARC_LOOK.widthRate;
     arc.arcDegree = _data.arcDegree * 2.0f;
     arc.tiltDegree = _data.arcTilt;
     arc.swing = swing;
     arc.color = _data.arcColor;
-    arc.life = 0.2f;
+    arc.life = ARC_LOOK.life;
     effects->PlaySlashArc(arc);
 }
 
@@ -154,8 +170,8 @@ void EnemyAttackState::ApplyHit(Enemy& enemy, float time) {
     if (isFirstWindow && !_hasEnteredFirstHit) {
         _hasEnteredFirstHit = true;
         if (isArea && effects) {
-            effects->Shake(_data.shake, 0.4f);
-            effects->PlayShockwave(enemy.GetPosition(), _areaRadius, GetColorU8(255, 120, 60, 255));
+            effects->Shake(_data.shake, STOMP_SHAKE_TIME);
+            effects->PlayShockwave(enemy.GetPosition(), _areaRadius, _data.arcColor);
         }
     }
 
@@ -167,5 +183,5 @@ void EnemyAttackState::ApplyHit(Enemy& enemy, float time) {
     if (hits <= 0 || !isFirstHit || !effects) return;
 
     effects->HitStop(_data.hitStop);
-    if (!isArea && _data.shake > 0.0f) effects->Shake(_data.shake, 0.25f);
+    if (!isArea && _data.shake > 0.0f) effects->Shake(_data.shake, HIT_SHAKE_TIME);
 }

@@ -8,16 +8,11 @@ void EnemyDeadState::Enter(Enemy& enemy) {
     enemy.SetBodySolid(false);
     enemy.SetHovering(false);
     enemy.SetKnockback(_knockback);
-    enemy.SetVerticalVelocity(JUMP_SPEED);
+    enemy.SetVerticalVelocity(Character::DEFEAT_JUMP_SPEED);
 
-    if (data.canBlow && !data.isFlying) {
-        // 飛ばされた向きの逆を向いたまま、後ろ向きに飛んでいく
-        enemy.PlayAnimation("BlowIn", 1.0f, true);
-        enemy.FaceImmediately(VScale(_knockback, -1.0f));
-    }
-    else {
-        enemy.PlayAnimation("Down", 1.0f, true);
-    }
+    // 吹き飛ぶアニメを持つ敵は、飛ばされた向きの逆を向いたまま、後ろ向きに飛んでいく
+    if (data.canBlow && !data.isFlying) enemy.PlayBlowIn(_knockback);
+    else enemy.PlayAnimation("Down", 1.0f, true);
 
     _phase = Phase::Fly;
     _timer = 0.0f;

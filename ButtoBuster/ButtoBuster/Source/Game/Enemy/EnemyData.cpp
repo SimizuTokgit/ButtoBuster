@@ -3,6 +3,19 @@
 // 攻撃の判定時間は、アニメで武器を振っているフレームに合わせてある
 namespace {
 
+    // ときどき出す大振り 斬り (slash) を遅く振り、当たれば吹き飛ばす Goblin と RedGoblin で同じ
+    // ガードできない技にすると、頭の上の合図が赤く大きくなる 見たら避ける
+    AttackData MakeHeavySwing(const AttackData& slash) {
+        AttackData heavy = slash;
+        heavy.animationSpeed = 0.7f;
+        heavy.reaction = HitReaction::Blow;
+        heavy.damage = 10;
+        heavy.knockback = 600.0f;
+        heavy.canGuard = false;
+        heavy.arcColor = GetColorU8(255, 40, 30, 255);
+        return heavy;
+    }
+
     // 基本の敵 数で押してくる
     // 振りかぶってから斬るまでが長いので、声を聞いてから避けられる
     EnemyData CreateGoblin() {
@@ -14,7 +27,7 @@ namespace {
         data.weaponBone = "hansocketR";
         data.weaponModel = "Data/Character/Weapon/Axe/Axe.mv1";
 
-        // 吹っ飛ばされ値の許容値 体力があったころの体力と同じ量にしてある
+        // のけぞるまでに食らうダメージと、吹っ飛ばされ値の許容値
         data.flinchLimit = 36.0f;
         data.blow.limit = 40.0f;
         data.walkSpeed = 200.0f;
@@ -35,16 +48,8 @@ namespace {
         data.slash.arcTilt = 30.0f;
         data.slash.arcColor = GetColorU8(255, 90, 60, 255);
 
-        // ときどき出す大振り 斬りを遅く振り、当たれば吹き飛ばす
-        // ガードできない技にすると、頭の上の合図が赤く大きくなる 見たら避ける
         data.hasHeavy = true;
-        data.heavy = data.slash;
-        data.heavy.animationSpeed = 0.7f;
-        data.heavy.reaction = HitReaction::Blow;
-        data.heavy.damage = 10;
-        data.heavy.knockback = 600.0f;
-        data.heavy.canGuard = false;
-        data.heavy.arcColor = GetColorU8(255, 40, 30, 255);
+        data.heavy = MakeHeavySwing(data.slash);
 
         data.attackRange = 150.0f;
         data.surroundRadius = 320.0f;
@@ -103,15 +108,8 @@ namespace {
         data.slash.arcTilt = 20.0f;
         data.slash.arcColor = GetColorU8(255, 70, 50, 255);
 
-        // ときどき出す大振り 斬りを遅く振り、当たれば吹き飛ばす
         data.hasHeavy = true;
-        data.heavy = data.slash;
-        data.heavy.animationSpeed = 0.7f;
-        data.heavy.reaction = HitReaction::Blow;
-        data.heavy.damage = 10;
-        data.heavy.knockback = 600.0f;
-        data.heavy.canGuard = false;
-        data.heavy.arcColor = GetColorU8(255, 40, 30, 255);
+        data.heavy = MakeHeavySwing(data.slash);
 
         data.attackRange = 170.0f;
         data.surroundRadius = 340.0f;
@@ -168,7 +166,7 @@ namespace {
         data.slash.heightMax = 150.0f;
         data.slash.lunge = 350.0f;
         data.slash.hitStop = 0.03f;
-        data.slash.hitSound = "Player/dmg_byNeedle";
+        data.slash.hitSound = "Player/dmg_byNeedle";    // 撃った針が当たったときも、この音 (EnemyShootState)
 
         data.canShoot = true;
         data.shootTime = 16.5f;
@@ -194,7 +192,7 @@ namespace {
     }
 
     // 大型 のけぞらせられない 大振りの前に予備動作の音が鳴る
-    // Damage のアニメが無いことを、殴っても止まらない硬さとしてそのまま使っている
+    // 殴っても止まらないのは canFlinch を false にしているから のけぞるアニメ (Damage) も持っていない
     EnemyData CreateGolem() {
         EnemyData data;
         data.kind = EnemyKind::Golem;
@@ -256,6 +254,7 @@ namespace {
         data.heavy.hitStop = 0.08f;
         data.heavy.shake = 16.0f;
         data.heavy.hitSound = "Player/dmg_byRockKnuckle";
+        data.heavy.arcColor = data.slash.arcColor;   // 弧は出さず、踏んだときに広げる衝撃波の色
         data.heavyAreaRadius = 380.0f;
 
         data.attackRange = 250.0f;

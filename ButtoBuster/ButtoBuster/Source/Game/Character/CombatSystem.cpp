@@ -6,6 +6,9 @@
 #include <cmath>
 
 namespace {
+    // 体どうしがこの余白より近ければ、向きを問わずに当てる 足元の敵を空振りしないように
+    constexpr float TOUCH_MARGIN = 20.0f;
+
     bool IsTarget(const Character& attacker, const Character* target, const std::vector<Character*>& hitList) {
         if (!target || target == &attacker) return false;
         if (target->team == attacker.team) return false;
@@ -59,8 +62,8 @@ int CombatSystem::ApplyMelee(Character& attacker, const AttackData& attack, std:
         float distance = VSize(toTarget);
         if (distance > attack.reach + target->bodyRadius) continue;
 
-        // 体が触れるほど近いなら向きは問わない 足元の敵を空振りしないように
-        bool isTouching = distance < attacker.bodyRadius + target->bodyRadius + 20.0f;
+        // 体が触れるほど近いなら向きは問わない
+        bool isTouching = distance < attacker.bodyRadius + target->bodyRadius + TOUCH_MARGIN;
         if (!isTouching) {
             float dot = VDot(VScale(toTarget, 1.0f / distance), forward);
             if (dot < cosArc) continue;

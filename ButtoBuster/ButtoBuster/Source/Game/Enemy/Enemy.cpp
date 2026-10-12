@@ -7,9 +7,9 @@
 #include "StageBuilder.h"
 #include "SoundManager.h"
 #include "GameObject.h"
-#include "Transform.h"
 #include "MeshRenderer.h"
 #include "SkinnedMeshRenderer.h"
+#include "Mathf.h"
 #include <cmath>
 #include <memory>
 
@@ -24,6 +24,10 @@ namespace {
     // 羽ばたきに合わせて上下に揺らす
     constexpr float HOVER_BOB_HEIGHT = 20.0f;
     constexpr float HOVER_BOB_SPEED = 3.0f;
+
+    // 斬られた音と、痛がる声の大きさ
+    constexpr float HIT_SOUND_VOLUME = 0.8f;
+    constexpr float DAMAGE_VOICE_VOLUME = 0.7f;
 }
 
 void Enemy::Initialize(const EnemyData& data, int id, Character* target) {
@@ -79,7 +83,7 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
     if (effects) effects->PlayHit(GetCenter(), knockback);
 
     // 飛んできた敵がぶつかった音は、連鎖の知らせを受けた側が鳴らす 斬られた音とは違うので
-    if (!info.isFromProjectile) SoundManager::Instance().PlaySE(_data->soundHit, 0.8f);
+    if (!info.isFromProjectile) SoundManager::Instance().PlaySE(_data->soundHit, HIT_SOUND_VOLUME);
 
     // 吹っ飛ばされ値が許容値に届いていれば、弱い技でも吹き飛ぶ 壁まで運べば割れる
     bool isOverLimit = GetBlowRatio() >= 1.0f;
@@ -90,7 +94,7 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
 
     // Golem は殴っても止まらない 許容値に届けば吹き飛ぶ 声だけは斬られるたびに出す
     if (!_data->canFlinch && !info.isFromProjectile && !isOverLimit) {
-        SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
+        PlayDamageVoice();
         return HitResult::Hit;
     }
 
@@ -109,7 +113,7 @@ HitResult Enemy::TakeHit(const HitInfo& info) {
         _states.Transition(current, std::make_unique<EnemyBlowState>(knockback, info.chain));
     }
     else {
-        SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
+        PlayDamageVoice();
 
         // 空中の斬りは相手を浮かせ、続けて斬れる高さに留める 叩きつけは真下へ落とし、地面で跳ね上げる
         // 浮いている敵は羽ばたきで高さを戻すので、地上の敵だけが浮く (落ちる)
@@ -125,7 +129,7 @@ void Enemy::OnAttackGuarded(VECTOR pushBack) {
 
     // 弾かれて体勢を崩すだけなので、吹っ飛ばされ値は溜めない
     // 攻撃の状態を抜けるときに振り終わりを知らせるので、攻撃の番も返される (EnemyAttackState::Exit)
-    SoundManager::Instance().PlaySE(_data->soundDamage, 0.7f);
+    PlayDamageVoice();
     _states.Transition(_states.GetCurrent(), std::make_unique<EnemyDamageState>(pushBack));
 }
 
@@ -169,9 +173,11 @@ void Enemy::KeepHovering(float deltaTime) {
     float targetY = groundY + _data->hoverHeight + sinf(phase) * HOVER_BOB_HEIGHT;
 
     float speed = (targetY - position.y) * HOVER_STIFFNESS;
-    if (speed > HOVER_MAX_SPEED) speed = HOVER_MAX_SPEED;
-    if (speed < -HOVER_MAX_SPEED) speed = -HOVER_MAX_SPEED;
-    SetVerticalVelocity(speed);
+    SetVerticalVelocity(Mathf::Clamp(speed, -HOVER_MAX_SPEED, HOVER_MAX_SPEED));
+}
+
+void Enemy::PlayDamageVoice() {
+    SoundManager::Instance().PlaySE(_data->soundDamage, DAMAGE_VOICE_VOLUME);
 }
 
 bool Enemy::AddFlinch(float damage) {

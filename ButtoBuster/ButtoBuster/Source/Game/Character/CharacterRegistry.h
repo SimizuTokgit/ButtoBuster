@@ -24,10 +24,4 @@ public:
     }
 
     static const std::vector<Character*>& GetAll() { return _characters; }
-
-    // まだ場にいるか 中身は見ずにアドレスだけで確かめる
-    // 消えたかもしれない相手を持ち続けるとき、触る前に使う
-    static bool Contains(const Character* character) {
-        return std::find(_characters.begin(), _characters.end(), character) != _characters.end();
-    }
 };

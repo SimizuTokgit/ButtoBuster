@@ -23,9 +23,6 @@ public:
 
     void Initialize(int count);
 
-    // 空きが無ければ撃たない 同時に飛ぶ数の上限はここで決まる
-    bool Fire(VECTOR position, VECTOR direction, int damage);
-
-    int GetFlyingCount() const;
-    int GetCapacity() const { return static_cast<int>(_needles.size()); }
+    // 空きが無ければ撃たない 同時に飛ぶ数の上限はここで決まる hitSound は当たった相手が鳴らす音
+    bool Fire(VECTOR position, VECTOR direction, int damage, const char* hitSound);
 };

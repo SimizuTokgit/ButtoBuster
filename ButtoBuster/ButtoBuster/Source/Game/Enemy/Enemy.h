@@ -25,6 +25,9 @@ private:
     const char* _thinking = "";
 
 public:
+    // 地面に落ちたときに立てる砂ぼこりの数 吹き飛んで着地したときと、叩きつけで落とされて地面に着いたとき
+    static constexpr int LAND_DUST_COUNT = 8;
+
     void Initialize(const EnemyData& data, int id, Character* target);
 
     void Start() override;
@@ -69,6 +72,9 @@ protected:
 
 private:
     void KeepHovering(float deltaTime);
+
+    // 痛がる声 のけぞったときと、のけぞらない敵が斬られたとき、攻撃を弾かれたときに出す
+    void PlayDamageVoice();
 
     // 怯み値を溜める 上限に届いたら 0 に戻して true を返す
     bool AddFlinch(float damage);

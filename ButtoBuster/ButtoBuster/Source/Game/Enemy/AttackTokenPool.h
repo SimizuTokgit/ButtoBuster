@@ -15,8 +15,6 @@ private:
 
 public:
     void SetCapacity(int capacity) { _capacity = capacity; }
-    int GetCapacity() const { return _capacity; }
-    int GetHolderCount() const { return static_cast<int>(_holders.size()); }
 
     bool TryAcquire(const Enemy* enemy) {
         if (Has(enemy)) return true;
@@ -34,6 +32,4 @@ public:
     bool Has(const Enemy* enemy) const {
         return std::find(_holders.begin(), _holders.end(), enemy) != _holders.end();
     }
-
-    void Clear() { _holders.clear(); }
 };

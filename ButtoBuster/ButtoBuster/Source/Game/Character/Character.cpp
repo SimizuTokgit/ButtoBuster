@@ -80,7 +80,7 @@ VECTOR Character::ScaleKnockback(VECTOR knockback) const {
 
 float Character::GetLaunchUpSpeed(VECTOR knockback, float minSpeed) {
     float horizontal = sqrtf(knockback.x * knockback.x + knockback.z * knockback.z);
-    float upSpeed = horizontal * tanf(LAUNCH_ANGLE * DX_PI_F / 180.0f);
+    float upSpeed = horizontal * tanf(Transform::Deg2Rad(LAUNCH_ANGLE));
     return (upSpeed > minSpeed) ? upSpeed : minSpeed;
 }
 
@@ -95,19 +95,19 @@ void Character::UpdateBlow(float deltaTime) {
 
     // 溜まるほど多く湯気を立ちのぼらせる 倒れた体からは出さない
     float ratio = GetBlowRatio();
-    if (IsDead() || ratio < STEAM_START_RATIO) {
+    if (IsDead() || ratio < STEAM.startRatio) {
         _steamTimer = 0.0f;
         return;
     }
     if (ratio > 1.0f) ratio = 1.0f;
 
-    _steamTimer += STEAM_PER_SECOND * ratio * deltaTime;
+    _steamTimer += STEAM.perSecond * ratio * deltaTime;
     int count = static_cast<int>(_steamTimer);
     if (count <= 0) return;
     _steamTimer -= count;
 
     // 頭と肩のあたりから出す
-    VECTOR top = VAdd(GetCenter(), VGet(0.0f, bodyHeight * 0.35f, 0.0f));
+    VECTOR top = VAdd(GetCenter(), VGet(0.0f, bodyHeight * STEAM.heightRate, 0.0f));
     if (auto* effects = EffectManager::Get()) effects->PlaySteam(top, count);
 }
 
@@ -126,6 +126,11 @@ void Character::PlayAnimation(const std::string& name, float speed, bool restart
     // その場で付け替えて時間を 0 にしておく
     // 次の Play まで待つと、同じフレームの判定が前のアニメの時間を読んでしまう
     _animator->Play(name, 0.0f);
+}
+
+void Character::PlayBlowIn(VECTOR velocity) {
+    PlayAnimation("BlowIn", 1.0f, true);
+    FaceImmediately(VScale(velocity, -1.0f));
 }
 
 float Character::GetAnimationTime() const {
@@ -200,11 +205,34 @@ bool Character::IsGrounded() const {
     return _rigidbody ? _rigidbody->isGrounded : true;
 }
 
-bool Character::ConsumeWallHit(ArenaWall::Hit& outHit) {
-    if (!_hasWallHit) return false;
-
+ArenaWall::Reaction Character::StickToWall() {
+    if (!_hasWallHit) return ArenaWall::Reaction::None;
     _hasWallHit = false;
-    outHit = _wallHit;
+
+    ArenaWall::Hit hit = _wallHit;
+    ArenaWall::Reaction reaction = ArenaWall::React(*this, hit);
+    if (reaction != ArenaWall::Reaction::Bounce) return reaction;
+
+    // ぶつかった姿のまま壁に止める
+    _stuckWallHit = hit;
+    _stickTime = ArenaWall::GetStickTime(hit);
+    _stickTimer = 0.0f;
+    StopHorizontal();
+    SetVerticalVelocity(0.0f);
+    SetAnimationSpeed(0.0f);
+    return reaction;
+}
+
+bool Character::HoldOnWall(float deltaTime) {
+    // 張り付いている間は吹っ飛ばされ値を減らさず、壁に止めておく
+    HoldBlow();
+    StopHorizontal();
+    SetVerticalVelocity(0.0f);
+
+    _stickTimer += deltaTime;
+    if (_stickTimer < _stickTime) return false;
+
+    ArenaWall::Bounce(*this, _stuckWallHit);
     return true;
 }
 
@@ -301,21 +329,21 @@ void Character::UpdateBodyColor() {
     if (!_renderer || _renderer->ModelHandle == -1) return;
 
     // 1 より大きくすると明るくなる 当たった瞬間だけ白っぽく光らせる
-    float rate = (_flashTimer > 0.0f) ? _flashTimer / FLASH_TIME : 0.0f;
-    float scale = 1.0f + rate * 2.0f;
+    float rate = (_flashTimer > 0.0f) ? _flashTimer / FLASH.time : 0.0f;
+    float scale = 1.0f + rate * FLASH.brightness;
 
     // 吹っ飛ばされ値が溜まるほど赤くする 許容値に届いたらいちばん赤い
     float heat = GetBlowRatio();
     bool isBreakable = heat >= 1.0f;
     if (heat > 1.0f) heat = 1.0f;
 
-    float red = scale + heat * HEAT_RED;
-    float other = scale * (1.0f - heat * HEAT_FADE);
+    float red = scale + heat * HEAT.red;
+    float other = scale * (1.0f - heat * HEAT.fade);
 
     // 許容値に届いたら脈打たせる 倒された体は脈打たない
     if (isBreakable && !IsDead()) {
-        float pulse = (sinf(GetNowCount() / 1000.0f * HEAT_PULSE_SPEED) + 1.0f) * 0.5f;
-        red += pulse * HEAT_PULSE;
+        float pulse = (sinf(GetNowCount() / 1000.0f * HEAT.pulseSpeed) + 1.0f) * 0.5f;
+        red += pulse * HEAT.pulse;
     }
     MV1SetDifColorScale(_renderer->ModelHandle, GetColorF(red, other, other, 1.0f));
 }
