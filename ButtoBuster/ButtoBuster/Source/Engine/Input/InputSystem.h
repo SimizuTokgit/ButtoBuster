@@ -18,8 +18,11 @@ private:
     static constexpr int TRIGGER_PRESS = 128;
     static constexpr int TRIGGER_RELEASE = 64;
 
-    char _keys[256] = {};
-    char _prevKeys[256] = {};
+    // DxLib のキーの数 GetHitKeyStateAll が埋める配列の大きさ
+    static constexpr int KEY_COUNT = 256;
+
+    char _keys[KEY_COUNT] = {};
+    char _prevKeys[KEY_COUNT] = {};
 
     XINPUT_STATE _pad = {};
     XINPUT_STATE _prevPad = {};
@@ -93,12 +96,12 @@ public:
     // ----- キーボード -----
 
     bool KeyHeld(int key) const {
-        if (key < 0 || key >= 256) return false;
+        if (key < 0 || key >= KEY_COUNT) return false;
         return _keys[key] != 0;
     }
 
     bool KeyPressed(int key) const {
-        if (key < 0 || key >= 256) return false;
+        if (key < 0 || key >= KEY_COUNT) return false;
         return _keys[key] != 0 && _prevKeys[key] == 0;
     }
 
@@ -147,30 +150,10 @@ public:
     // ----- まとめて使うもの -----
 
     // 左スティック 遊びの内側はゼロにする
-    VECTOR LeftStick() const {
-        if (!_padConnected) return VGet(0.0f, 0.0f, 0.0f);
-
-        float x = _pad.ThumbLX / STICK_MAX;
-        float z = _pad.ThumbLY / STICK_MAX;
-
-        if (fabsf(x) < DEAD_ZONE) x = 0.0f;
-        if (fabsf(z) < DEAD_ZONE) z = 0.0f;
-
-        return VGet(x, 0.0f, z);
-    }
+    VECTOR LeftStick() const { return ReadStick(_pad.ThumbLX, _pad.ThumbLY); }
 
     // 右スティック 左と同じく x が右 z が上
-    VECTOR RightStick() const {
-        if (!_padConnected) return VGet(0.0f, 0.0f, 0.0f);
-
-        float x = _pad.ThumbRX / STICK_MAX;
-        float z = _pad.ThumbRY / STICK_MAX;
-
-        if (fabsf(x) < DEAD_ZONE) x = 0.0f;
-        if (fabsf(z) < DEAD_ZONE) z = 0.0f;
-
-        return VGet(x, 0.0f, z);
-    }
+    VECTOR RightStick() const { return ReadStick(_pad.ThumbRX, _pad.ThumbRY); }
 
     // 決定 タイトルやリザルトの進行に使う
     bool ConfirmHeld() const {
@@ -221,6 +204,19 @@ public:
 private:
     InputSystem() = default;
     ~InputSystem() = default;
+
+    // スティックの傾きを -1〜1 にして x と z に入れる 遊びの内側はゼロにする
+    VECTOR ReadStick(int rawX, int rawY) const {
+        if (!_padConnected) return VGet(0.0f, 0.0f, 0.0f);
+
+        float x = rawX / STICK_MAX;
+        float z = rawY / STICK_MAX;
+
+        if (fabsf(x) < DEAD_ZONE) x = 0.0f;
+        if (fabsf(z) < DEAD_ZONE) z = 0.0f;
+
+        return VGet(x, 0.0f, z);
+    }
 
     // 左スティックの上下 上がプラス -1〜1
     float StickY(const XINPUT_STATE& pad) const {

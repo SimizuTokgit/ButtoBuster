@@ -1,6 +1,7 @@
 ﻿#include "ParticleSystem.h"
 #include "ParticleManager.h"
 #include "Transform.h"
+#include "Mathf.h"
 #include <cmath>
 
 ParticleSystem::~ParticleSystem() {
@@ -32,10 +33,7 @@ bool ParticleSystem::IsAlive() const {
 
 void ParticleSystem::Emit(int count) {
     if (!_playing) {
-        _playing = true;
-        _elapsedTime = 0.0f;
-        _emissionAccumulator = 0.0f;
-        ParticleManager::Instance().Register(this);
+        Play();
     }
     for (int i = 0; i < count; ++i) {
         EmitSingle();
@@ -71,15 +69,15 @@ void ParticleSystem::EmitSingle() {
 
     // 速度を決定（ランダム方向 × ランダム速度）
     VECTOR dir = RandomEmitDirection();
-    float speed = RandomFloat(startSpeedMin, startSpeedMax);
+    float speed = Mathf::RandomRange(startSpeedMin, startSpeedMax);
     target->velocity = VScale(dir, speed);
 
     // ライフタイム
-    target->startLifetime = RandomFloat(startLifetimeMin, startLifetimeMax);
+    target->startLifetime = Mathf::RandomRange(startLifetimeMin, startLifetimeMax);
     target->remainingLifetime = target->startLifetime;
 
     // サイズ
-    target->startSize = RandomFloat(startSizeMin, startSizeMax);
+    target->startSize = Mathf::RandomRange(startSizeMin, startSizeMax);
 
     // 不透明度
     target->alpha = 1.0f;
@@ -176,31 +174,13 @@ void ParticleSystem::Render() {
     } else if (useSubPass) {
         // 二重パス描画（旧Damageエフェクト互換）
         // Pass 1: 減算ブレンド
-        for (const auto& p : _particles) {
-            if (!p.alive) continue;
-            float size = p.startSize * p.alpha;
-            int alpha255 = static_cast<int>(p.alpha * 255.0f);
-            SetDrawBlendMode(DX_BLENDMODE_SUB, alpha255);
-            DrawBillboard3D(p.position, 0.5f, 0.5f, size, 0.0f, graphHandle, TRUE);
-        }
+        RenderBillboards(DX_BLENDMODE_SUB);
 
         // Pass 2: 加算ブレンド
-        for (const auto& p : _particles) {
-            if (!p.alive) continue;
-            float size = p.startSize * p.alpha;
-            int alpha255 = static_cast<int>(p.alpha * 255.0f);
-            SetDrawBlendMode(DX_BLENDMODE_ADD_X4, alpha255);
-            DrawBillboard3D(p.position, 0.5f, 0.5f, size, 0.0f, graphHandle, TRUE);
-        }
+        RenderBillboards(DX_BLENDMODE_ADD_X4);
     } else {
         // 単一パス描画
-        for (const auto& p : _particles) {
-            if (!p.alive) continue;
-            float size = p.startSize * p.alpha;
-            int alpha255 = static_cast<int>(p.alpha * 255.0f);
-            SetDrawBlendMode(blendMode, alpha255);
-            DrawBillboard3D(p.position, 0.5f, 0.5f, size, 0.0f, graphHandle, TRUE);
-        }
+        RenderBillboards(blendMode);
     }
 
     // 描画設定を元に戻す
@@ -209,25 +189,29 @@ void ParticleSystem::Render() {
     SetUseZBufferFlag(FALSE);
 }
 
-float ParticleSystem::RandomFloat(float minVal, float maxVal) {
-    float t = static_cast<float>(GetRand(10000)) / 10000.0f;
-    return minVal + (maxVal - minVal) * t;
+void ParticleSystem::RenderBillboards(int mode) {
+    for (const auto& p : _particles) {
+        if (!p.alive) continue;
+        float size = p.startSize * p.alpha;
+        SetDrawBlendMode(mode, Mathf::ToByte(p.alpha));
+        DrawBillboard3D(p.position, 0.5f, 0.5f, size, 0.0f, graphHandle, TRUE);
+    }
 }
 
 VECTOR ParticleSystem::RandomDirection() {
     VECTOR dir;
     float lenSq;
     do {
-        dir.x = RandomFloat(-1.0f, 1.0f);
-        dir.y = RandomFloat(-1.0f, 1.0f);
-        dir.z = RandomFloat(-1.0f, 1.0f);
+        dir.x = Mathf::RandomRange(-1.0f, 1.0f);
+        dir.y = Mathf::RandomRange(-1.0f, 1.0f);
+        dir.z = Mathf::RandomRange(-1.0f, 1.0f);
         lenSq = VSquareSize(dir);
     } while (lenSq < 0.0001f || lenSq > 1.0f);
     return VNorm(dir);
 }
 
 VECTOR ParticleSystem::RandomEmitDirection() const {
-    if (spreadDegree >= 180.0f) return RandomDirection();
+    if (spreadDegree >= FULL_SPREAD_DEGREE) return RandomDirection();
 
     float axisLength = VSize(emitDirection);
     if (axisLength < 0.0001f) return RandomDirection();
@@ -235,7 +219,7 @@ VECTOR ParticleSystem::RandomEmitDirection() const {
 
     // 軸にでたらめな向きを混ぜてずらす 広がりが大きいほど多く混ぜる
     // 厳密に円錐の中で均等ではないが、火花の見た目には十分
-    float spread = spreadDegree * DX_PI_F / 180.0f;
+    float spread = Transform::Deg2Rad(spreadDegree);
     if (spread > DX_PI_F * 0.5f) spread = DX_PI_F * 0.5f;
     VECTOR mixed = VAdd(VScale(axis, cosf(spread)), VScale(RandomDirection(), sinf(spread)));
     if (VSquareSize(mixed) < 0.0001f) return axis;
@@ -274,7 +258,7 @@ void ParticleSystem::RenderStretched() {
 
         VECTOR head = VAdd(p.position, VScale(along, size * 0.5f));
         VECTOR tail = VSub(p.position, VScale(along, length));
-        int alpha255 = static_cast<int>(p.alpha * 255.0f);
+        int alpha255 = Mathf::ToByte(p.alpha);
 
         VERTEX3D headLeft = makeVertex(VAdd(head, side), 0.0f, 0.0f, alpha255);
         VERTEX3D headRight = makeVertex(VSub(head, side), 1.0f, 0.0f, alpha255);
@@ -302,6 +286,6 @@ void ParticleSystem::RenderStretched() {
 
 VECTOR ParticleSystem::RandomPointInSphere(float radius) {
     VECTOR dir = RandomDirection();
-    float r = radius * std::cbrt(RandomFloat(0.0f, 1.0f));
+    float r = radius * std::cbrt(Mathf::RandomRange(0.0f, 1.0f));
     return VScale(dir, r);
 }

@@ -15,9 +15,6 @@ public:
     /// 描画
     /// </summary>
     void Render() override {
-        if (!enabled || ModelHandle == -1 || !transform) return;
-
-        ApplyTransform();
-        MV1DrawModel(ModelHandle);
+        DrawModel();
     }
 };

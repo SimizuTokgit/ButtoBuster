@@ -127,7 +127,7 @@ public:
     /// コリジョン用モデルをデバッグ描画する
     /// </summary>
     /// <param name="color">描画色</param>
-    void DrawGizmo(unsigned int color = 0x00FF00) const {
+    void DrawGizmo(unsigned int color = GIZMO_COLOR) const {
         if (ModelHandle == -1) return;
 
         MV1DrawModelDebug(
@@ -144,16 +144,6 @@ public:
     /// 読み込まれているか
     /// </summary>
     bool IsLoaded() const { return ModelHandle != -1; }
-
-    /// <summary>
-    /// ワールド座標での中心位置を取得（オーバーライド）
-    /// </summary>
-    VECTOR GetWorldCenter() const override {
-        if (transform) {
-            return VAdd(transform->position, center);
-        }
-        return center;
-    }
 
 private:
     /// <summary>

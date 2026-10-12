@@ -16,6 +16,11 @@
 #include "InputSystem.h"
 #include "DebugMenu.h"
 
+namespace {
+    // 当たり判定を表示するデバッグ切り替えの名前
+    const char* const GIZMO_TOGGLE_NAME = "当たり判定";
+}
+
 bool System::Main(const std::function<bool()>& loadFirstScene) {
     if (!Initialize(loadFirstScene)) return false;
 
@@ -42,7 +47,7 @@ bool System::Initialize(const std::function<bool()>& loadFirstScene) {
     SoundManager::Instance().Init();
 
     // 制作用のチートはここか各シーンで足す
-    DebugMenu::Instance().AddToggle(KEY_INPUT_F2, "当たり判定");
+    DebugMenu::Instance().AddToggle(KEY_INPUT_F2, GIZMO_TOGGLE_NAME);
 
     if (!loadFirstScene || !loadFirstScene()) return false;
 
@@ -111,7 +116,7 @@ void System::MainLoop() {
         ParticleManager::Instance().RenderAll();
         UIManager::Instance().RenderAll();
 
-        if (DebugMenu::Instance().GetToggle("当たり判定")) {
+        if (DebugMenu::Instance().GetToggle(GIZMO_TOGGLE_NAME)) {
             scene.DrawGizmos();
         }
         DebugMenu::Instance().Render();

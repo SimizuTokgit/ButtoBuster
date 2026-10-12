@@ -14,7 +14,7 @@ public:
     // 粒が残ったまま消されたときに、マネージャーが消えたものを回さないように外す
     ~ParticleSystem() override;
 
-    // === Emission ===
+    // === 放出 ===
 
     /// <summary>最大パーティクル数</summary>
     int maxParticles = 256;
@@ -25,15 +25,16 @@ public:
     /// <summary>球体放出時の半径</summary>
     float emissionRadius = 0.0f;
 
-    // 飛ばす向きと広がり 広がりが 180 度なら全方向
+    // 飛ばす向きと広がり 広がりが FULL_SPREAD_DEGREE 以上なら全方向
     // 斬った向きに火花を飛ばすときに絞る
+    static constexpr float FULL_SPREAD_DEGREE = 180.0f;
     VECTOR emitDirection = VGet(0, 1, 0);
-    float spreadDegree = 180.0f;
+    float spreadDegree = FULL_SPREAD_DEGREE;
 
     /// <summary>秒あたりの放出数（0 = バーストのみ）</summary>
     float emissionRate = 0.0f;
 
-    // === Lifetime ===
+    // === 寿命 ===
 
     /// <summary>初期ライフタイム（最小値、秒）</summary>
     float startLifetimeMin = 0.5f;
@@ -41,7 +42,7 @@ public:
     /// <summary>初期ライフタイム（最大値、秒）</summary>
     float startLifetimeMax = 1.0f;
 
-    // === Speed ===
+    // === 速さ ===
 
     /// <summary>初期速度（最小値）</summary>
     float startSpeedMin = 200.0f;
@@ -49,7 +50,7 @@ public:
     /// <summary>初期速度（最大値）</summary>
     float startSpeedMax = 750.0f;
 
-    // === Size ===
+    // === 大きさ ===
 
     /// <summary>初期サイズ（最小値）</summary>
     float startSizeMin = 4.0f;
@@ -57,12 +58,12 @@ public:
     /// <summary>初期サイズ（最大値）</summary>
     float startSizeMax = 16.0f;
 
-    // === Color ===
+    // === 色 ===
 
     /// <summary>描画色</summary>
     COLOR_U8 color = GetColorU8(255, 255, 255, 255);
 
-    // === Physics ===
+    // === 物理 ===
 
     /// <summary>重力</summary>
     VECTOR gravity = VGet(0, 0, 0);
@@ -70,7 +71,7 @@ public:
     /// <summary>減速量（速度単位/秒）</summary>
     float drag = 0.0f;
 
-    // === Rendering ===
+    // === 描画 ===
 
     /// <summary>パーティクル画像ハンドル</summary>
     int graphHandle = -1;
@@ -92,7 +93,7 @@ public:
     /// </summary>
     float alphaFadeRatio = 0.0f;
 
-    // === Control ===
+    // === 再生 ===
 
     /// <summary>ループ再生</summary>
     bool looping = false;
@@ -100,7 +101,7 @@ public:
     /// <summary>再生時間（秒、looping=true時のエミッション期間）</summary>
     float duration = 1.0f;
 
-    // === Public Methods ===
+    // === 操作 ===
 
     /// <summary>パーティクルの放出を開始する</summary>
     void Play();
@@ -117,7 +118,7 @@ public:
     /// <summary>指定数のパーティクルを即座に放出する</summary>
     void Emit(int count);
 
-    // === Internal（ParticleManagerから呼ばれる） ===
+    // === 内部用（ParticleManagerから呼ばれる） ===
 
     void Update(float deltaTime);
     void Render();
@@ -129,10 +130,12 @@ private:
     float _emissionAccumulator = 0.0f;
 
     void EmitSingle();
-    static float RandomFloat(float minVal, float maxVal);
     static VECTOR RandomDirection();
     VECTOR RandomEmitDirection() const;
     void RenderStretched();
+
+    // 生きている粒を、指定のブレンドで板として描く
+    void RenderBillboards(int mode);
 
     // 尾を引く板の頂点 毎フレーム作り直すので持っておいて使い回す
     std::vector<VERTEX3D> _vertices;

@@ -3,7 +3,6 @@
 #include <type_traits>
 #include <typeindex>
 #include <unordered_map>
-#include <cmath>
 #include <utility>
 #include <memory>
 #include <string>
@@ -12,8 +11,6 @@
 #include "Transform.h"
 #include "MonoBehaviour.h"
 #include "Collision.h"
-
-using namespace std;
 
 // 前方宣言
 class Collider;
@@ -25,18 +22,18 @@ class Collider;
 /// </summary>
 class GameObject : public Object {
 private:
-    vector<unique_ptr<Component>> _components;
-    unordered_map<type_index, Component*> _byType;
+    std::vector<std::unique_ptr<Component>> _components;
+    std::unordered_map<std::type_index, Component*> _byType;
 
     /// <summary>子GameObjectの所有権リスト（メモリ管理用）</summary>
-    vector<unique_ptr<GameObject>> _ownedChildren;
+    std::vector<std::unique_ptr<GameObject>> _ownedChildren;
 
 public:
     Transform* transform = nullptr;
     GameObject* gameObject = nullptr;
 
     /// <summary>オブジェクト名（デバッグ用）</summary>
-    string name;
+    std::string name;
 
     /// <summary>アクティブ状態</summary>
     bool activeSelf = true;
@@ -53,7 +50,7 @@ public:
         gameObject = this;
     }
 
-    GameObject(const string& objectName) : GameObject() {
+    GameObject(const std::string& objectName) : GameObject() {
         name = objectName;
     }
 
@@ -63,22 +60,22 @@ public:
 
     template<typename T, typename... Args>
     T* AddComponent(Args&&... args) {
-        static_assert(is_base_of<Component, T>::value, "T must be a Component");
-        auto component = make_unique<T>(forward<Args>(args)...);
+        static_assert(std::is_base_of<Component, T>::value, "T must be a Component");
+        auto component = std::make_unique<T>(std::forward<Args>(args)...);
 
         component->transform = transform;
         component->gameObject = gameObject;
 
         auto* rawPtr = component.get();
-        _components.push_back(move(component));
-        _byType[type_index(typeid(T))] = rawPtr;
+        _components.push_back(std::move(component));
+        _byType[std::type_index(typeid(T))] = rawPtr;
 
         return rawPtr;
     }
 
     template<typename T>
     T* GetComponent() {
-        auto it = _byType.find(type_index(typeid(T)));
+        auto it = _byType.find(std::type_index(typeid(T)));
         if (it != _byType.end()) {
             return static_cast<T*>(it->second);
         }
@@ -116,8 +113,8 @@ public:
     /// 自分自身は検索対象に含まない
     /// </summary>
     template<typename T>
-    vector<T*> GetComponentsInChildren() {
-        vector<T*> results;
+    std::vector<T*> GetComponentsInChildren() {
+        std::vector<T*> results;
         size_t count = transform->GetChildCount();
         for (size_t i = 0; i < count; ++i) {
             auto* childTransform = transform->GetChild(i);
@@ -151,8 +148,8 @@ public:
     /// UnityのGetComponentsInParent相当
     /// </summary>
     template<typename T>
-    vector<T*> GetComponentsInParent() {
-        vector<T*> results;
+    std::vector<T*> GetComponentsInParent() {
+        std::vector<T*> results;
         GameObject* current = this;
         while (current) {
             auto* component = current->GetComponent<T>();
@@ -170,7 +167,7 @@ private:
     /// GetComponentsInChildrenの内部実装（再帰用）
     /// </summary>
     template<typename T>
-    void GetComponentsInChildrenInternal(vector<T*>& results) {
+    void GetComponentsInChildrenInternal(std::vector<T*>& results) {
         auto* component = GetComponent<T>();
         if (component) {
             results.push_back(component);
@@ -191,12 +188,12 @@ public:
     /// </summary>
     /// <param name="childName">子オブジェクト名</param>
     /// <returns>作成した子GameObjectへのポインタ</returns>
-    GameObject* AddChild(const string& childName = "") {
-        auto child = make_unique<GameObject>(childName);
+    GameObject* AddChild(const std::string& childName = "") {
+        auto child = std::make_unique<GameObject>(childName);
         child->transform->SetParent(this->transform);
 
         auto* rawPtr = child.get();
-        _ownedChildren.push_back(move(child));
+        _ownedChildren.push_back(std::move(child));
 
         return rawPtr;
     }
@@ -263,7 +260,7 @@ public:
     /// <summary>
     /// 名前で子GameObjectを検索
     /// </summary>
-    GameObject* FindChild(const string& childName) {
+    GameObject* FindChild(const std::string& childName) {
         size_t count = transform->GetChildCount();
         for (size_t i = 0; i < count; ++i) {
             auto* childTransform = transform->GetChild(i);
@@ -282,7 +279,7 @@ public:
     /// </summary>
     /// <param name="objectName">検索するオブジェクト名</param>
     /// <returns>見つかったGameObject、見つからない場合はnullptr</returns>
-    inline static GameObject* Find(const string& objectName);
+    inline static GameObject* Find(const std::string& objectName);
 
     // ===== ライフサイクル =====
 
@@ -396,14 +393,14 @@ public:
 
 private:
     Transform* CreateTransformComponent() {
-        auto component = make_unique<Transform>();
+        auto component = std::make_unique<Transform>();
 
         component->transform = component.get();
         component->gameObject = this;
 
         auto* rawPtr = component.get();
-        _components.push_back(move(component));
-        _byType[type_index(typeid(Transform))] = rawPtr;
+        _components.push_back(std::move(component));
+        _byType[std::type_index(typeid(Transform))] = rawPtr;
 
         return rawPtr;
     }
@@ -441,6 +438,6 @@ std::vector<T*> Component::GetComponentsInParent() {
 // Scene の定義が必要なため、ここでインクルード
 #include "Scene.h"
 
-inline GameObject* GameObject::Find(const string& objectName) {
+inline GameObject* GameObject::Find(const std::string& objectName) {
     return Scene::Instance().Find(objectName);
 }

@@ -42,4 +42,9 @@ namespace Mathf {
     inline float RandomRange(float min, float max) {
         return min + (max - min) * (static_cast<float>(GetRand(RANDOM_STEPS)) / RANDOM_STEPS);
     }
+
+    // 0〜1 の割合を 0〜255 にする 音量や透明度を DxLib に渡すときに使う 範囲の外は端にそろえる
+    inline int ToByte(float rate) {
+        return static_cast<int>(Clamp01(rate) * 255.0f);
+    }
 }

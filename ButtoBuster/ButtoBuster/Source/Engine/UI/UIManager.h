@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <vector>
-#include <algorithm>
+#include "ContainerUtil.h"
 
-// forward declaration
+// 前方宣言
 class UIImage;
 
 /// <summary>
@@ -26,20 +26,12 @@ public:
 
     /// <summary>UIImageを登録</summary>
     void Register(UIImage* image) {
-        if (image) {
-            auto it = std::find(_images.begin(), _images.end(), image);
-            if (it == _images.end()) {
-                _images.push_back(image);
-            }
-        }
+        ContainerUtil::AddUnique(_images, image);
     }
 
     /// <summary>UIImageの登録解除</summary>
     void Unregister(UIImage* image) {
-        auto it = std::find(_images.begin(), _images.end(), image);
-        if (it != _images.end()) {
-            _images.erase(it);
-        }
+        ContainerUtil::Remove(_images, image);
     }
 
     /// <summary>登録されている全UIImageを描画</summary>

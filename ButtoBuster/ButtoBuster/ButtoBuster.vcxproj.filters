@@ -398,6 +398,9 @@
     <ClInclude Include="Source\Engine\Core\Component.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Core\ContainerUtil.h">
+      <Filter>Source\Engine\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Core\GameObject.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
@@ -483,9 +486,6 @@
       <Filter>Source\Engine\Render</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Render\Skybox.h">
-      <Filter>Source\Engine\Render</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Engine\Render\SpriteRenderer.h">
       <Filter>Source\Engine\Render</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\UI\UIImage.h">

@@ -12,11 +12,26 @@ class Skybox;
 /// </summary>
 class Camera : public Component {
 public:
+    // クリップ面の初期値 Skybox が描いたあとに戻す値もこれ
+    static constexpr float DEFAULT_NEAR = 10.0f;
+    static constexpr float DEFAULT_FAR = 50000.0f;
+
+    // Transform が無いときのカメラ位置
+    static constexpr VECTOR DEFAULT_POSITION = { 0.0f, 0.0f, -100.0f };
+
+    // 注視点が未設定のとき、前方のこの距離を見る
+    static constexpr float LOOK_DISTANCE = 100.0f;
+
+    // ライトの初期値 斜め上から照らす白い光と、暗い所を少し持ち上げる環境光
+    static constexpr VECTOR DEFAULT_LIGHT_DIRECTION = { 0.5f, -1.0f, 0.5f };
+    static constexpr COLOR_F DEFAULT_LIGHT_DIFFUSE = { 1.0f, 1.0f, 1.0f, 1.0f };
+    static constexpr COLOR_F DEFAULT_LIGHT_AMBIENT = { 0.3f, 0.3f, 0.3f, 1.0f };
+
     /// <summary>近クリップ面</summary>
-    float nearClipPlane = 10.0f;
+    float nearClipPlane = DEFAULT_NEAR;
 
     /// <summary>遠クリップ面</summary>
-    float farClipPlane = 50000.0f;
+    float farClipPlane = DEFAULT_FAR;
 
     /// <summary>視野角（度）</summary>
     float fieldOfView = 60.0f;
@@ -91,10 +106,10 @@ public:
         SetCameraNearFar(nearClipPlane, farClipPlane);
 
         // 視野角を設定（ラジアンに変換）
-        SetupCamera_Perspective(fieldOfView * DX_PI_F / 180.0f);
+        SetupCamera_Perspective(Transform::Deg2Rad(fieldOfView));
 
         // カメラ位置を取得
-        VECTOR cameraPos = transform ? transform->localPosition : VGet(0, 0, -100);
+        VECTOR cameraPos = transform ? transform->localPosition : DEFAULT_POSITION;
 
         // 注視点を決定
         VECTOR lookAt;
@@ -105,7 +120,7 @@ public:
             // 注視点が未設定ならTransformの前方向を使用
             float rotY = Transform::Deg2Rad(transform->localEulerAngles.y);
             VECTOR forward = VGet(sinf(rotY), 0, cosf(rotY));
-            lookAt = VAdd(cameraPos, VScale(forward, 100.0f));
+            lookAt = VAdd(cameraPos, VScale(forward, LOOK_DISTANCE));
         }
         else {
             lookAt = VGet(0, 0, 0);
@@ -131,9 +146,9 @@ public:
     /// <param name="diffuse">ディフューズカラー</param>
     /// <param name="ambient">アンビエントカラー</param>
     void SetupDirectionalLight(
-        VECTOR direction = VGet(0.5f, -1.0f, 0.5f),
-        COLOR_F diffuse = GetColorF(1.0f, 1.0f, 1.0f, 1.0f),
-        COLOR_F ambient = GetColorF(0.3f, 0.3f, 0.3f, 1.0f)
+        VECTOR direction = DEFAULT_LIGHT_DIRECTION,
+        COLOR_F diffuse = DEFAULT_LIGHT_DIFFUSE,
+        COLOR_F ambient = DEFAULT_LIGHT_AMBIENT
     ) {
         VECTOR lightDir = VNorm(direction);
         SetLightDirection(lightDir);

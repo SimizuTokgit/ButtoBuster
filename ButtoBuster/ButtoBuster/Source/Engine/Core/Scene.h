@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <type_traits>
 
 class GameObject;
 class Component;
@@ -132,18 +131,6 @@ private:
     /// 再帰的に名前でGameObjectを検索
     /// </summary>
     GameObject* FindRecursive(GameObject* obj, const std::string& name);
-
-    /// <summary>
-    /// 再帰的にコンポーネントを検索
-    /// </summary>
-    template<typename T>
-    T* FindFirstObjectByTypeRecursive(GameObject* obj);
-
-    /// <summary>
-    /// 再帰的に全てのコンポーネントを収集
-    /// </summary>
-    template<typename T>
-    void FindObjectsByTypeRecursive(GameObject* obj, std::vector<T*>& results);
 };
 
 // テンプレートメソッドの実装（ヘッダーに配置が必要）
@@ -159,28 +146,7 @@ T* Scene::FindFirstObjectByType() {
         }
 
         // 子孫を再帰的に検索
-        auto* found = FindFirstObjectByTypeRecursive<T>(obj.get());
-        if (found) {
-            return found;
-        }
-    }
-    return nullptr;
-}
-
-template<typename T>
-T* Scene::FindFirstObjectByTypeRecursive(GameObject* obj) {
-    size_t childCount = obj->GetChildCount();
-    for (size_t i = 0; i < childCount; ++i) {
-        auto* child = obj->GetChild(i);
-
-        // 子オブジェクトをチェック
-        auto* component = child->GetComponent<T>();
-        if (component) {
-            return component;
-        }
-
-        // 孫以降を再帰的に検索
-        auto* found = FindFirstObjectByTypeRecursive<T>(child);
+        auto* found = obj->GetComponentInChildren<T>();
         if (found) {
             return found;
         }
@@ -199,26 +165,10 @@ std::vector<T*> Scene::FindObjectsByType() {
         }
 
         // 子孫を再帰的に収集
-        FindObjectsByTypeRecursive<T>(obj.get(), results);
+        std::vector<T*> found = obj->GetComponentsInChildren<T>();
+        results.insert(results.end(), found.begin(), found.end());
     }
     return results;
-}
-
-template<typename T>
-void Scene::FindObjectsByTypeRecursive(GameObject* obj, std::vector<T*>& results) {
-    size_t childCount = obj->GetChildCount();
-    for (size_t i = 0; i < childCount; ++i) {
-        auto* child = obj->GetChild(i);
-
-        // 子オブジェクトをチェック
-        auto* component = child->GetComponent<T>();
-        if (component) {
-            results.push_back(component);
-        }
-
-        // 孫以降を再帰的に収集
-        FindObjectsByTypeRecursive<T>(child, results);
-    }
 }
 
 // ===== Object テンプレートメソッドの実装 =====

@@ -187,6 +187,7 @@
     <ClInclude Include="Source\Engine\Audio\SoundManager.h" />
     <ClInclude Include="Source\Engine\Core\Behaviour.h" />
     <ClInclude Include="Source\Engine\Core\Component.h" />
+    <ClInclude Include="Source\Engine\Core\ContainerUtil.h" />
     <ClInclude Include="Source\Engine\Core\GameObject.h" />
     <ClInclude Include="Source\Engine\Core\Mathf.h" />
     <ClInclude Include="Source\Engine\Core\MonoBehaviour.h" />
@@ -216,7 +217,6 @@
     <ClInclude Include="Source\Engine\Render\Renderer.h" />
     <ClInclude Include="Source\Engine\Render\SkinnedMeshRenderer.h" />
     <ClInclude Include="Source\Engine\Render\Skybox.h" />
-    <ClInclude Include="Source\Engine\Render\SpriteRenderer.h" />
     <ClInclude Include="Source\Engine\UI\UIImage.h" />
     <ClInclude Include="Source\Engine\UI\UIManager.h" />
     <ClInclude Include="Source\Game\Camera\CameraData.h" />

@@ -1,5 +1,6 @@
 ﻿#include "RenderManager.h"
 #include "Renderer.h"
+#include <algorithm>
 
 void RenderManager::RenderAll() {
     // 半透明のものは不透明なものを全部描いてから描く

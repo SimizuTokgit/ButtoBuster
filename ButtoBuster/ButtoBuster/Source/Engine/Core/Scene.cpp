@@ -6,8 +6,8 @@ GameObject* Scene::CreateGameObject(const std::string& name) {
     auto* rawPtr = obj.get();
     _rootObjects.push_back(std::move(obj));
 
-    // ゲーム中に生成された場合に備えて Start 待ちへ積む。
-    // シーン開始時の一括 Start を通る分は Scene::Start 側で破棄される
+    // Start 待ちへ積む。
+    // ゲーム中に生成したものは次のフレームの頭で、シーン構築時のものは Scene::Start でまとめて Start する
     _pendingStart.push_back(rawPtr);
 
     return rawPtr;
@@ -24,8 +24,9 @@ void Scene::Destroy(GameObject* obj) {
     if (obj->pendingDestroy) return;
     obj->pendingDestroy = true;
 
-    // 予約した時点で更新も描画も止めておく
+    // 予約した時点で更新を止めておく
     // （実際に消えるのはフレーム末なので、それまで動き続けないようにする）
+    // 描画は Renderer 側が別に回しているので、消えるまでは描かれる
     obj->activeSelf = false;
 
     _destroyQueue.push_back(obj);

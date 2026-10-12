@@ -3,7 +3,6 @@
 #include "Quaternion.h"
 #include "DxLib.h"
 #include <vector>
-#include <cmath>
 
 /// <summary>
 /// Transform コンポーネント

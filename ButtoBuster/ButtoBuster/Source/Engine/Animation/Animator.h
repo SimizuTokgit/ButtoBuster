@@ -58,11 +58,7 @@ public:
 
         MV1SetFrameUserLocalMatrix(ModelHandle, RootFrame, MGetIdent());
 
-        _animations.clear();
-        _clipOrder.clear();
-        _currentAnimName.clear();
-        _attachIndex = -1;
-        _animPlayTime = 0.0f;
+        ResetAnimations();
 
         return true;
     }
@@ -123,7 +119,7 @@ public:
             if (_animPlayTime > clip->TotalTime) _animPlayTime = clip->TotalTime;
         }
 
-        // AnimationEvent detection
+        // アニメーションイベントの判定
         if (!clip->events.empty()) {
             static constexpr float TIME_SCALE = 10000.0f;
             int prevI = static_cast<int>(prevTime * TIME_SCALE);
@@ -133,11 +129,11 @@ public:
                 int evtI = static_cast<int>(evt.time * TIME_SCALE);
 
                 if (clip->IsLoop && prevI > currI) {
-                    // Loop wraparound: fire if NOT in [currI, prevI)
+                    // ループで頭に戻ったとき [currI, prevI) の外なら呼ぶ
                     if (evtI >= currI && evtI < prevI) continue;
                 }
                 else {
-                    // Normal: fire if in [prevI, currI)
+                    // 通常は [prevI, currI) の中なら呼ぶ
                     if (evtI < prevI || evtI >= currI) continue;
                 }
 
@@ -215,6 +211,18 @@ public:
     /// 登録したアニメの名前を、登録した順に返す
     /// </summary>
     const std::vector<std::string>& GetClipNames() const { return _clipOrder; }
+
+private:
+    /// <summary>
+    /// 登録したアニメと再生の状態を空に戻す（初期化のときに呼ぶ）
+    /// </summary>
+    void ResetAnimations() {
+        _animations.clear();
+        _clipOrder.clear();
+        _currentAnimName.clear();
+        _attachIndex = -1;
+        _animPlayTime = 0.0f;
+    }
 };
 
 // SkinnedMeshRendererとの連携用インライン関数
@@ -228,18 +236,14 @@ inline bool Animator::InitFromRenderer(SkinnedMeshRenderer* renderer) {
     RootFrame = renderer->RootFrame;
 
     if (RootFrame == -1) {
-        RootFrame = MV1SearchFrame(ModelHandle, "root");
+        RootFrame = MV1SearchFrame(ModelHandle, renderer->rootBoneName);
     }
 
     if (RootFrame != -1) {
         MV1SetFrameUserLocalMatrix(ModelHandle, RootFrame, MGetIdent());
     }
 
-    _animations.clear();
-    _clipOrder.clear();
-    _currentAnimName.clear();
-    _attachIndex = -1;
-    _animPlayTime = 0.0f;
+    ResetAnimations();
 
     renderer->animator = this;
 

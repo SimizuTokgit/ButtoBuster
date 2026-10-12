@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <vector>
-#include <algorithm>
+#include "ContainerUtil.h"
 
 // 前方宣言
 class AudioSource;
@@ -28,20 +28,12 @@ public:
 
     /// <summary>AudioSourceを登録</summary>
     void RegisterSource(AudioSource* source) {
-        if (source) {
-            auto it = std::find(_sources.begin(), _sources.end(), source);
-            if (it == _sources.end()) {
-                _sources.push_back(source);
-            }
-        }
+        ContainerUtil::AddUnique(_sources, source);
     }
 
     /// <summary>AudioSourceの登録解除</summary>
     void UnregisterSource(AudioSource* source) {
-        auto it = std::find(_sources.begin(), _sources.end(), source);
-        if (it != _sources.end()) {
-            _sources.erase(it);
-        }
+        ContainerUtil::Remove(_sources, source);
     }
 
     /// <summary>アクティブなAudioListenerを設定</summary>

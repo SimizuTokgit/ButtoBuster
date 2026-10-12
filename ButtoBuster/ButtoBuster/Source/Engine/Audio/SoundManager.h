@@ -129,17 +129,17 @@ private:
     /// </summary>
     const std::string* ResolveSEName(const std::string& seName) const;
 
-    /// <summary>未使用の SE 用 AudioSource を取得（全て再生中なら nullptr）</summary>
-    AudioSource* GetUnusedSESource();
+    /// <summary>読み込み済みのクリップを名前で探す（無い、または読み込めていなければ nullptr）</summary>
+    static AudioClip* FindLoadedClip(const ClipMap& clips, const std::string& name);
 
-    /// <summary>未使用の BGM 用 AudioSource を取得</summary>
-    AudioSource* GetUnusedBGMSource();
+    /// <summary>2D 再生用の AudioSource を count 個作ってプールに入れる</summary>
+    void BuildSourcePool(std::vector<AudioSource*>& pool, int count);
 
-    static float ClampVolume(float v) {
-        if (v < 0.0f) return 0.0f;
-        if (v > 1.0f) return 1.0f;
-        return v;
-    }
+    /// <summary>プールから未使用の AudioSource を取得（全て再生中なら nullptr）</summary>
+    static AudioSource* FindUnusedSource(const std::vector<AudioSource*>& pool);
+
+    /// <summary>プールの AudioSource にクリップを載せて 2D で再生する</summary>
+    static void PlayOnSource(AudioSource* src, AudioClip* clip, bool loop, float volume);
 
     // AudioSource プールのサイズ
     // BGM はクロスフェードで同時に 2 本鳴らせるよう 2 にする

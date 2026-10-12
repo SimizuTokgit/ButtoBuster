@@ -28,6 +28,9 @@ public:
     /// </summary>
     bool isTrigger = false;
 
+    /// <summary>デバッグ描画の色（緑）</summary>
+    static constexpr unsigned int GIZMO_COLOR = 0x00FF00;
+
     /// <summary>ローカル座標でのオフセット</summary>
     VECTOR center = VGet(0, 0, 0);
 
