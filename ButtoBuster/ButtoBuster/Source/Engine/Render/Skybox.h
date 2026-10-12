@@ -14,7 +14,7 @@ public:
     float farClipPlane = 100000.0f;
 
     /// <summary>スカイボックス用の近クリップ面</summary>
-    float nearClipPlane = Camera::DEFAULT_NEAR;
+    float nearClipPlane = Camera::INITIAL_NEAR_CLIP;
 
     /// <summary>空用3Dモデルハンドル（準定数）</summary>
     int ModelHandle = -1;
@@ -65,7 +65,7 @@ public:
     /// </summary>
     /// <param name="savedNear">復元用の近クリップ面</param>
     /// <param name="savedFar">復元用の遠クリップ面</param>
-    void Render(float savedNear = Camera::DEFAULT_NEAR, float savedFar = Camera::DEFAULT_FAR) {
+    void Render(float savedNear = Camera::INITIAL_NEAR_CLIP, float savedFar = Camera::INITIAL_FAR_CLIP) {
         if (ModelHandle == -1) return;
 
         SetCameraNearFar(nearClipPlane, farClipPlane);

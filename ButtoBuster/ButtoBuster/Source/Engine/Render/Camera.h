@@ -13,8 +13,9 @@ class Skybox;
 class Camera : public Component {
 public:
     // クリップ面の初期値 Skybox が描いたあとに戻す値もこれ
-    static constexpr float DEFAULT_NEAR = 10.0f;
-    static constexpr float DEFAULT_FAR = 50000.0f;
+    // DEFAULT_NEAR / DEFAULT_FAR は DxLib.h にマクロとしてあるので、その名前は使わない
+    static constexpr float INITIAL_NEAR_CLIP = 10.0f;
+    static constexpr float INITIAL_FAR_CLIP = 50000.0f;
 
     // Transform が無いときのカメラ位置
     static constexpr VECTOR DEFAULT_POSITION = { 0.0f, 0.0f, -100.0f };
@@ -28,10 +29,10 @@ public:
     static constexpr COLOR_F DEFAULT_LIGHT_AMBIENT = { 0.3f, 0.3f, 0.3f, 1.0f };
 
     /// <summary>近クリップ面</summary>
-    float nearClipPlane = DEFAULT_NEAR;
+    float nearClipPlane = INITIAL_NEAR_CLIP;
 
     /// <summary>遠クリップ面</summary>
-    float farClipPlane = DEFAULT_FAR;
+    float farClipPlane = INITIAL_FAR_CLIP;
 
     /// <summary>視野角（度）</summary>
     float fieldOfView = 60.0f;
