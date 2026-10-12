@@ -180,10 +180,10 @@ InputInfo EnemyAI::Surround(InputInfo input, VECTOR toTarget, float deltaTime) {
     float slotDistance = VSize(toSlot);
     if (slotDistance < SLOT_ARRIVE_DISTANCE) return input;
 
-    // 遠ければ走って追いつき、近ければ歩いて回り込む 賢さ 4 からは、場所を移るときも走ってキビキビ動く
+    // 遠ければ走って追いつき、近ければ歩いて回り込む 賢さ 4 からは、いつも走ってキビキビ動く
     // 賢さ 0 の敵 (行動の木を使わない) は _intelligence が 0 のまま
-    float runDistance = (_intelligence >= LEVEL_ENCIRCLE) ? ENCIRCLE_RUN_DISTANCE : SLOT_RUN_DISTANCE;
-    float amount = (slotDistance > runDistance) ? 1.0f : 0.5f;
+    bool isRunning = _intelligence >= LEVEL_ENCIRCLE || slotDistance > SLOT_RUN_DISTANCE;
+    float amount = isRunning ? 1.0f : 0.5f;
     input.move = VScale(toSlot, amount / slotDistance);
     return input;
 }
@@ -498,13 +498,9 @@ BehaviorStatus EnemyAI::Flank(float deltaTime) {
 BehaviorStatus EnemyAI::Encircle(float deltaTime) {
     _enemy->SetThinking("すき間へ回って囲む");
 
-    // 着いたら棒立ちにせず、すき間の真ん中を挟んで左右へ踏み替える
-    _stepTimer -= deltaTime;
-    if (_stepTimer <= 0.0f) {
-        _stepSign = -_stepSign;
-        _stepTimer = RandomRange(STEP_TIME_MIN, STEP_TIME_MAX);
-    }
-    CircleTo(FindGapAngle() + _stepSign * STEP_ANGLE);
+    // 着いたら棒立ちにせず、すき間の真ん中を挟んで左右へ踏み替える 番号で時をずらし、全員がそろって動かないように
+    int stepCount = static_cast<int>(GetNowCount() / (STEP_TIME * 1000.0f)) + _enemy->GetId();
+    CircleTo(FindGapAngle() + ((stepCount % 2 == 0) ? STEP_ANGLE : -STEP_ANGLE));
 
     _input = Surround(_input, _toTarget, deltaTime);
     return BehaviorStatus::Running;
@@ -518,8 +514,9 @@ void EnemyAI::CircleTo(float angle) {
         return;
     }
 
-    // 向かう間は普段より速く回る 賢さ 4 からはさらに速く
-    float rate = (_intelligence >= LEVEL_ENCIRCLE) ? ENCIRCLE_SPEED_RATE : FLANK_SPEED_RATE;
+    // 向かう間は普段より速く回る 賢さ 4 からは走る速さで回る (回る角度の速さ = 走る速さ / 待つ間合い)
+    const EnemyData& data = _enemy->GetData();
+    float rate = (_intelligence >= LEVEL_ENCIRCLE) ? data.runSpeed / data.surroundRadius / ORBIT_SPEED : FLANK_SPEED_RATE;
     _orbitDirection = (diff > 0.0f) ? rate : -rate;
 }
 
@@ -532,7 +529,6 @@ float EnemyAI::FindGapAngle() const {
     // いちばん小さいのが左隣、いちばん大きいのが右隣 (右隣までの角度は 2π から引いた分)
     float nearest = DX_TWO_PI_F;
     float farthest = 0.0f;
-    bool hasAlly = false;
     for (const Character* other : CharacterRegistry::GetAll()) {
         if (other == _enemy || other->team != _enemy->team || other->IsDead()) continue;
 
@@ -544,18 +540,16 @@ float EnemyAI::FindGapAngle() const {
         if (diff < 0.0f) diff += DX_TWO_PI_F;
         if (diff < nearest) nearest = diff;
         if (diff > farthest) farthest = diff;
-        hasAlly = true;
     }
 
     VECTOR back = VScale(target->GetForward(), -1.0f);
     float backAngle = atan2f(back.z, back.x);
-    if (!hasAlly) return backAngle;
+    if (nearest >= DX_TWO_PI_F) return backAngle;
 
-    // 左隣と右隣の真ん中 そこからすき間の中で、背中側へ少し寄せる
-    float toLeft = nearest;
-    float toRight = DX_TWO_PI_F - farthest;
-    float middle = myAngle + (toLeft - toRight) * 0.5f;
-    float lean = (toLeft + toRight) * 0.5f * ENCIRCLE_BACK_LEAN;
+    // 左隣と右隣の間のすき間の真ん中 そこからすき間の中で、背中側へ少し寄せる
+    float gap = nearest + DX_TWO_PI_F - farthest;
+    float middle = myAngle + nearest - gap * 0.5f;
+    float lean = gap * 0.5f * ENCIRCLE_BACK_LEAN;
     float toBack = WrapAngle(backAngle - middle);
     if (toBack > lean) toBack = lean;
     if (toBack < -lean) toBack = -lean;
