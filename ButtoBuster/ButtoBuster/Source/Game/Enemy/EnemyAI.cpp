@@ -7,6 +7,7 @@
 #include "PhaseDirector.h"
 #include "Difficulty.h"
 #include "GameObject.h"
+#include "CharacterRegistry.h"
 #include <cmath>
 
 namespace {
@@ -19,6 +20,13 @@ namespace {
 
     Node Do(BehaviorStatus (EnemyAI::*run)(float)) {
         return std::make_unique<BehaviorAction<EnemyAI>>(run);
+    }
+
+    // 角度を -π〜π にそろえる
+    float WrapAngle(float angle) {
+        while (angle > DX_PI_F) angle -= DX_TWO_PI_F;
+        while (angle < -DX_PI_F) angle += DX_TWO_PI_F;
+        return angle;
     }
 
     // 「条件がそろったらやる」枝
@@ -172,8 +180,10 @@ InputInfo EnemyAI::Surround(InputInfo input, VECTOR toTarget, float deltaTime) {
     float slotDistance = VSize(toSlot);
     if (slotDistance < SLOT_ARRIVE_DISTANCE) return input;
 
-    // 遠ければ走って追いつき、近ければ歩いて回り込む
-    float amount = (slotDistance > SLOT_RUN_DISTANCE) ? 1.0f : 0.5f;
+    // 遠ければ走って追いつき、近ければ歩いて回り込む 賢さ 4 からは、場所を移るときも走ってキビキビ動く
+    // 賢さ 0 の敵 (行動の木を使わない) は _intelligence が 0 のまま
+    float runDistance = (_intelligence >= LEVEL_ENCIRCLE) ? ENCIRCLE_RUN_DISTANCE : SLOT_RUN_DISTANCE;
+    float amount = (slotDistance > runDistance) ? 1.0f : 0.5f;
     input.move = VScale(toSlot, amount / slotDistance);
     return input;
 }
@@ -223,6 +233,7 @@ float EnemyAI::RandomRange(float min, float max) {
 // ├ [1] 振っている途中なら待つ ........ IsBusy      → Hold
 // ├ [4] バースト値が溜まり壁際なら離れる IsCornered  → LeaveWall
 // ├ [2] 溜めを見たら下がる ............ SeesCharge  → BackOff
+// ├ [4] 横から溜めを見たら裏へ回る .... SeesChargeAside → Flank
 // ├ [5] 背中を見たら踏み込む .......... SeesBack    → RushIn
 // ├ [3] 隙を見たら踏み込む ............ SeesOpening → RushIn
 // ├ [1] 届くなら振る .................. IsInReach   → Selector
@@ -230,7 +241,7 @@ float EnemyAI::RandomRange(float min, float max) {
 // │       ├ [2] 壁を割れるなら大振り ... IsTargetAtLimit → SwingHeavy
 // │       └ [1] 決めておいた技 ......................... SwingPlanned
 // ├ [1] 番が取れたら近づく ............ TakeToken   → Approach
-// └ [1] 回って待つ ([3] から背中側へ) ............. Orbit / Flank
+// └ [1] 回って待つ ([3] 背中側へ [4] すき間へ囲む) .. Orbit / Flank / Encircle
 
 void EnemyAI::BuildTree() {
     // ----- 1. この敵の賢さを決める -----
@@ -261,6 +272,7 @@ void EnemyAI::BuildTree() {
     // 身を守る
     addIf(*root, LEVEL_LEAVE_WALL, When(If(&EnemyAI::IsCornered),  Do(&EnemyAI::LeaveWall)));  // バースト値が溜まって壁際なら、割られないよう離れる
     addIf(*root, LEVEL_BACK_OFF,   When(If(&EnemyAI::SeesCharge),  Do(&EnemyAI::BackOff)));    // こちらを向いて溜めていたら、届かない所まで下がる
+    addIf(*root, LEVEL_ENCIRCLE,   When(If(&EnemyAI::SeesChargeAside), Do(&EnemyAI::Flank))); // 横から溜めを見たら、裏へ回って離した所を狙う
 
     // 攻める
     addIf(*root, LEVEL_BACKSTAB,   When(If(&EnemyAI::SeesBack),    Do(&EnemyAI::RushIn)));     // 背中を向けたら、番がなくても走って踏み込む
@@ -268,8 +280,11 @@ void EnemyAI::BuildTree() {
     addIf(*root, LEVEL_BASIC,      When(If(&EnemyAI::IsInReach),   std::move(swing)));         // 届く距離なら、番がなくても振る
     addIf(*root, LEVEL_BASIC,      When(Do(&EnemyAI::TakeToken),   Do(&EnemyAI::Approach)));   // 番が取れたら近づく 届いたら上の枝で振る
 
-    // 待つ ほかは周りを回る 賢さ 3 からは相手の背中側へ回り込む
-    addIf(*root, LEVEL_BASIC,      Do(intelligence >= LEVEL_FLANK ? &EnemyAI::Flank : &EnemyAI::Orbit));
+    // 待つ ほかは周りを回る 賢さ 3 からは相手の背中側へ、4 からは仲間とのすき間へ回り込んで囲む
+    auto wait = &EnemyAI::Orbit;
+    if (intelligence >= LEVEL_FLANK) wait = &EnemyAI::Flank;
+    if (intelligence >= LEVEL_ENCIRCLE) wait = &EnemyAI::Encircle;
+    addIf(*root, LEVEL_BASIC,      Do(wait));
 
     _tree = std::move(root);
 }
@@ -379,6 +394,12 @@ bool EnemyAI::SeesCharge() const {
     return Notices(_chargeTime) && isFacingMe && _distance < CHARGE_WATCH_DISTANCE;
 }
 
+bool EnemyAI::SeesChargeAside() const {
+    // 溜めている相手の横か後ろにいるとき 正面にいる仲間は下がる (SeesCharge) ので、横からは裏へ回って離した所を狙う
+    bool isFacingMe = _enemy->GetTarget()->GetFacingDot(_enemy->GetPosition()) > CHARGE_FACE_DOT;
+    return Notices(_chargeTime) && !isFacingMe && _distance < CHARGE_WATCH_DISTANCE;
+}
+
 bool EnemyAI::SeesOpening() const {
     return _cooldown <= 0.0f && Notices(_openingTime) && _distance < RUSH_DISTANCE;
 }
@@ -466,22 +487,79 @@ BehaviorStatus EnemyAI::Orbit(float deltaTime) {
 BehaviorStatus EnemyAI::Flank(float deltaTime) {
     _enemy->SetThinking("背中側へ回り込む");
 
-    // 相手の背中側の角度へ、回る向きを合わせる 個体ごとに少しずらして重ならないようにする
+    // 相手の背中側の角度へ回る 個体ごとに少しずらして重ならないようにする
     VECTOR back = VScale(_enemy->GetTarget()->GetForward(), -1.0f);
-    float diff = atan2f(back.z, back.x) + _flankOffset - _orbitAngle;
-    while (diff > DX_PI_F) diff -= DX_TWO_PI_F;
-    while (diff < -DX_PI_F) diff += DX_TWO_PI_F;
-
-    // 着いたら回らずに待つ 向かう間は普段より速く回る
-    if (fabsf(diff) < FLANK_ARRIVE_ANGLE) {
-        _orbitDirection = 0.0f;
-    }
-    else {
-        _orbitDirection = (diff > 0.0f) ? FLANK_SPEED_RATE : -FLANK_SPEED_RATE;
-    }
+    CircleTo(atan2f(back.z, back.x) + _flankOffset);
 
     _input = Surround(_input, _toTarget, deltaTime);
     return BehaviorStatus::Running;
+}
+
+BehaviorStatus EnemyAI::Encircle(float deltaTime) {
+    _enemy->SetThinking("すき間へ回って囲む");
+
+    // 着いたら棒立ちにせず、すき間の真ん中を挟んで左右へ踏み替える
+    _stepTimer -= deltaTime;
+    if (_stepTimer <= 0.0f) {
+        _stepSign = -_stepSign;
+        _stepTimer = RandomRange(STEP_TIME_MIN, STEP_TIME_MAX);
+    }
+    CircleTo(FindGapAngle() + _stepSign * STEP_ANGLE);
+
+    _input = Surround(_input, _toTarget, deltaTime);
+    return BehaviorStatus::Running;
+}
+
+void EnemyAI::CircleTo(float angle) {
+    // 着いたら回らずに待つ 背中の前後で揺れないように
+    float diff = WrapAngle(angle - _orbitAngle);
+    if (fabsf(diff) < FLANK_ARRIVE_ANGLE) {
+        _orbitDirection = 0.0f;
+        return;
+    }
+
+    // 向かう間は普段より速く回る 賢さ 4 からはさらに速く
+    float rate = (_intelligence >= LEVEL_ENCIRCLE) ? ENCIRCLE_SPEED_RATE : FLANK_SPEED_RATE;
+    _orbitDirection = (diff > 0.0f) ? rate : -rate;
+}
+
+float EnemyAI::FindGapAngle() const {
+    const Character* target = _enemy->GetTarget();
+    VECTOR center = target->GetPosition();
+    float myAngle = atan2f(-_toTarget.z, -_toTarget.x);
+
+    // 相手から見た仲間の方角を、自分から左回りに 0〜2π で測る
+    // いちばん小さいのが左隣、いちばん大きいのが右隣 (右隣までの角度は 2π から引いた分)
+    float nearest = DX_TWO_PI_F;
+    float farthest = 0.0f;
+    bool hasAlly = false;
+    for (const Character* other : CharacterRegistry::GetAll()) {
+        if (other == _enemy || other->team != _enemy->team || other->IsDead()) continue;
+
+        VECTOR offset = VSub(other->GetPosition(), center);
+        offset.y = 0.0f;
+        if (VSize(offset) > ENGAGE_DISTANCE) continue;
+
+        float diff = WrapAngle(atan2f(offset.z, offset.x) - myAngle);
+        if (diff < 0.0f) diff += DX_TWO_PI_F;
+        if (diff < nearest) nearest = diff;
+        if (diff > farthest) farthest = diff;
+        hasAlly = true;
+    }
+
+    VECTOR back = VScale(target->GetForward(), -1.0f);
+    float backAngle = atan2f(back.z, back.x);
+    if (!hasAlly) return backAngle;
+
+    // 左隣と右隣の真ん中 そこからすき間の中で、背中側へ少し寄せる
+    float toLeft = nearest;
+    float toRight = DX_TWO_PI_F - farthest;
+    float middle = myAngle + (toLeft - toRight) * 0.5f;
+    float lean = (toLeft + toRight) * 0.5f * ENCIRCLE_BACK_LEAN;
+    float toBack = WrapAngle(backAngle - middle);
+    if (toBack > lean) toBack = lean;
+    if (toBack < -lean) toBack = -lean;
+    return middle + toBack;
 }
 
 BehaviorStatus EnemyAI::LeaveWall(float deltaTime) {

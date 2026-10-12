@@ -16,6 +16,7 @@ class Character;
 //   2: + ときどき大振り (heavyChance)、ガード中とホカホカの相手には大振り、こちらを向いて溜めていたら下がる
 //   3: + 相手の隙に踏み込む、待つ間は背中側へ回り込む
 //   4: + 自分のバースト値が溜まったら壁から離れる (壁を割られないように) 気づくのが早い
+//        待つ間は仲間とのすき間へ走って囲み、着いたら左右へ踏み替える 溜めを横から見たら裏へ回る
 //   5: + 相手が背中を向けたら、番がなくても踏み込む 気づくのがいちばん早い
 // 賢さ 0 の敵 (Bee と Golem) は今までどおり、番を持っていれば近づいて技を出し、持っていなければ相手の周りを回る
 class EnemyAI : public MonoBehaviour {
@@ -49,6 +50,7 @@ private:
     static constexpr int LEVEL_RUSH_IN = 3;         // 相手の隙に踏み込む
     static constexpr int LEVEL_FLANK = 3;           // 待つ間は背中側へ回り込む
     static constexpr int LEVEL_LEAVE_WALL = 4;      // 自分のバースト値が溜まったら壁から離れる
+    static constexpr int LEVEL_ENCIRCLE = 4;        // 仲間とのすき間へ回って囲む 溜めを横から見たら裏へ回る
     static constexpr int LEVEL_BACKSTAB = 5;        // 相手が背中を向けたら踏み込む
 
     // ----- 行動の木で使う数値 -----
@@ -78,8 +80,27 @@ private:
     // 回り込む先との角度の差がこれより小さければ、着いたとみなして止まる ラジアン 背中の前後で揺れないように
     static constexpr float FLANK_ARRIVE_ANGLE = 0.15f;
 
-    // 回り込むときは普段 (ORBIT_SPEED) の何倍の速さで回るか
+    // 回り込むときは普段 (ORBIT_SPEED) の何倍の速さで回るか 賢さ 4 からは ENCIRCLE_SPEED_RATE
     static constexpr float FLANK_SPEED_RATE = 2.0f;
+
+    // ----- 囲む (賢さ 4) -----
+    // 待つ間は、相手から見て左右でいちばん近い仲間との、すき間の真ん中へ回る
+    // 全員が同じように動くので、司令役がいなくても間がそろって囲みになる 仲間が攻めに出たり倒れたりしたら並び直す
+
+    // 回る速さは普段 (ORBIT_SPEED) の何倍か 背中側へ回り込むときもこの速さ
+    static constexpr float ENCIRCLE_SPEED_RATE = 4.0f;
+
+    // すき間の中で背中側へ寄せる割合 0 で真ん中のまま 1 ですき間の端まで寄る
+    // 強くすると全員が背中へ寄って正面が空く 0.2 で、正面のすき間が均等の 1.5〜2 倍ほど (正面には番を持った敵が来る)
+    static constexpr float ENCIRCLE_BACK_LEAN = 0.2f;
+
+    // 着いたら棒立ちにせず、この角度だけ左右へ踏み替えて間合いを測る ラジアン と、踏み替えるまでの時間 秒
+    static constexpr float STEP_ANGLE = 0.2f;
+    static constexpr float STEP_TIME_MIN = 0.4f;
+    static constexpr float STEP_TIME_MAX = 0.8f;
+
+    // 回り込み先がこれより遠ければ走る 普段 (SLOT_RUN_DISTANCE) より短くして、場所を移るときは走る
+    static constexpr float ENCIRCLE_RUN_DISTANCE = 60.0f;
 
     // 気づくまでの時間 (EnemyData の reactionTime) に掛ける数 [賢さ] で引く 小さいほど早く気づく
     static constexpr float REACTION_RATES[] = {
@@ -130,6 +151,8 @@ private:
     float _openingTime = 0.0f;           // 相手が隙を見せ続けている時間
     Technique _nextTechnique = Technique::Slash;  // 次に振る技 振り終わりに決める
     float _flankOffset = 0.0f;           // 回り込む先を個体ごとにずらす角度
+    float _stepSign = 1.0f;              // 囲んで待つ間に踏み替える向き 1 か -1
+    float _stepTimer = 0.0f;             // 次に踏み替えるまでの時間
 
 public:
     // 練習台 攻撃も番の取り合いもせず、その場で相手のほうを向いて立っている チュートリアルが使う
@@ -184,6 +207,7 @@ private:
     bool SeesGuard() const;
     bool IsTargetAtLimit() const;
     bool SeesCharge() const;
+    bool SeesChargeAside() const;
     bool SeesOpening() const;
     bool IsCornered() const;
     bool SeesBack() const;
@@ -198,6 +222,13 @@ private:
     BehaviorStatus RushIn(float deltaTime);
     BehaviorStatus Orbit(float deltaTime);
     BehaviorStatus Flank(float deltaTime);
+    BehaviorStatus Encircle(float deltaTime);
     BehaviorStatus LeaveWall(float deltaTime);
     BehaviorStatus SwingAt(Technique technique);
+
+    // 相手の周りの angle の方角へ回るよう、回る向きを合わせる 着いたら回らずに待つ
+    void CircleTo(float angle);
+
+    // 左右でいちばん近い仲間との、すき間の真ん中の方角 背中側へ少し寄せる 仲間がいなければ背中側
+    float FindGapAngle() const;
 };
