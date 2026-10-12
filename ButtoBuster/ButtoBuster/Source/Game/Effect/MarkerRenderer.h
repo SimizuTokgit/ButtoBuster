@@ -10,7 +10,7 @@ class Character;
 //    飛んでいる敵や吹き飛んで宙にいるときは、真下の地面に描く 倒されたら描かない
 // 頭の上 敵全員に赤い矢印を描く 囲まれていても、どこに敵がいるか分かるように
 // 攻撃範囲 振りかぶっている間、攻撃する側が毎フレーム ShowRange で頼み、頼まれたフレームだけ描く
-//    途中で斬られて振りをやめれば、頼まれなくなって消える 敵は赤、プレイヤーは青
+//    途中で斬られて振りをやめれば、頼まれなくなって消える 敵の技だけで、赤で描く
 //    扇形の技は、丸い画像を扇の形に切り取って描く
 // 画像と大きさの数値は MarkerRenderer.cpp の先頭
 class MarkerRenderer : public Renderer {
@@ -21,7 +21,6 @@ public:
         VECTOR forward = VGet(0.0f, 0.0f, 1.0f);    // 扇の真ん中の向き
         float radius = 0.0f;                        // 届く距離
         float arcDegree = 180.0f;                   // 正面から左右に何度まで (AttackData と同じ) 180 で全方向
-        bool isPlayer = false;                      // 青 (プレイヤーの技) か 赤 (敵の技) か
         float fill = 0.0f;                          // 当たるまでの進み具合 0〜1 中から満ちていく 0 なら満ちる分は描かない
     };
 
@@ -29,8 +28,7 @@ private:
     int _arrowGraph = -1;
     int _enemyRingGraph = -1;
     int _playerRingGraph = -1;
-    int _enemyRangeGraph = -1;
-    int _playerRangeGraph = -1;
+    int _rangeGraph = -1;
 
     // 頼まれた攻撃範囲 描いたら空にする
     std::vector<RangeDesc> _ranges;
@@ -39,8 +37,7 @@ private:
     std::vector<VERTEX3D> _shadowVertices;
     std::vector<VERTEX3D> _enemyRingVertices;
     std::vector<VERTEX3D> _playerRingVertices;
-    std::vector<VERTEX3D> _enemyRangeVertices;
-    std::vector<VERTEX3D> _playerRangeVertices;
+    std::vector<VERTEX3D> _rangeVertices;
 
 public:
     ~MarkerRenderer() override;

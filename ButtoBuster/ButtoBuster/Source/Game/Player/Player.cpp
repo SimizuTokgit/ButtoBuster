@@ -8,7 +8,6 @@
 #include "PlayerRushState.h"
 #include "CharacterRegistry.h"
 #include "EffectManager.h"
-#include "StageBuilder.h"
 #include "SlashTrail.h"
 #include "SoundManager.h"
 #include "SkinnedMeshRenderer.h"
@@ -318,19 +317,6 @@ void Player::HoldChargePose() {
 
 VECTOR Player::GetHeadPosition() const {
     return VAdd(GetPosition(), VGet(0.0f, bodyHeight + HEAD_OFFSET, 0.0f));
-}
-
-void Player::ShowAttackRange(const AttackData& attack) const {
-    auto* effects = EffectManager::Get();
-    if (!effects) return;
-
-    MarkerRenderer::RangeDesc range;
-    range.center = StageBuilder::SnapToGround(GetPosition());
-    range.forward = GetForward();
-    range.radius = attack.reach;
-    range.arcDegree = attack.arcDegree;
-    range.isPlayer = true;
-    effects->ShowRange(range);
 }
 
 void Player::UpdateCombo(float deltaTime) {

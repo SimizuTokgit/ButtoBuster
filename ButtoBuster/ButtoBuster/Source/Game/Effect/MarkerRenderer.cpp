@@ -12,8 +12,7 @@ namespace {
     constexpr const char* ARROW_IMAGE = "Data/Effect/MarkerArrow.png";
     constexpr const char* ENEMY_RING_IMAGE = "Data/Effect/RingEnemy.png";
     constexpr const char* PLAYER_RING_IMAGE = "Data/Effect/RingPlayer.png";
-    constexpr const char* ENEMY_RANGE_IMAGE = "Data/Effect/RangeEnemy.png";
-    constexpr const char* PLAYER_RANGE_IMAGE = "Data/Effect/RangePlayer.png";
+    constexpr const char* RANGE_IMAGE = "Data/Effect/RangeEnemy.png";
 
     // ----- 足元の影 -----
     constexpr float SHADOW_SCALE = 2.2f;        // 体の半径の何倍の大きさか
@@ -24,7 +23,7 @@ namespace {
     constexpr float RING_ALPHA = 0.9f;
     constexpr float RING_IMAGE_RATE = 0.667f;   // 画像の半分の幅に対して、輪のある所 外へは星の飾りが出ている
 
-    // ----- 攻撃範囲 (RangeEnemy.png RangePlayer.png) -----
+    // ----- 攻撃範囲 (RangeEnemy.png) -----
     constexpr float RANGE_IMAGE_RATE = 0.779f;  // 画像の半分の幅に対して、外側の輪のある所 ここを届く距離に合わせる
     constexpr float RANGE_ALPHA = 0.55f;        // 範囲全体の濃さ
     constexpr float RANGE_FILL_ALPHA = 0.8f;    // 中から満ちていく分の濃さ 満ちきったときに当たる
@@ -47,7 +46,7 @@ namespace {
 }
 
 MarkerRenderer::~MarkerRenderer() {
-    for (int graph : { _arrowGraph, _enemyRingGraph, _playerRingGraph, _enemyRangeGraph, _playerRangeGraph }) {
+    for (int graph : { _arrowGraph, _enemyRingGraph, _playerRingGraph, _rangeGraph }) {
         if (graph != -1) DeleteGraph(graph);
     }
 }
@@ -56,8 +55,7 @@ void MarkerRenderer::Setup() {
     _arrowGraph = LoadGraph(ARROW_IMAGE);
     _enemyRingGraph = LoadGraph(ENEMY_RING_IMAGE);
     _playerRingGraph = LoadGraph(PLAYER_RING_IMAGE);
-    _enemyRangeGraph = LoadGraph(ENEMY_RANGE_IMAGE);
-    _playerRangeGraph = LoadGraph(PLAYER_RANGE_IMAGE);
+    _rangeGraph = LoadGraph(RANGE_IMAGE);
 
     // 半透明のものと一緒に、不透明なモデルのあとで描く
     renderQueue = RENDER_QUEUE_TRANSPARENT;
@@ -86,8 +84,7 @@ void MarkerRenderer::Render() {
         DrawBatch(_shadowVertices, DX_NONE_GRAPH);
         DrawBatch(_enemyRingVertices, _enemyRingGraph);
         DrawBatch(_playerRingVertices, _playerRingGraph);
-        DrawBatch(_enemyRangeVertices, _enemyRangeGraph);
-        DrawBatch(_playerRangeVertices, _playerRangeGraph);
+        DrawBatch(_rangeVertices, _rangeGraph);
     }
 
     DrawArrows();
@@ -131,7 +128,7 @@ void MarkerRenderer::BuildFootMarker(const Character& character) {
 void MarkerRenderer::BuildRange(const RangeDesc& desc, float scale, float alpha) {
     if (desc.radius <= 0.0f || scale <= 0.0f) return;
 
-    std::vector<VERTEX3D>& out = desc.isPlayer ? _playerRangeVertices : _enemyRangeVertices;
+    std::vector<VERTEX3D>& out = _rangeVertices;
     const COLOR_U8 white = GetColorU8(255, 255, 255, 255);
 
     // 画像の外側の輪が届く距離に来るよう、画像の半分の幅をこの長さにする

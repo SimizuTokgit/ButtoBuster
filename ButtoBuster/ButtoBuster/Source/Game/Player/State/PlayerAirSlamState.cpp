@@ -36,7 +36,6 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
     switch (_phase) {
     case Phase::Windup: {
         player.SetVerticalVelocity(0.0f);
-        player.ShowAttackRange(_data);
 
         bool isPoseReached = player.GetAnimationTime() >= player.data.chargePoseTime || player.IsAnimationFinished();
         if (isPoseReached) StartDive(player);
@@ -45,7 +44,6 @@ void PlayerAirSlamState::Execute(Player& player, const InputInfo& input, float d
 
     case Phase::Dive:
         player.SetVerticalVelocity(-player.data.airSlamDiveSpeed);
-        player.ShowAttackRange(_data);
         Catch(player);
         if (player.IsGrounded() || _timer > DIVE_TIME_LIMIT) {
             // 前の扇形で当てるので、振り抜く前に近くの敵へ向きを吸い付ける 地上の斬りと同じ
