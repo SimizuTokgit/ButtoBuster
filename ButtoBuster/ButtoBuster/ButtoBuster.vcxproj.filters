@@ -398,6 +398,9 @@
     <ClInclude Include="Source\Engine\Core\GameObject.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Core\Mathf.h">
+      <Filter>Source\Engine\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Core\MonoBehaviour.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>

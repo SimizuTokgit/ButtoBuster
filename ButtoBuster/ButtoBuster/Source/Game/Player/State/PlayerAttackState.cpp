@@ -14,9 +14,6 @@
 using std::make_unique;
 
 namespace {
-    // 技の時間はアニメのフレーム 30fps で数える (AttackData と同じ)
-    constexpr float ANIMATION_FPS = 30.0f;
-
     // 振るときの声 コンボの段ごと (空中の斬りも同じ) 溜めてから振ったとき 対空斬り
     const char* const COMBO_VOICES[PlayerAttacks::SLASH_COUNT] = {
         "Player/Vc_Attack1", "Player/Vc_Attack2", "Player/Vc_Attack3",

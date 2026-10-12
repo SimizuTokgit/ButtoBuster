@@ -1,5 +1,6 @@
 ﻿#include "SpriteEffectRenderer.h"
 #include "Time.h"
+#include "Mathf.h"
 #include <algorithm>
 
 namespace {
@@ -79,7 +80,7 @@ void SpriteEffectRenderer::Draw(const Sprite& sprite, VECTOR cameraPosition) {
         alpha = desc.alphaStart + (desc.alphaEnd - desc.alphaStart) * fade;
     }
     if (desc.flicker > 0.0f) {
-        alpha *= 1.0f - desc.flicker * (GetRand(1000) / 1000.0f);
+        alpha *= 1.0f - desc.flicker * Mathf::RandomRange(0.0f, 1.0f);
     }
     if (alpha <= 0.0f) return;
 

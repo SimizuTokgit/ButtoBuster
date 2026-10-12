@@ -4,22 +4,10 @@
 #include "Camera.h"
 #include "PhysicsManager.h"
 #include "Time.h"
+#include "Mathf.h"
 #include <cmath>
 
 namespace {
-    float ToRadian(float degree) { return degree * DX_PI_F / 180.0f; }
-
-    float WrapDegree(float degree) {
-        while (degree > 180.0f) degree -= 360.0f;
-        while (degree < -180.0f) degree += 360.0f;
-        return degree;
-    }
-
-    // 地面に沿った向きを角度にする +Z が 0 +X が 90
-    float YawFromDirection(VECTOR direction) {
-        return atan2f(direction.x, direction.z) * 180.0f / DX_PI_F;
-    }
-
     // 1 フレームで目標へ近づける割合 フレームレートが変わっても同じ速さになるよう指数で減らす
     float BlendRate(float sharpness, float deltaTime) {
         return 1.0f - expf(-sharpness * deltaTime);
@@ -50,8 +38,8 @@ void CameraFollow::Update(float deltaTime) {
     VECTOR lookAt = VAdd(GetLookAt(), VScale(GetGroundRight(), data.shoulderOffset));
 
     // 見ている点からカメラへ向かう向き
-    float yaw = ToRadian(_yaw);
-    float pitch = ToRadian(_pitch);
+    float yaw = Transform::Deg2Rad(_yaw);
+    float pitch = Transform::Deg2Rad(_pitch);
     VECTOR back = VGet(-sinf(yaw) * cosf(pitch), sinf(pitch), -cosf(yaw) * cosf(pitch));
 
     float cameraDistance = ResolveObstacle(lookAt, back, data.distance, unscaled);
@@ -75,17 +63,17 @@ void CameraFollow::ResetBehind(VECTOR facing) {
     facing.y = 0.0f;
     if (VSquareSize(facing) < 0.0001f) return;
 
-    _resetYaw = YawFromDirection(facing);
+    _resetYaw = Mathf::YawFromDirection(facing);
     _isResetting = true;
 }
 
 VECTOR CameraFollow::GetGroundForward() const {
-    float yaw = ToRadian(_yaw);
+    float yaw = Transform::Deg2Rad(_yaw);
     return VGet(sinf(yaw), 0.0f, cosf(yaw));
 }
 
 VECTOR CameraFollow::GetGroundRight() const {
-    float yaw = ToRadian(_yaw);
+    float yaw = Transform::Deg2Rad(_yaw);
     return VGet(cosf(yaw), 0.0f, -sinf(yaw));
 }
 
@@ -120,7 +108,7 @@ void CameraFollow::SnapToTarget() {
     // 背中側から見る
     VECTOR facing = target->forward;
     facing.y = 0.0f;
-    if (VSquareSize(facing) > 0.0001f) _yaw = YawFromDirection(facing);
+    if (VSquareSize(facing) > 0.0001f) _yaw = Mathf::YawFromDirection(facing);
     _pitch = data.basePitch;
     _isResetting = false;
 
@@ -164,7 +152,7 @@ void CameraFollow::UpdateAngles(float deltaTime) {
 
     if (_isResetting) {
         float rate = BlendRate(data.resetSharpness, deltaTime);
-        float difference = WrapDegree(_resetYaw - _yaw);
+        float difference = Mathf::WrapDegree(_resetYaw - _yaw);
         _yaw += difference * rate;
         _pitch += (data.basePitch - _pitch) * rate;
         if (fabsf(difference) < 0.5f) _isResetting = false;
@@ -176,7 +164,7 @@ void CameraFollow::UpdateAngles(float deltaTime) {
         bool isMoving = VSize(_moveVelocity) > data.followMinSpeed;
 
         if (isMoving && VSquareSize(facing) > 0.0001f) {
-            float difference = WrapDegree(YawFromDirection(facing) - _yaw);
+            float difference = Mathf::WrapDegree(Mathf::YawFromDirection(facing) - _yaw);
             if (fabsf(difference) < data.followMaxAngle) {
                 float step = difference * BlendRate(data.behindFollowSharpness, deltaTime);
                 float maxStep = data.behindFollowMaxSpeed * deltaTime;
@@ -187,7 +175,7 @@ void CameraFollow::UpdateAngles(float deltaTime) {
         }
     }
 
-    _yaw = WrapDegree(_yaw);
+    _yaw = Mathf::WrapDegree(_yaw);
     if (_pitch < data.minPitch) _pitch = data.minPitch;
     if (_pitch > data.maxPitch) _pitch = data.maxPitch;
 }

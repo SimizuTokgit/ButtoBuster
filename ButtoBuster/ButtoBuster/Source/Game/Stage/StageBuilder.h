@@ -17,5 +17,9 @@ namespace StageBuilder {
     // 敵を地面の上に出すときと、Bee が浮く高さを決めるときに使う
     bool FindGroundHeight(float x, float z, float& outY);
 
+    // 真下の地面の高さにそろえた位置 地面が見つからなければそのまま返す
+    // 宙にいるものの足元に、輪や印を出すときに使う
+    VECTOR SnapToGround(VECTOR position);
+
     VECTOR GetArenaCenter();
 }

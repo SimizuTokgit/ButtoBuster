@@ -1,8 +1,12 @@
 ﻿#pragma once
 #include "HitInfo.h"
 
+// アニメは 1 秒 30 フレームで作られていて、その速さで読み込む (CharacterBuilder)
+// 技の時間も、このフレームで数える
+constexpr float ANIMATION_FPS = 30.0f;
+
 // 近接攻撃1つ分の数値
-// 時間はすべてアニメのフレーム 30fps で数える
+// 時間はすべてアニメのフレーム (ANIMATION_FPS) で数える
 // 判定の出る時間は、アニメで武器を振っているフレームに合わせる
 struct AttackData {
     const char* animationName = "";

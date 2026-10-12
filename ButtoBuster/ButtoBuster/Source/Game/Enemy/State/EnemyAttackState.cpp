@@ -10,9 +10,6 @@
 using std::make_unique;
 
 namespace {
-    // アニメの時間は 30fps のフレームで数えている
-    constexpr float ANIMATION_FPS = 30.0f;
-
     // ----- 攻撃の合図 (頭の上のオレンジ 大振りは赤) -----
     // 当たり判定が出るこの秒数前に光らせて音を鳴らす 光った瞬間に回避すればジャスト回避になる
     // ジャスト回避は、押してから justDodgeWindow (PlayerData 0.18 秒) のうちに当たったときなので、それより短くする

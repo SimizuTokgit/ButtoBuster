@@ -7,19 +7,8 @@
 #include "Rigidbody.h"
 #include "CapsuleCollider.h"
 #include "EffectManager.h"
+#include "Mathf.h"
 #include <cmath>
-
-namespace {
-    float YawFromDirection(VECTOR direction) {
-        return Transform::Rad2Deg(atan2f(direction.x, direction.z));
-    }
-
-    float WrapDegree(float degree) {
-        while (degree > 180.0f) degree -= 360.0f;
-        while (degree < -180.0f) degree += 360.0f;
-        return degree;
-    }
-}
 
 Character::~Character() {
     CharacterRegistry::Remove(this);
@@ -223,9 +212,9 @@ void Character::FaceTowards(VECTOR direction, float degreesPerSecond, float delt
     direction.y = 0.0f;
     if (VSquareSize(direction) < 0.0001f) return;
 
-    float current = YawFromDirection(GetForward());
-    float target = YawFromDirection(direction);
-    float difference = WrapDegree(target - current);
+    float current = Mathf::YawFromDirection(GetForward());
+    float target = Mathf::YawFromDirection(direction);
+    float difference = Mathf::WrapDegree(target - current);
     float step = degreesPerSecond * deltaTime;
 
     if (fabsf(difference) <= step) {
@@ -242,7 +231,7 @@ void Character::FaceImmediately(VECTOR direction) {
     direction.y = 0.0f;
     if (VSquareSize(direction) < 0.0001f) return;
 
-    transform->localRotation = Quaternion::Euler(0.0f, YawFromDirection(direction), 0.0f);
+    transform->localRotation = Quaternion::Euler(0.0f, Mathf::YawFromDirection(direction), 0.0f);
 }
 
 VECTOR Character::GetForward() const {

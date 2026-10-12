@@ -74,10 +74,6 @@ namespace {
 
     // 薄れ始める割合 出ている長さに対して 0.5 なら半分までは濃いまま
     constexpr float CRACK_IMAGE_FADE_START = 0.5f;
-
-    COLOR_U8 ToColor(unsigned int rgb) {
-        return GetColorU8((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
-    }
 }
 
 void WallBreakEffectObserver::OnNotify(const WallBreakEvent& event) {
@@ -116,7 +112,6 @@ void WallBreakEffectObserver::OnNotify(const WallBreakEvent& event) {
     effects->PlayWallCrack(crack);
 
     // 壁の足元に輪を広げる
-    VECTOR ground = event.position;
-    StageBuilder::FindGroundHeight(event.position.x, event.position.z, ground.y);
-    effects->PlayShockwave(ground, look.shockwaveRadius, ToColor(look.shockwaveColor));
+    VECTOR ground = StageBuilder::SnapToGround(event.position);
+    effects->PlayShockwave(ground, look.shockwaveRadius, EffectManager::ToColor(look.shockwaveColor));
 }

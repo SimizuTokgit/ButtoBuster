@@ -170,7 +170,6 @@ private:
     float GetRange(Technique technique) const;
     void ReleaseToken();
 
-    static float RandomRange(float min, float max);
 
     // 攻撃してから次の番を欲しがるまでの待ち 難易度の倍率を掛ける
     float RollCooldown() const;

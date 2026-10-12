@@ -163,6 +163,11 @@ bool StageBuilder::FindGroundHeight(float x, float z, float& outY) {
     return true;
 }
 
+VECTOR StageBuilder::SnapToGround(VECTOR position) {
+    FindGroundHeight(position.x, position.z, position.y);
+    return position;
+}
+
 VECTOR StageBuilder::GetArenaCenter() {
     return VGet(0.0f, 0.0f, 0.0f);
 }

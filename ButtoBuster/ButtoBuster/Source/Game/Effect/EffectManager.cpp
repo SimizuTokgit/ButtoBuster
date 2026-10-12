@@ -474,9 +474,7 @@ void EffectManager::PlayWallHit(VECTOR position, VECTOR normal, float power) {
     BurstToward(_hitSpark, position, aim, 70.0f, 4 + static_cast<int>(power * 6.0f));
     Burst(_hitFlash, position, 1);
 
-    VECTOR ground = position;
-    StageBuilder::FindGroundHeight(position.x, position.z, ground.y);
-    PlayDust(ground, 6 + static_cast<int>(power * 6.0f));
+    PlayDust(StageBuilder::SnapToGround(position), 6 + static_cast<int>(power * 6.0f));
 
     HitStop(0.03f + power * 0.04f);
     Shake(3.0f + power * 7.0f, 0.25f);

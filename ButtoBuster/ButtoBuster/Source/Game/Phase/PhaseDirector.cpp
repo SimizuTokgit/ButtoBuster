@@ -11,16 +11,13 @@
 #include "SoundManager.h"
 #include "Scene.h"
 #include "GameObject.h"
+#include "Mathf.h"
 #include <algorithm>
 #include <cmath>
 
 namespace {
     // フェーズを越えたときに、吹っ飛ばされ値が許容値のこの割合以上なら「危ない」の声にする
     constexpr float CLEAR_DANGER_RATIO = 0.75f;
-
-    float RandomRange(float min, float max) {
-        return min + (max - min) * (GetRand(1000) / 1000.0f);
-    }
 }
 
 PhaseDirector::~PhaseDirector() {
@@ -308,8 +305,7 @@ void PhaseDirector::RemoveFinishedEnemies() {
     bool isFighting = _step == Step::Announce || _step == Step::Battle;
     if (hasNewDefeat && isFighting && _spawnQueue.empty() && GetAliveCount() == 0) {
         // 吹き飛んで宙にいることが多いので、輪は真下の地面に出す
-        StageBuilder::FindGroundHeight(lastDefeatPosition.x, lastDefeatPosition.z, lastDefeatPosition.y);
-        if (auto* effects = EffectManager::Get()) effects->PlayFinalBlow(lastDefeatPosition);
+        if (auto* effects = EffectManager::Get()) effects->PlayFinalBlow(StageBuilder::SnapToGround(lastDefeatPosition));
     }
 }
 
@@ -326,9 +322,7 @@ Enemy* PhaseDirector::SpawnAt(const EnemyData& enemyData, VECTOR position) {
 
     if (auto* effects = EffectManager::Get()) {
         // 飛ぶ敵も、現れる印は地面に出す
-        VECTOR ground = position;
-        StageBuilder::FindGroundHeight(position.x, position.z, ground.y);
-        effects->PlaySpawn(ground);
+        effects->PlaySpawn(StageBuilder::SnapToGround(position));
     }
     SoundManager::Instance().PlaySE("Common/enemy_Nifram", 0.6f);
     SoundManager::Instance().PlaySE(enemyData.soundSpawn);
@@ -343,8 +337,8 @@ VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& enemyData) const {
 
     constexpr int ATTEMPTS = 8;
     for (int i = 0; i < ATTEMPTS; ++i) {
-        float angle = RandomRange(0.0f, DX_TWO_PI_F);
-        float distance = RandomRange(data.spawnDistanceMin, data.spawnDistanceMax);
+        float angle = Mathf::RandomRange(0.0f, DX_TWO_PI_F);
+        float distance = Mathf::RandomRange(data.spawnDistanceMin, data.spawnDistanceMax);
         VECTOR position = VAdd(playerPosition, VGet(cosf(angle) * distance, 0.0f, sinf(angle) * distance));
 
         // 戦える範囲の外に出たら端まで戻す

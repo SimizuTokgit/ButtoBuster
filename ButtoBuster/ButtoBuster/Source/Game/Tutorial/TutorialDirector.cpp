@@ -19,6 +19,7 @@
 #include "SoundManager.h"
 #include "InputSystem.h"
 #include "Time.h"
+#include "Mathf.h"
 #include <algorithm>
 #include <cmath>
 
@@ -307,9 +308,7 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
     case TutorialGoal::Look: {
         // 手で回した分だけ数える 歩いてカメラが付いてきた分は数えない
         float yaw = GetCameraYaw();
-        float change = yaw - _lastYaw;
-        while (change > 180.0f) change -= 360.0f;
-        while (change < -180.0f) change += 360.0f;
+        float change = Mathf::WrapDegree(yaw - _lastYaw);
         _lastYaw = yaw;
 
         if (_controller && _controller->HasViewInput()) _lookedDegrees += fabsf(change);
@@ -491,7 +490,7 @@ float TutorialDirector::GetCameraYaw() const {
     if (!_camera) return 0.0f;
 
     VECTOR forward = _camera->GetGroundForward();
-    return atan2f(forward.x, forward.z) * 180.0f / DX_PI_F;
+    return Mathf::YawFromDirection(forward);
 }
 
 bool TutorialDirector::IsReadGoal(TutorialGoal goal) {

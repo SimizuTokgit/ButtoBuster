@@ -7,12 +7,8 @@
 #include "MeshRenderer.h"
 #include "BoneFollower.h"
 #include "SoundManager.h"
+#include "AttackData.h"
 #include <memory>
-
-namespace {
-    // アニメは1秒30フレームで作られている
-    constexpr float ANIMATION_FPS = 30.0f;
-}
 
 bool CharacterBuilder::LoadAnimations(Animator* animator, const std::string& folder, const ClipInfo* clips, int count) {
     if (!animator) return false;

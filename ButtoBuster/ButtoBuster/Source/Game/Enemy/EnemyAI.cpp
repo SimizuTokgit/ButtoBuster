@@ -8,6 +8,7 @@
 #include "Difficulty.h"
 #include "GameObject.h"
 #include "CharacterRegistry.h"
+#include "Mathf.h"
 #include <cmath>
 
 namespace {
@@ -20,13 +21,6 @@ namespace {
 
     Node Do(BehaviorStatus (EnemyAI::*run)(float)) {
         return std::make_unique<BehaviorAction<EnemyAI>>(run);
-    }
-
-    // 角度を -π〜π にそろえる
-    float WrapAngle(float angle) {
-        while (angle > DX_PI_F) angle -= DX_TWO_PI_F;
-        while (angle < -DX_PI_F) angle += DX_TWO_PI_F;
-        return angle;
     }
 
     // 「条件がそろったらやる」枝
@@ -46,13 +40,13 @@ void EnemyAI::Start() {
     _enemy = GetComponent<Enemy>();
 
     // 出てきた全員が同時に殴りに来ないよう、最初の番の取り方をばらけさせる
-    _cooldown = RandomRange(0.3f, 1.5f);
+    _cooldown = Mathf::RandomRange(0.3f, 1.5f);
 
     // 賢さが 1 以上なら行動の木で動く
     if (_enemy && _enemy->GetData().intelligence > 0) {
         BuildTree();
         _nextTechnique = RollTechnique();
-        _flankOffset = RandomRange(-FLANK_SPREAD, FLANK_SPREAD);
+        _flankOffset = Mathf::RandomRange(-FLANK_SPREAD, FLANK_SPREAD);
     }
 }
 
@@ -156,7 +150,7 @@ InputInfo EnemyAI::Surround(InputInfo input, VECTOR toTarget, float deltaTime) {
     if (!_isOrbitReady) {
         _orbitAngle = atan2f(-toTarget.z, -toTarget.x);
         _orbitDirection = (GetRand(1) == 0) ? 1.0f : -1.0f;
-        _orbitSwitchTimer = RandomRange(2.0f, 4.0f);
+        _orbitSwitchTimer = Mathf::RandomRange(2.0f, 4.0f);
         _isOrbitReady = true;
     }
 
@@ -164,7 +158,7 @@ InputInfo EnemyAI::Surround(InputInfo input, VECTOR toTarget, float deltaTime) {
     _orbitSwitchTimer -= deltaTime;
     if (_orbitSwitchTimer <= 0.0f) {
         if (GetRand(2) == 0) _orbitDirection = -_orbitDirection;
-        _orbitSwitchTimer = RandomRange(2.0f, 4.0f);
+        _orbitSwitchTimer = Mathf::RandomRange(2.0f, 4.0f);
     }
     _orbitAngle += _orbitDirection * ORBIT_SPEED * deltaTime;
 
@@ -220,10 +214,6 @@ void EnemyAI::ReleaseToken() {
     if (auto* director = PhaseDirector::Get()) {
         director->GetTokens().Release(_enemy);
     }
-}
-
-float EnemyAI::RandomRange(float min, float max) {
-    return min + (max - min) * (GetRand(1000) / 1000.0f);
 }
 
 
@@ -346,7 +336,7 @@ void EnemyAI::UpdateAttackCycle(float deltaTime) {
 float EnemyAI::RollCooldown() const {
     const EnemyData& data = _enemy->GetData();
     float rate = followsDifficulty ? GameMode::GetData().enemyCooldownRate : 1.0f;
-    return RandomRange(data.cooldownMin, data.cooldownMax) * rate;
+    return Mathf::RandomRange(data.cooldownMin, data.cooldownMax) * rate;
 }
 
 bool EnemyAI::Notices(float seenTime) const {
@@ -508,7 +498,7 @@ BehaviorStatus EnemyAI::Encircle(float deltaTime) {
 
 void EnemyAI::CircleTo(float angle) {
     // 着いたら回らずに待つ 背中の前後で揺れないように
-    float diff = WrapAngle(angle - _orbitAngle);
+    float diff = Mathf::WrapRadian(angle - _orbitAngle);
     if (fabsf(diff) < FLANK_ARRIVE_ANGLE) {
         _orbitDirection = 0.0f;
         return;
@@ -536,7 +526,7 @@ float EnemyAI::FindGapAngle() const {
         offset.y = 0.0f;
         if (VSize(offset) > ENGAGE_DISTANCE) continue;
 
-        float diff = WrapAngle(atan2f(offset.z, offset.x) - myAngle);
+        float diff = Mathf::WrapRadian(atan2f(offset.z, offset.x) - myAngle);
         if (diff < 0.0f) diff += DX_TWO_PI_F;
         if (diff < nearest) nearest = diff;
         if (diff > farthest) farthest = diff;
@@ -550,7 +540,7 @@ float EnemyAI::FindGapAngle() const {
     float gap = nearest + DX_TWO_PI_F - farthest;
     float middle = myAngle + nearest - gap * 0.5f;
     float lean = gap * 0.5f * ENCIRCLE_BACK_LEAN;
-    float toBack = WrapAngle(backAngle - middle);
+    float toBack = Mathf::WrapRadian(backAngle - middle);
     if (toBack > lean) toBack = lean;
     if (toBack < -lean) toBack = -lean;
     return middle + toBack;

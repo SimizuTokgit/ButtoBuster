@@ -187,6 +187,7 @@
     <ClInclude Include="Source\Engine\Core\Behaviour.h" />
     <ClInclude Include="Source\Engine\Core\Component.h" />
     <ClInclude Include="Source\Engine\Core\GameObject.h" />
+    <ClInclude Include="Source\Engine\Core\Mathf.h" />
     <ClInclude Include="Source\Engine\Core\MonoBehaviour.h" />
     <ClInclude Include="Source\Engine\Core\Object.h" />
     <ClInclude Include="Source\Engine\Core\Observer.h" />

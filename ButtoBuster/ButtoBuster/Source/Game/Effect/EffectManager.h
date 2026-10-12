@@ -61,6 +61,11 @@ private:
 public:
     static EffectManager* Get() { return _instance; }
 
+    // 0xRRGGBB の色を COLOR_U8 にする FlashScreen と同じ書き方の色を、輪や雷にも使えるように
+    static COLOR_U8 ToColor(unsigned int rgb) {
+        return GetColorU8((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
+    }
+
     ~EffectManager() override;
 
     // カメラを作ったあとで呼ぶ

@@ -46,7 +46,7 @@ void EnemyMarkerRenderer::Render() {
 
         // 地面に立っていれば足の高さ、宙にいれば真下の地面
         VECTOR ground = character->GetPosition();
-        if (!character->IsGrounded()) StageBuilder::FindGroundHeight(ground.x, ground.z, ground.y);
+        if (!character->IsGrounded()) ground = StageBuilder::SnapToGround(ground);
         BuildMarker(ground, character->bodyRadius);
     }
     if (_vertices.empty()) return;
