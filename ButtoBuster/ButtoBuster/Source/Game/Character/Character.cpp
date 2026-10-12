@@ -261,6 +261,10 @@ VECTOR Character::GetCenter() const {
     return VAdd(GetPosition(), VGet(0.0f, bodyHeight * 0.5f, 0.0f));
 }
 
+VECTOR Character::GetTopPosition() const {
+    return VAdd(GetCenter(), VGet(0.0f, bodyHeight * 0.5f, 0.0f));
+}
+
 bool Character::IsTouchingSphere(VECTOR center, float radius) const {
     if (!_body) {
         VECTOR toCenter = VSub(center, GetCenter());

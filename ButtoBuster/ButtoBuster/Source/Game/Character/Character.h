@@ -199,6 +199,9 @@ public:
     // 胴体の真ん中 エフェクトや飛び道具の狙いに使う
     VECTOR GetCenter() const;
 
+    // 体のてっぺん 頭の上に出す合図や光の位置に使う
+    VECTOR GetTopPosition() const;
+
     // 球が体のカプセルに触れているか 飛び道具の当たり判定に使う
     bool IsTouchingSphere(VECTOR center, float radius) const;
 
