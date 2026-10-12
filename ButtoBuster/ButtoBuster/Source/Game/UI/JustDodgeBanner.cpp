@@ -1,19 +1,15 @@
 ﻿#include "JustDodgeBanner.h"
 #include "GameFont.h"
 #include "Time.h"
+#include "UiLayer.h"
 
 namespace {
-    // 連鎖の数と同じ段に描く フェーズの表示と結果の画面より奥
-    constexpr int SORTING_ORDER = 8;
-
-    // かわしたと分かる水色 反撃の弧と同じ色にする
-    constexpr unsigned int TEXT_COLOR = 0x78E6FF;
-
+    // 色はかわしたと分かる水色 (JUST_DODGE_COLOR) 反撃の弧と同じ色にする
     const char* const TEXT = "JUST DODGE!";
 }
 
 void JustDodgeBanner::Setup() {
-    sortingOrder = SORTING_ORDER;
+    sortingOrder = UiLayer::POPUP;
 }
 
 void JustDodgeBanner::OnNotify(const JustDodgeEvent& event) {
@@ -44,6 +40,6 @@ void JustDodgeBanner::Render() {
     int top = static_cast<int>(screen.y - rise) - GameFont::GetHeight(size);
 
     SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
-    GameFont::DrawCentered(static_cast<int>(screen.x), top, TEXT, TEXT_COLOR, size);
+    GameFont::DrawCentered(static_cast<int>(screen.x), top, TEXT, JUST_DODGE_COLOR, size);
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 }

@@ -20,6 +20,7 @@
 #include "InputSystem.h"
 #include "Time.h"
 #include "Mathf.h"
+#include "UiDraw.h"
 #include <algorithm>
 #include <cmath>
 
@@ -118,7 +119,7 @@ void TutorialDirector::Update(float deltaTime) {
 
     if (isRead) {
         if (IsWaitingConfirm() && InputSystem::Instance().ConfirmPressed()) {
-            SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
+            SoundManager::Instance().PlaySE(UiDraw::DECIDE_SE);
             if (step.goal == TutorialGoal::Finish) GoToGame();
             else NextStep();
         }
@@ -285,7 +286,7 @@ void TutorialDirector::UpdateSkip() {
     else _skipTimer = 0.0f;
 
     if (_skipTimer >= SKIP_HOLD_TIME) {
-        SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
+        SoundManager::Instance().PlaySE(UiDraw::DECIDE_SE);
         GoToGame();
     }
 }

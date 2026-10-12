@@ -14,8 +14,6 @@ namespace GameFont {
         Tiny,       // Small より小さい チュートリアルの説明に使う
     };
 
-    int Get(Size size);
-
     // 縁取りつき 3D の画面の上に置いても読めるように
     void Draw(int x, int y, const char* text, unsigned int color, Size size);
     void DrawCentered(int centerX, int y, const char* text, unsigned int color, Size size);

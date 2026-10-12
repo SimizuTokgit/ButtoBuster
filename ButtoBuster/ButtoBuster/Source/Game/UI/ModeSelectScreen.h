@@ -9,7 +9,8 @@
 class ModeSelectScreen : public UIImage {
 private:
     // ボタンの数 難易度の数 + もどる
-    static constexpr int BUTTON_COUNT = static_cast<int>(Difficulty::Count) + 1;
+    static constexpr int DIFFICULTY_COUNT = static_cast<int>(Difficulty::Count);
+    static constexpr int BUTTON_COUNT = DIFFICULTY_COUNT + 1;
     static constexpr int BACK_INDEX = BUTTON_COUNT - 1;
 
     float _timer = 0.0f;
@@ -17,15 +18,15 @@ private:
 
     int _focus = 0;
 
-    // 背景の画像 ボタンごとに 1 枚 読めなかったボタンはタイトルの背景を使う
-    int _backgrounds[BUTTON_COUNT] = {};
+    // 背景の画像 難易度ごとに 1 枚 読めなかった難易度と、もどるボタンはタイトルの背景を使う
+    int _backgrounds[DIFFICULTY_COUNT] = {};
     int _titleBackground = -1;
 
     // 背景を切り替えるときは、前の背景から重ねて替える
     int _previousFocus = 0;
     float _fadeTimer = 0.0f;
 
-    int _bestPhases[static_cast<int>(Difficulty::Count)] = {};
+    int _bestPhases[DIFFICULTY_COUNT] = {};
 
     int _lastMouseX = -1;
     int _lastMouseY = -1;

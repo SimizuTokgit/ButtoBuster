@@ -14,6 +14,169 @@ namespace {
 
     // 押された向きの火花を、少しだけ上へ跳ねさせる
     constexpr float SPARK_LIFT = 0.35f;
+
+    // 割れた壁のかけらは、火花より少し上向きに散らす
+    constexpr float SHARD_LIFT = 0.4f;
+
+    // 粒を散らす角度 (度) は、向けた向きから広げる角度
+    // 向きが無いときは全方向へ散らす (around の数)
+
+    // 斬ったとき (PlayHit) 線の火花と丸い火花
+    struct HitLook {
+        float streakSpread;
+        int streakCount;
+        float sparkSpread;
+        int sparkCount;
+        int aroundStreakCount;
+        int aroundSparkCount;
+    };
+    const HitLook HIT_LOOK = { 35.0f, 9, 60.0f, 6, 8, 8 };
+
+    // ガードしたとき (PlayGuard)
+    struct GuardLook {
+        float spread;
+        int count;
+        int aroundCount;
+    };
+    const GuardLook GUARD_LOOK = { 50.0f, 12, 10 };
+
+    // 敵が現れるとき (PlaySpawn) 煙を出す高さと数 地面に広げる輪の大きさと色 (0xRRGGBB) と長さと濃さ
+    struct SpawnLook {
+        float smokeHeight;
+        int smokeCount;
+        float ringStartRadius;
+        float ringEndRadius;
+        float ringWidth;
+        unsigned int ringColor;
+        float ringLife;
+        float ringAlpha;
+    };
+    const SpawnLook SPAWN_LOOK = { 80.0f, 12, 20.0f, 220.0f, 80.0f, 0x965AFF, 0.6f, 0.8f };
+
+    // 回復の光の数 (PlayHeal)
+    constexpr int HEAL_COUNT = 40;
+
+    // 土煙 (PlayDust) 出す高さと散らす角度 湯気 (PlaySteam) を散らす角度
+    constexpr float DUST_LIFT = 15.0f;
+    constexpr float DUST_SPREAD = 75.0f;
+    constexpr float STEAM_SPREAD = 30.0f;
+
+    // 衝撃波 (PlayShockwave) 大きさと太さは渡された半径に掛ける割合
+    // 外の輪 内側を速く走る白い芯 跳ね上がるかけら 土煙
+    struct ShockwaveLook {
+        float waveStartRate;
+        float waveWidthRate;
+        float waveLife;
+        float coreStartRate;
+        float coreEndRate;
+        float coreWidthRate;
+        unsigned int coreColor;
+        float coreLife;
+        float debrisHeight;
+        float debrisSpread;
+        int debrisCount;
+        int dustCount;
+    };
+    const ShockwaveLook SHOCKWAVE_LOOK = {
+        0.15f, 0.35f, 0.45f,            // waveStartRate waveWidthRate waveLife
+        0.1f, 0.75f, 0.15f, 0xFFFFFF, 0.3f, // coreStartRate coreEndRate coreWidthRate coreColor coreLife
+        10.0f, 55.0f, 14,               // debrisHeight debrisSpread debrisCount
+        10,                             // dustCount
+    };
+
+    // 範囲攻撃の予兆 (PlayAreaWarning) 中から満ちていく赤と、縁の線 色 (0xRRGGBB) と始めと終わりの濃さ
+    struct AreaWarningLook {
+        unsigned int fillColor;
+        float fillAlphaStart;
+        float fillAlphaEnd;
+        float edgeWidth;
+        unsigned int edgeColor;
+        float edgeAlphaStart;
+        float edgeAlphaEnd;
+    };
+    const AreaWarningLook AREA_WARNING_LOOK = { 0xFF281E, 0.15f, 0.6f, 40.0f, 0xFF3C28, 0.5f, 0.9f };
+
+    // フェーズの最後の 1 体を倒したとき (PlayFinalBlow) 普通のとどめとははっきり違う重さにする
+    struct FinalBlowLook {
+        // 一度ほぼ止める秒数 そのあとゆっくり流す速さ (1 で普通) と長さ 寄るのもこの長さ
+        float hitStop;
+        float slowScale;
+        float slowTime;
+
+        // 画面を光らせる色 (0xRRGGBB) と濃さと長さ
+        unsigned int flashColor;
+        float flashAlpha;
+        float flashTime;
+
+        // 寄る角度 度
+        float zoom;
+
+        // 画面の揺れの強さと長さ
+        float shake;
+        float shakeTime;
+
+        // 金の衝撃波を二重に 内側は速く、外側は大きく 半径と色 (0xRRGGBB)
+        float innerWaveRadius;
+        unsigned int innerWaveColor;
+        float outerWaveRadius;
+        unsigned int outerWaveColor;
+
+        // 粒を出す高さ (足元から) と、弾ける光 残り火 線の火花の数
+        float burstHeight;
+        int burstCount;
+        int emberCount;
+        int streakCount;
+    };
+    const FinalBlowLook FINAL_BLOW_LOOK = {
+        0.2f,                       // hitStop
+        0.15f, 1.3f,                // slowScale slowTime
+        0xFFFFFF, 0.7f, 0.45f,      // flashColor flashAlpha flashTime
+        14.0f,                      // zoom
+        20.0f, 0.8f,                // shake shakeTime
+        600.0f, 0xFFDC96,           // innerWaveRadius innerWaveColor
+        1100.0f, 0xFFB45A,          // outerWaveRadius outerWaveColor
+        100.0f, 40, 30, 30,         // burstHeight burstCount emberCount streakCount
+    };
+
+    // 吹き飛んだ体が壁にぶつかったとき (PlayWallHit)
+    // 数と強さは いちばん弱いときの値 + ぶつかった強さ (0〜1) に掛けて足す値
+    struct WallHitLook {
+        float streakSpread;
+        int streakCount;
+        float streakExtra;
+        float sparkSpread;
+        int sparkCount;
+        float sparkExtra;
+        int dustCount;
+        float dustExtra;
+        float hitStop;
+        float hitStopExtra;
+        float shake;
+        float shakeExtra;
+        float shakeTime;
+
+        // ぶつかった所の光の幕の強さ 0〜1
+        float glow;
+        float glowExtra;
+    };
+    const WallHitLook WALL_HIT_LOOK = {
+        40.0f, 6, 10.0f,            // streakSpread streakCount streakExtra
+        70.0f, 4, 6.0f,             // sparkSpread sparkCount sparkExtra
+        6, 6.0f,                    // dustCount dustExtra
+        0.03f, 0.04f,               // hitStop hitStopExtra
+        3.0f, 7.0f, 0.25f,          // shake shakeExtra shakeTime
+        0.5f, 0.5f,                 // glow glowExtra
+    };
+
+    // 壁が割れたとき (PlayWallBreak) かけらと線の火花 当たった点の光の数
+    struct WallBreakLook {
+        float shardSpread;
+        int shardCount;
+        float streakSpread;
+        int streakCount;
+        int flashCount;
+    };
+    const WallBreakLook WALL_BREAK_LOOK = { 45.0f, 36, 30.0f, 20, 2 };
 }
 
 EffectManager::~EffectManager() {
@@ -91,7 +254,7 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _guardSpark->color = GetColorU8(255, 230, 100, 255);
     }
 
-    // 倒した瞬間に弾ける光 厄災の魔物が消えるときの紫
+    // フェーズの最後の 1 体を倒したとき (PlayFinalBlow) に弾ける光 厄災の魔物が消えるときの紫
     _killBurst = CreateSystem("KillBurst", _damageGraph);
     if (_killBurst) {
         _killBurst->emissionShape = EmissionShape::Sphere;
@@ -106,7 +269,7 @@ void EffectManager::Initialize(CameraFollow* camera) {
         _killBurst->color = GetColorU8(200, 120, 255, 255);
     }
 
-    // 倒した後にしばらく立ちのぼる残り火
+    // 同じく最後の 1 体を倒したあと、しばらく立ちのぼる残り火
     _killEmber = CreateSystem("KillEmber", _damageGraph);
     if (_killEmber) {
         _killEmber->emissionShape = EmissionShape::Sphere;
@@ -285,12 +448,12 @@ void EffectManager::PlayHit(VECTOR position, VECTOR direction) {
     direction.y = 0.0f;
     if (VSquareSize(direction) > 0.0001f) {
         VECTOR aim = VAdd(VNorm(direction), VScale(UP, SPARK_LIFT));
-        BurstToward(_hitStreak, position, aim, 35.0f, 9);
-        BurstToward(_hitSpark, position, aim, 60.0f, 6);
+        BurstToward(_hitStreak, position, aim, HIT_LOOK.streakSpread, HIT_LOOK.streakCount);
+        BurstToward(_hitSpark, position, aim, HIT_LOOK.sparkSpread, HIT_LOOK.sparkCount);
     }
     else {
-        Burst(_hitStreak, position, 8);
-        Burst(_hitSpark, position, 8);
+        Burst(_hitStreak, position, HIT_LOOK.aroundStreakCount);
+        Burst(_hitSpark, position, HIT_LOOK.aroundSparkCount);
     }
     Burst(_hitFlash, position, 1);
 }
@@ -299,38 +462,39 @@ void EffectManager::PlayGuard(VECTOR position, VECTOR direction) {
     direction.y = 0.0f;
     if (VSquareSize(direction) > 0.0001f) {
         VECTOR aim = VAdd(VNorm(direction), VScale(UP, SPARK_LIFT));
-        BurstToward(_guardSpark, position, aim, 50.0f, 12);
+        BurstToward(_guardSpark, position, aim, GUARD_LOOK.spread, GUARD_LOOK.count);
     }
     else {
-        Burst(_guardSpark, position, 10);
+        Burst(_guardSpark, position, GUARD_LOOK.aroundCount);
     }
 }
 
 void EffectManager::PlaySpawn(VECTOR groundPosition) {
-    Burst(_spawnSmoke, VAdd(groundPosition, VGet(0.0f, 80.0f, 0.0f)), 12);
+    const SpawnLook& look = SPAWN_LOOK;
+    Burst(_spawnSmoke, VAdd(groundPosition, VGet(0.0f, look.smokeHeight, 0.0f)), look.smokeCount);
 
     // 湧き出る穴のように、紫の輪を地面に広げる
     if (_shapes) {
         ShapeEffectRenderer::RingDesc ring;
         ring.center = groundPosition;
-        ring.startRadius = 20.0f;
-        ring.endRadius = 220.0f;
-        ring.width = 80.0f;
-        ring.color = GetColorU8(150, 90, 255, 255);
-        ring.life = 0.6f;
-        ring.alphaStart = 0.8f;
+        ring.startRadius = look.ringStartRadius;
+        ring.endRadius = look.ringEndRadius;
+        ring.width = look.ringWidth;
+        ring.color = ToColor(look.ringColor);
+        ring.life = look.ringLife;
+        ring.alphaStart = look.ringAlpha;
         _shapes->AddRing(ring);
     }
 }
 
 void EffectManager::PlayHeal(VECTOR position) {
-    Burst(_healLight, position, 40);
+    Burst(_healLight, position, HEAL_COUNT);
 }
 
 void EffectManager::PlayDust(VECTOR groundPosition, int count) {
     // 地面に半分埋もれないよう、少し上から横と上へ広げる
-    VECTOR position = VAdd(groundPosition, VGet(0.0f, 15.0f, 0.0f));
-    BurstToward(_dust, position, UP, 75.0f, count);
+    VECTOR position = VAdd(groundPosition, VGet(0.0f, DUST_LIFT, 0.0f));
+    BurstToward(_dust, position, UP, DUST_SPREAD, count);
 }
 
 void EffectManager::PlayWarning(VECTOR position, bool isHeavy) {
@@ -338,7 +502,7 @@ void EffectManager::PlayWarning(VECTOR position, bool isHeavy) {
 }
 
 void EffectManager::PlaySteam(VECTOR position, int count) {
-    BurstToward(_steam, position, UP, 30.0f, count);
+    BurstToward(_steam, position, UP, STEAM_SPREAD, count);
 }
 
 // ----- 形 -----
@@ -350,33 +514,37 @@ void EffectManager::PlaySlashArc(const ArcDesc& desc) {
 void EffectManager::PlayShockwave(VECTOR groundPosition, float radius, COLOR_U8 color) {
     if (radius <= 0.0f) return;
 
+    const ShockwaveLook& look = SHOCKWAVE_LOOK;
     if (_shapes) {
         ShapeEffectRenderer::RingDesc wave;
         wave.center = groundPosition;
-        wave.startRadius = radius * 0.15f;
+        wave.startRadius = radius * look.waveStartRate;
         wave.endRadius = radius;
-        wave.width = radius * 0.35f;
+        wave.width = radius * look.waveWidthRate;
         wave.color = color;
-        wave.life = 0.45f;
+        wave.life = look.waveLife;
         _shapes->AddRing(wave);
 
         // 内側を白く速く走らせ、衝撃の芯に見せる
         ShapeEffectRenderer::RingDesc core;
         core.center = groundPosition;
-        core.startRadius = radius * 0.1f;
-        core.endRadius = radius * 0.75f;
-        core.width = radius * 0.15f;
-        core.color = GetColorU8(255, 255, 255, 255);
-        core.life = 0.3f;
+        core.startRadius = radius * look.coreStartRate;
+        core.endRadius = radius * look.coreEndRate;
+        core.width = radius * look.coreWidthRate;
+        core.color = ToColor(look.coreColor);
+        core.life = look.coreLife;
         _shapes->AddRing(core);
     }
 
-    BurstToward(_shockDebris, VAdd(groundPosition, VGet(0.0f, 10.0f, 0.0f)), UP, 55.0f, 14);
-    PlayDust(groundPosition, 10);
+    VECTOR debrisPosition = VAdd(groundPosition, VGet(0.0f, look.debrisHeight, 0.0f));
+    BurstToward(_shockDebris, debrisPosition, UP, look.debrisSpread, look.debrisCount);
+    PlayDust(groundPosition, look.dustCount);
 }
 
 void EffectManager::PlayAreaWarning(VECTOR groundPosition, float radius, float seconds) {
     if (!_shapes || radius <= 0.0f || seconds <= 0.0f) return;
+
+    const AreaWarningLook& look = AREA_WARNING_LOOK;
 
     // 中から外へ満ちていく赤 満ちきったときに当たる
     ShapeEffectRenderer::RingDesc fill;
@@ -384,10 +552,10 @@ void EffectManager::PlayAreaWarning(VECTOR groundPosition, float radius, float s
     fill.startRadius = 0.0f;
     fill.endRadius = radius;
     fill.width = radius;
-    fill.color = GetColorU8(255, 40, 30, 255);
+    fill.color = ToColor(look.fillColor);
     fill.life = seconds;
-    fill.alphaStart = 0.15f;
-    fill.alphaEnd = 0.6f;
+    fill.alphaStart = look.fillAlphaStart;
+    fill.alphaEnd = look.fillAlphaEnd;
     _shapes->AddRing(fill);
 
     // 範囲の縁は最初から見せておく どこまで逃げればよいか分かるように
@@ -395,11 +563,11 @@ void EffectManager::PlayAreaWarning(VECTOR groundPosition, float radius, float s
     edge.center = groundPosition;
     edge.startRadius = radius;
     edge.endRadius = radius;
-    edge.width = 40.0f;
-    edge.color = GetColorU8(255, 60, 40, 255);
+    edge.width = look.edgeWidth;
+    edge.color = ToColor(look.edgeColor);
     edge.life = seconds;
-    edge.alphaStart = 0.5f;
-    edge.alphaEnd = 0.9f;
+    edge.alphaStart = look.edgeAlphaStart;
+    edge.alphaEnd = look.edgeAlphaEnd;
     _shapes->AddRing(edge);
 }
 
@@ -447,40 +615,43 @@ void EffectManager::SlowMotion(float scale, float seconds) {
 }
 
 void EffectManager::PlayFinalBlow(VECTOR position) {
+    const FinalBlowLook& look = FINAL_BLOW_LOOK;
+
     // 一度ほぼ止めてから、ゆっくり流す
-    HitStop(0.2f);
-    SlowMotion(0.15f, 1.3f);
+    HitStop(look.hitStop);
+    SlowMotion(look.slowScale, look.slowTime);
 
-    FlashScreen(0xFFFFFF, 0.7f, 0.45f);
-    ZoomPunch(14.0f, 1.3f);
+    FlashScreen(look.flashColor, look.flashAlpha, look.flashTime);
+    ZoomPunch(look.zoom, look.slowTime);
 
-    // 大きく長く揺らす 普通のとどめとははっきり違う重さにする
-    Shake(20.0f, 0.8f);
+    // 大きく長く揺らす
+    Shake(look.shake, look.shakeTime);
 
-    // 金の衝撃波を二重に 内側は速く、外側は大きく
-    PlayShockwave(position, 600.0f, GetColorU8(255, 220, 150, 255));
-    PlayShockwave(position, 1100.0f, GetColorU8(255, 180, 90, 255));
+    PlayShockwave(position, look.innerWaveRadius, ToColor(look.innerWaveColor));
+    PlayShockwave(position, look.outerWaveRadius, ToColor(look.outerWaveColor));
 
-    VECTOR center = VAdd(position, VGet(0.0f, 100.0f, 0.0f));
-    Burst(_killBurst, center, 40);
-    Burst(_killEmber, center, 30);
-    Burst(_hitStreak, center, 30);
+    VECTOR center = VAdd(position, VGet(0.0f, look.burstHeight, 0.0f));
+    Burst(_killBurst, center, look.burstCount);
+    Burst(_killEmber, center, look.emberCount);
+    Burst(_hitStreak, center, look.streakCount);
 }
 
 void EffectManager::PlayWallHit(VECTOR position, VECTOR normal, float power) {
+    const WallHitLook& look = WALL_HIT_LOOK;
+
     // 壁から内側、跳ね返る向きへ火花を散らす
     VECTOR aim = VAdd(normal, VScale(UP, SPARK_LIFT));
-    BurstToward(_hitStreak, position, aim, 40.0f, 6 + static_cast<int>(power * 10.0f));
-    BurstToward(_hitSpark, position, aim, 70.0f, 4 + static_cast<int>(power * 6.0f));
+    BurstToward(_hitStreak, position, aim, look.streakSpread, look.streakCount + static_cast<int>(power * look.streakExtra));
+    BurstToward(_hitSpark, position, aim, look.sparkSpread, look.sparkCount + static_cast<int>(power * look.sparkExtra));
     Burst(_hitFlash, position, 1);
 
-    PlayDust(StageBuilder::SnapToGround(position), 6 + static_cast<int>(power * 6.0f));
+    PlayDust(StageBuilder::SnapToGround(position), look.dustCount + static_cast<int>(power * look.dustExtra));
 
-    HitStop(0.03f + power * 0.04f);
-    Shake(3.0f + power * 7.0f, 0.25f);
+    HitStop(look.hitStop + power * look.hitStopExtra);
+    Shake(look.shake + power * look.shakeExtra, look.shakeTime);
 
     // 壁は離れていると見えないので、ぶつかった所だけ光らせて、そこに壁があると分かるようにする
-    if (auto* boundary = ArenaBoundary::Get()) boundary->Flash(position, 0.5f + power * 0.5f);
+    if (auto* boundary = ArenaBoundary::Get()) boundary->Flash(position, look.glow + power * look.glowExtra);
 }
 
 void EffectManager::PlayWallBreak(VECTOR position, VECTOR outward) {
@@ -488,10 +659,11 @@ void EffectManager::PlayWallBreak(VECTOR position, VECTOR outward) {
     if (VSquareSize(outward) < 0.0001f) outward = VGet(0.0f, 0.0f, 1.0f);
 
     // かけらと火花は外へ、少し上向きに散らす
-    VECTOR aim = VAdd(VNorm(outward), VScale(UP, 0.4f));
-    BurstToward(_wallShard, position, aim, 45.0f, 36);
-    BurstToward(_hitStreak, position, aim, 30.0f, 20);
-    Burst(_hitFlash, position, 2);
+    const WallBreakLook& look = WALL_BREAK_LOOK;
+    VECTOR aim = VAdd(VNorm(outward), VScale(UP, SHARD_LIFT));
+    BurstToward(_wallShard, position, aim, look.shardSpread, look.shardCount);
+    BurstToward(_hitStreak, position, aim, look.streakSpread, look.streakCount);
+    Burst(_hitFlash, position, look.flashCount);
 }
 
 void EffectManager::SetBaseTimeScale(float scale) {

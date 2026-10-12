@@ -2,7 +2,10 @@
 #include "Character.h"
 #include "CharacterRegistry.h"
 #include "StageBuilder.h"
+#include "EffectDraw.h"
 #include <cmath>
+
+using namespace EffectDraw;
 
 namespace {
     // ----- 影 -----
@@ -19,16 +22,6 @@ namespace {
     constexpr float LIFT = 3.0f;
 
     constexpr int SEGMENTS = 32;
-
-    VERTEX3D MakeVertex(VECTOR position, COLOR_U8 color, float alpha) {
-        VERTEX3D vertex{};
-        vertex.pos = position;
-        vertex.norm = VGet(0.0f, 1.0f, 0.0f);
-        vertex.dif = color;
-        vertex.dif.a = static_cast<unsigned char>(alpha * 255.0f);
-        vertex.spc = GetColorU8(0, 0, 0, 0);
-        return vertex;
-    }
 }
 
 void EnemyMarkerRenderer::Setup() {
@@ -51,20 +44,9 @@ void EnemyMarkerRenderer::Render() {
     }
     if (_vertices.empty()) return;
 
-    // 奥のモデルには隠れるが、自分は奥行きを書かない 重なった印どうしが欠けないように
-    SetUseZBufferFlag(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseLighting(FALSE);
-    SetUseBackCulling(FALSE);
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, 255);
-
+    // 影は光らせず、普通に重ねる
+    TransparentScope scope(DX_BLENDMODE_ALPHA);
     DrawPolygon3D(_vertices.data(), static_cast<int>(_vertices.size() / 3), DX_NONE_GRAPH, TRUE);
-
-    // ほかのエフェクトと同じ初期の状態に戻す
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-    SetUseLighting(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseZBufferFlag(FALSE);
 }
 
 void EnemyMarkerRenderer::BuildMarker(VECTOR ground, float bodyRadius) {
@@ -96,10 +78,7 @@ void EnemyMarkerRenderer::BuildMarker(VECTOR ground, float bodyRadius) {
         VERTEX3D out0 = MakeVertex(VAdd(center, VScale(d0, ringOuter)), RING_COLOR, 0.0f);
         VERTEX3D out1 = MakeVertex(VAdd(center, VScale(d1, ringOuter)), RING_COLOR, 0.0f);
 
-        const VERTEX3D quads[2][4] = { { in0, mid0, in1, mid1 }, { mid0, out0, mid1, out1 } };
-        for (const auto& q : quads) {
-            _vertices.push_back(q[0]); _vertices.push_back(q[1]); _vertices.push_back(q[2]);
-            _vertices.push_back(q[2]); _vertices.push_back(q[1]); _vertices.push_back(q[3]);
-        }
+        PushQuad(_vertices, in0, mid0, in1, mid1);
+        PushQuad(_vertices, mid0, out0, mid1, out1);
     }
 }

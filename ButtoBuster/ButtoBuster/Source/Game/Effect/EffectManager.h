@@ -134,7 +134,6 @@ public:
 
     // デバッグのスロー再生用 ヒットストップが明けたらこの速さに戻る
     void SetBaseTimeScale(float scale);
-    float GetBaseTimeScale() const { return _baseTimeScale; }
 
 private:
     ParticleSystem* CreateSystem(const char* name, int graph);

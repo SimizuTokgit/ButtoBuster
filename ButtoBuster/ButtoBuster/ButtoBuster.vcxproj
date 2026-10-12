@@ -234,6 +234,7 @@
     <ClInclude Include="Source\Game\Debug\ChargePoseDebugger.h" />
     <ClInclude Include="Source\Game\Debug\ColliderGizmo.h" />
     <ClInclude Include="Source\Game\Debug\DebugCheats.h" />
+    <ClInclude Include="Source\Game\Effect\EffectDraw.h" />
     <ClInclude Include="Source\Game\Effect\EffectManager.h" />
     <ClInclude Include="Source\Game\Effect\EnemyMarkerRenderer.h" />
     <ClInclude Include="Source\Game\Effect\ScreenFlash.h" />
@@ -320,6 +321,8 @@
     <ClInclude Include="Source\Game\UI\ResultScreen.h" />
     <ClInclude Include="Source\Game\UI\TitleScreen.h" />
     <ClInclude Include="Source\Game\UI\TutorialScreen.h" />
+    <ClInclude Include="Source\Game\UI\UiDraw.h" />
+    <ClInclude Include="Source\Game\UI\UiLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

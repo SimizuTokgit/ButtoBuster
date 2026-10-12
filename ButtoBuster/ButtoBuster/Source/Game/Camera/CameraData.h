@@ -51,8 +51,9 @@ struct CameraData {
     // カメラへ向かって走ってくるときに、画面がぐるりと半周するのを防ぐ
     float followMaxAngle = 150.0f;
 
-    // 視点を戻すボタンで、背中側へ戻す速さ
+    // 視点を戻すボタンで、背中側へ戻す速さと、戻し終えたとみなす背中との角度の差
     float resetSharpness = 12.0f;
+    float resetFinishAngle = 0.5f;
 
     // ----- 壁際 -----
 

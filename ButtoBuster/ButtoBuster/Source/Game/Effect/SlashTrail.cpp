@@ -1,7 +1,10 @@
 ﻿#include "SlashTrail.h"
 #include "SkinnedMeshRenderer.h"
+#include "EffectDraw.h"
 #include "Time.h"
 #include <algorithm>
+
+using namespace EffectDraw;
 
 SlashTrail::~SlashTrail() {
     if (_graph != -1) DeleteGraph(_graph);
@@ -55,18 +58,6 @@ void SlashTrail::Draw() {
 
     _vertices.clear();
 
-    auto makeVertex = [this](VECTOR position, float u, float v, float alpha) {
-        VERTEX3D vertex{};
-        vertex.pos = position;
-        vertex.norm = VGet(0.0f, 1.0f, 0.0f);
-        vertex.dif = trailColor;
-        vertex.dif.a = static_cast<unsigned char>(alpha * 255.0f);
-        vertex.spc = GetColorU8(0, 0, 0, 0);
-        vertex.u = u;
-        vertex.v = v;
-        return vertex;
-    };
-
     float last = static_cast<float>(_samples.size() - 1);
     for (size_t i = 0; i + 1 < _samples.size(); ++i) {
         const Sample& a = _samples[i];
@@ -78,33 +69,14 @@ void SlashTrail::Draw() {
         float uA = i / last;
         float uB = (i + 1) / last;
 
-        VERTEX3D aBase = makeVertex(a.base, uA, 1.0f, alphaA);
-        VERTEX3D aTip = makeVertex(a.tip, uA, 0.0f, alphaA);
-        VERTEX3D bBase = makeVertex(b.base, uB, 1.0f, alphaB);
-        VERTEX3D bTip = makeVertex(b.tip, uB, 0.0f, alphaB);
-
-        _vertices.push_back(aBase);
-        _vertices.push_back(aTip);
-        _vertices.push_back(bBase);
-
-        _vertices.push_back(bBase);
-        _vertices.push_back(aTip);
-        _vertices.push_back(bTip);
+        PushQuad(_vertices,
+            MakeVertex(a.base, trailColor, alphaA, uA, 1.0f),
+            MakeVertex(a.tip, trailColor, alphaA, uA, 0.0f),
+            MakeVertex(b.base, trailColor, alphaB, uB, 1.0f),
+            MakeVertex(b.tip, trailColor, alphaB, uB, 0.0f));
     }
 
-    // 奥にあるモデルには隠れるが、自分は奥行きを書かない
-    // 書くと帯の重なった部分が欠けて見える
-    SetUseZBufferFlag(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseLighting(FALSE);
-    SetUseBackCulling(FALSE);
-    SetDrawBlendMode(DX_BLENDMODE_ADD, 255);
-
+    // 描き終えたら、2D の描画に響かないよう元の状態に戻る
+    TransparentScope scope(DX_BLENDMODE_ADD);
     DrawPolygon3D(_vertices.data(), static_cast<int>(_vertices.size() / 3), _graph, TRUE);
-
-    // 2D の描画に響かないよう、ほかのエフェクトと同じ初期の状態に戻す
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-    SetUseLighting(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseZBufferFlag(FALSE);
 }

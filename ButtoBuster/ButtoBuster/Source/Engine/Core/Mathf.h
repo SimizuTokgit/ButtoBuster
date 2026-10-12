@@ -38,6 +38,11 @@ namespace Mathf {
         return atan2f(direction.x, direction.z) * 180.0f / DX_PI_F;
     }
 
+    // 0〜1 の t を、最初に勢いよく進み だんだんゆっくりになる 0〜1 にする
+    inline float EaseOutQuad(float t) {
+        return 1.0f - (1.0f - t) * (1.0f - t);
+    }
+
     // min〜max のどこか
     inline float RandomRange(float min, float max) {
         return min + (max - min) * (static_cast<float>(GetRand(RANDOM_STEPS)) / RANDOM_STEPS);

@@ -539,6 +539,9 @@
     <ClInclude Include="Source\Game\Debug\DebugCheats.h">
       <Filter>Source\Game\Debug</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Effect\EffectDraw.h">
+      <Filter>Source\Game\Effect</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Effect\EffectManager.h">
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
@@ -795,6 +798,12 @@
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\TutorialScreen.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\UiDraw.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\UiLayer.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
   </ItemGroup>

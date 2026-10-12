@@ -16,10 +16,7 @@ namespace {
 
 void CameraFollow::Start() {
     _camera = GetComponent<Camera>();
-    if (_camera) {
-        _camera->fieldOfView = data.fieldOfView;
-        _baseFieldOfView = data.fieldOfView;
-    }
+    if (_camera) _camera->fieldOfView = data.fieldOfView;
     SnapToTarget();
 }
 
@@ -155,7 +152,7 @@ void CameraFollow::UpdateAngles(float deltaTime) {
         float difference = Mathf::WrapDegree(_resetYaw - _yaw);
         _yaw += difference * rate;
         _pitch += (data.basePitch - _pitch) * rate;
-        if (fabsf(difference) < 0.5f) _isResetting = false;
+        if (fabsf(difference) < data.resetFinishAngle) _isResetting = false;
     }
     else if (_idleTime > data.followDelay && data.behindFollowSharpness > 0.0f) {
         // 動いている間は、プレイヤーの背中の向きへ回り込む
@@ -168,16 +165,13 @@ void CameraFollow::UpdateAngles(float deltaTime) {
             if (fabsf(difference) < data.followMaxAngle) {
                 float step = difference * BlendRate(data.behindFollowSharpness, deltaTime);
                 float maxStep = data.behindFollowMaxSpeed * deltaTime;
-                if (step > maxStep) step = maxStep;
-                if (step < -maxStep) step = -maxStep;
-                _yaw += step;
+                _yaw += Mathf::Clamp(step, -maxStep, maxStep);
             }
         }
     }
 
     _yaw = Mathf::WrapDegree(_yaw);
-    if (_pitch < data.minPitch) _pitch = data.minPitch;
-    if (_pitch > data.maxPitch) _pitch = data.maxPitch;
+    _pitch = Mathf::Clamp(_pitch, data.minPitch, data.maxPitch);
 }
 
 VECTOR CameraFollow::GetLookAt() const {
@@ -210,7 +204,7 @@ void CameraFollow::UpdateZoomPunch() {
     if (!_camera) return;
 
     if (_punchTime <= 0.0f) {
-        _camera->fieldOfView = _baseFieldOfView;
+        _camera->fieldOfView = data.fieldOfView;
         return;
     }
 
@@ -229,7 +223,7 @@ void CameraFollow::UpdateZoomPunch() {
         amount = (1.0f - back) * (1.0f - back);
     }
 
-    _camera->fieldOfView = _baseFieldOfView - _punchDegrees * amount;
+    _camera->fieldOfView = data.fieldOfView - _punchDegrees * amount;
 }
 
 VECTOR CameraFollow::GetShakeOffset() {
@@ -243,8 +237,8 @@ VECTOR CameraFollow::GetShakeOffset() {
 
     // 終わりに向けて弱める
     float power = _shakePower * (_shakeTime / _shakeDuration);
-    float x = (GetRand(2000) / 1000.0f - 1.0f) * power;
-    float y = (GetRand(2000) / 1000.0f - 1.0f) * power;
+    float x = Mathf::RandomRange(-1.0f, 1.0f) * power;
+    float y = Mathf::RandomRange(-1.0f, 1.0f) * power;
 
     // カメラが回っても画面の上で同じ揺れ方になるよう、カメラから見た左右と上下で揺らす
     return VAdd(VScale(GetGroundRight(), x), VGet(0.0f, y, 0.0f));

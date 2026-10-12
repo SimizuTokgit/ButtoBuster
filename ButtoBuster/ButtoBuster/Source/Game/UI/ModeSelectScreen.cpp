@@ -6,6 +6,8 @@
 #include "InputSystem.h"
 #include "SceneManager.h"
 #include "SoundManager.h"
+#include "Mathf.h"
+#include "UiDraw.h"
 #include "DxLib.h"
 #include <cmath>
 #include <cstdio>
@@ -14,6 +16,7 @@ namespace {
     // ----- 見出し -----
     constexpr const char* HEADING = "MODE SELECT";
     constexpr int HEADING_Y = 90;
+    constexpr unsigned int HEADING_COLOR = 0xFFFFFF;
 
     // ----- ボタン (画面の真ん中に縦に並べる) -----
     constexpr int BUTTON_WIDTH = 460;
@@ -45,26 +48,14 @@ namespace {
     // ----- 操作の案内 (画面の下) -----
     constexpr const char* HINT_TEXT = "W S / ↑ ↓ / 十字キーで選ぶ    SPACE / A で決定    BackSpace / B でもどる";
     constexpr int HINT_BOTTOM_MARGIN = 60;
-    constexpr unsigned int HINT_COLOR = 0xAAAAAA;
 
     // ----- 背景 -----
-    constexpr const char* TITLE_BACKGROUND = "Data/2D/TitleBack.png";   // もどるボタンと、画像が無い難易度で使う
+    // 画像はタイトルと同じもの (UiDraw.h) と難易度ごとのもの 上に敷く黒と、画像が 1 枚も無いときの色もタイトルと同じ
     constexpr float BACKGROUND_FADE_TIME = 0.25f;   // 背景を替えるときに重ねる時間 秒
-    constexpr int BACKGROUND_SHADE_ALPHA = 120;     // 背景の上に敷く黒の濃さ 文字を読みやすくする
-    constexpr unsigned int NO_IMAGE_COLOR = 0x0C0C14;  // 背景の画像が 1 枚も無いときの色
 
-    // ----- 音 -----
+    // ----- 音 決定の音はタイトルと同じ -----
     constexpr const char* MOVE_SE = "Game/SE_ButtonSelect";
     constexpr float MOVE_SE_VOLUME = 0.5f;
-    constexpr const char* DECIDE_SE = "Game/SE_ButtonPush";
-
-    // 前の画面で押しっぱなしのボタンで、すぐに決まらないように少し待つ
-    constexpr float INPUT_DELAY = 0.3f;
-
-    constexpr int DIFFICULTY_COUNT = static_cast<int>(Difficulty::Count);
-
-    static_assert(sizeof(ACCENT_COLORS) / sizeof(ACCENT_COLORS[0]) == DIFFICULTY_COUNT + 1,
-        "難易度を足したら ACCENT_COLORS にも色を足すこと (最後はもどる)");
 }
 
 ModeSelectScreen::~ModeSelectScreen() {
@@ -80,7 +71,7 @@ void ModeSelectScreen::Start() {
 
     InputSystem::Instance().SetMouseLook(false);
 
-    _titleBackground = LoadGraph(TITLE_BACKGROUND);
+    _titleBackground = LoadGraph(UiDraw::TITLE_BACKGROUND_IMAGE);
     for (int i = 0; i < DIFFICULTY_COUNT; ++i) {
         Difficulty difficulty = static_cast<Difficulty>(i);
         _backgrounds[i] = LoadGraph(GameMode::GetData(difficulty).background);
@@ -99,7 +90,7 @@ void ModeSelectScreen::Update(float deltaTime) {
     _timer += deltaTime;
     _fadeTimer += deltaTime;
 
-    if (_isRequested || _timer < INPUT_DELAY) return;
+    if (_isRequested || _timer < UiDraw::MENU_INPUT_DELAY) return;
 
     InputSystem& input = InputSystem::Instance();
 
@@ -148,13 +139,12 @@ void ModeSelectScreen::SetFocus(int index) {
 
 void ModeSelectScreen::Decide() {
     _isRequested = true;
-    SoundManager::Instance().PlaySE(DECIDE_SE);
+    SoundManager::Instance().PlaySE(UiDraw::DECIDE_SE);
 
     if (_focus == BACK_INDEX) {
         SceneManager::Instance().RequestLoadScene<TitleScene>();
         return;
     }
-    // ModeSelectScreen.cpp  ボタンを決めたとき
     GameMode::Set(static_cast<Difficulty>(_focus));
 
     // 本番の前に、毎回チュートリアルを挟む (長押しで飛ばせる)
@@ -202,21 +192,21 @@ void ModeSelectScreen::Render() {
     int centerX = screenWidth / 2;
 
     // ----- 背景 前の背景の上に、今の背景を少しずつ濃く重ねる -----
-    DrawBox(0, 0, screenWidth, screenHeight, NO_IMAGE_COLOR, TRUE);
-    float fade = (BACKGROUND_FADE_TIME > 0.0f) ? _fadeTimer / BACKGROUND_FADE_TIME : 1.0f;
-    if (fade > 1.0f) fade = 1.0f;
+    UiDraw::FillScreen(UiDraw::MENU_NO_IMAGE_COLOR);
+    float fade = (BACKGROUND_FADE_TIME > 0.0f) ? Mathf::Clamp01(_fadeTimer / BACKGROUND_FADE_TIME) : 1.0f;
     int current = GetBackground(_focus);
     int previous = GetBackground(_previousFocus);
     if (fade < 1.0f && previous != current) DrawBackground(previous, 255, screenWidth, screenHeight);
     DrawBackground(current, static_cast<int>(255 * fade), screenWidth, screenHeight);
 
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, BACKGROUND_SHADE_ALPHA);
-    DrawBox(0, 0, screenWidth, screenHeight, 0x000000, TRUE);
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    UiDraw::FillScreen(0x000000, UiDraw::MENU_SHADE_ALPHA);
 
-    GameFont::DrawCentered(centerX, HEADING_Y, HEADING, 0xFFFFFF, GameFont::Size::Large);
+    GameFont::DrawCentered(centerX, HEADING_Y, HEADING, HEADING_COLOR, GameFont::Size::Large);
 
     // ----- ボタン -----
+    static_assert(sizeof(ACCENT_COLORS) / sizeof(ACCENT_COLORS[0]) == BUTTON_COUNT,
+        "難易度を足したら ACCENT_COLORS にも色を足すこと (最後はもどる)");
+
     char text[64];
     int textHeight = GameFont::GetHeight(GameFont::Size::Medium);
     int recordHeight = GameFont::GetHeight(GameFont::Size::Small);
@@ -236,9 +226,7 @@ void ModeSelectScreen::Render() {
             right += sway;
         }
 
-        SetDrawBlendMode(DX_BLENDMODE_ALPHA, BUTTON_ALPHA);
-        DrawBox(left, top, right, bottom, BUTTON_COLOR, TRUE);
-        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+        UiDraw::FillBox(left, top, right, bottom, BUTTON_COLOR, BUTTON_ALPHA);
 
         unsigned int lineColor = isFocused ? accent : IDLE_LINE_COLOR;
         DrawBox(left, top, right, bottom, lineColor, FALSE);
@@ -266,5 +254,5 @@ void ModeSelectScreen::Render() {
         GameFont::DrawCentered(centerX, lastBottom + DESCRIPTION_GAP, "タイトルへ戻る", DESCRIPTION_COLOR, GameFont::Size::Small);
     }
 
-    GameFont::DrawCentered(centerX, screenHeight - HINT_BOTTOM_MARGIN, HINT_TEXT, HINT_COLOR, GameFont::Size::Small);
+    GameFont::DrawCentered(centerX, screenHeight - HINT_BOTTOM_MARGIN, HINT_TEXT, UiDraw::PROMPT_COLOR, GameFont::Size::Small);
 }

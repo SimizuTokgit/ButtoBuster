@@ -45,7 +45,7 @@ private:
     float _shakeTime = 0.0f;
     float _shakeDuration = 0.0f;
 
-    float _baseFieldOfView = 60.0f;
+    // 寄る演出 画角は data.fieldOfView から狭める
     float _punchDegrees = 0.0f;
     float _punchTime = 0.0f;
     float _punchDuration = 0.0f;

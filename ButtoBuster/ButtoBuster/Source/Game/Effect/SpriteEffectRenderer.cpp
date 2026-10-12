@@ -1,25 +1,12 @@
 ﻿#include "SpriteEffectRenderer.h"
+#include "EffectDraw.h"
 #include "Time.h"
 #include "Mathf.h"
-#include <algorithm>
+
+using namespace EffectDraw;
 
 namespace {
     const VECTOR UP = { 0.0f, 1.0f, 0.0f };
-
-    VERTEX3D MakeVertex(VECTOR position, float u, float v, COLOR_U8 color, float alpha) {
-        if (alpha < 0.0f) alpha = 0.0f;
-        if (alpha > 1.0f) alpha = 1.0f;
-
-        VERTEX3D vertex{};
-        vertex.pos = position;
-        vertex.norm = UP;
-        vertex.dif = color;
-        vertex.dif.a = static_cast<unsigned char>(alpha * 255.0f);
-        vertex.spc = GetColorU8(0, 0, 0, 0);
-        vertex.u = u;
-        vertex.v = v;
-        return vertex;
-    }
 }
 
 void SpriteEffectRenderer::Setup() {
@@ -40,29 +27,15 @@ void SpriteEffectRenderer::Render() {
     Advance(Time::DeltaTime());
     if (!enabled || _sprites.empty()) return;
 
-    // 奥のモデルには隠れるが、自分は奥行きを書かない 重なった板が欠けないように
-    SetUseZBufferFlag(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseLighting(FALSE);
-    SetUseBackCulling(FALSE);
+    // 混ぜ方は板ごとに Draw で決める
+    TransparentScope scope;
 
     VECTOR cameraPosition = GetCameraPosition();
     for (const auto& sprite : _sprites) Draw(sprite, cameraPosition);
-
-    // ほかのエフェクトと同じ初期の状態に戻す
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-    SetUseLighting(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseZBufferFlag(FALSE);
 }
 
 void SpriteEffectRenderer::Advance(float deltaTime) {
-    for (auto& sprite : _sprites) sprite.age += deltaTime;
-
-    _sprites.erase(
-        std::remove_if(_sprites.begin(), _sprites.end(),
-            [](const Sprite& sprite) { return sprite.age >= sprite.desc.life; }),
-        _sprites.end());
+    AdvanceAndRemove(_sprites, deltaTime);
 }
 
 void SpriteEffectRenderer::Draw(const Sprite& sprite, VECTOR cameraPosition) {
@@ -87,8 +60,7 @@ void SpriteEffectRenderer::Draw(const Sprite& sprite, VECTOR cameraPosition) {
     // 出た瞬間の大きさから、勢いよく広がって元の大きさになる
     float scale = 1.0f;
     if (desc.growTime > 0.0f && sprite.age < desc.growTime) {
-        float t = sprite.age / desc.growTime;
-        float eased = 1.0f - (1.0f - t) * (1.0f - t);
+        float eased = Mathf::EaseOutQuad(sprite.age / desc.growTime);
         scale = desc.startScale + (1.0f - desc.startScale) * eased;
     }
     float width = desc.width * scale;
@@ -112,13 +84,13 @@ void SpriteEffectRenderer::Draw(const Sprite& sprite, VECTOR cameraPosition) {
     VECTOR top = VAdd(bottom, VScale(UP, height));
 
     VERTEX3D vertices[6] = {
-        MakeVertex(VSub(top, halfWidth), 0.0f, 0.0f, desc.color, alpha),
-        MakeVertex(VAdd(top, halfWidth), 1.0f, 0.0f, desc.color, alpha),
-        MakeVertex(VSub(bottom, halfWidth), 0.0f, 1.0f, desc.color, alpha),
+        MakeVertex(VSub(top, halfWidth), desc.color, alpha, 0.0f, 0.0f),
+        MakeVertex(VAdd(top, halfWidth), desc.color, alpha, 1.0f, 0.0f),
+        MakeVertex(VSub(bottom, halfWidth), desc.color, alpha, 0.0f, 1.0f),
 
-        MakeVertex(VSub(bottom, halfWidth), 0.0f, 1.0f, desc.color, alpha),
-        MakeVertex(VAdd(top, halfWidth), 1.0f, 0.0f, desc.color, alpha),
-        MakeVertex(VAdd(bottom, halfWidth), 1.0f, 1.0f, desc.color, alpha),
+        MakeVertex(VSub(bottom, halfWidth), desc.color, alpha, 0.0f, 1.0f),
+        MakeVertex(VAdd(top, halfWidth), desc.color, alpha, 1.0f, 0.0f),
+        MakeVertex(VAdd(bottom, halfWidth), desc.color, alpha, 1.0f, 1.0f),
     };
 
     SetDrawBlendMode(desc.blendMode, 255);
