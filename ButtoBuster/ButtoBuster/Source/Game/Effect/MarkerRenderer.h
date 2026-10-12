@@ -6,8 +6,9 @@
 class Character;
 
 // 場所と攻撃範囲を見せる印
-// 敵 毎フレーム全員の足元に影と赤い輪を、頭の上に赤い矢印を描く 地面の色に敵が溶けて見えにくいので
-//    飛んでいる敵や吹き飛んで宙にいる敵は、足元の印を真下の地面に描く 倒された敵には描かない
+// 足元 毎フレーム、敵全員とプレイヤーの足元に影と輪を描く 敵は赤、プレイヤーは青 地面の色に溶けて見えにくいので
+//    飛んでいる敵や吹き飛んで宙にいるときは、真下の地面に描く 倒されたら描かない
+// 頭の上 敵全員に赤い矢印を描く 囲まれていても、どこに敵がいるか分かるように
 // 攻撃範囲 振りかぶっている間、攻撃する側が毎フレーム ShowRange で頼み、頼まれたフレームだけ描く
 //    途中で斬られて振りをやめれば、頼まれなくなって消える 敵は赤、プレイヤーは青
 //    扇形の技は、丸い画像を扇の形に切り取って描く
@@ -26,7 +27,8 @@ public:
 
 private:
     int _arrowGraph = -1;
-    int _ringGraph = -1;
+    int _enemyRingGraph = -1;
+    int _playerRingGraph = -1;
     int _enemyRangeGraph = -1;
     int _playerRangeGraph = -1;
 
@@ -35,7 +37,8 @@ private:
 
     // 画像ごとに分けて、まとめて描く
     std::vector<VERTEX3D> _shadowVertices;
-    std::vector<VERTEX3D> _ringVertices;
+    std::vector<VERTEX3D> _enemyRingVertices;
+    std::vector<VERTEX3D> _playerRingVertices;
     std::vector<VERTEX3D> _enemyRangeVertices;
     std::vector<VERTEX3D> _playerRangeVertices;
 
@@ -49,7 +52,7 @@ public:
     void ShowRange(const RangeDesc& desc) { _ranges.push_back(desc); }
 
 private:
-    void BuildFootMarker(VECTOR ground, float bodyRadius);
+    void BuildFootMarker(const Character& character);
     void BuildRange(const RangeDesc& desc, float scale, float alpha);
     void DrawArrows();
     void DrawBatch(std::vector<VERTEX3D>& vertices, int graph);

@@ -10,7 +10,8 @@ using namespace EffectDraw;
 
 namespace {
     constexpr const char* ARROW_IMAGE = "Data/Effect/MarkerArrow.png";
-    constexpr const char* RING_IMAGE = "Data/Effect/MarkerRing.png";
+    constexpr const char* ENEMY_RING_IMAGE = "Data/Effect/RingEnemy.png";
+    constexpr const char* PLAYER_RING_IMAGE = "Data/Effect/RingPlayer.png";
     constexpr const char* ENEMY_RANGE_IMAGE = "Data/Effect/RangeEnemy.png";
     constexpr const char* PLAYER_RANGE_IMAGE = "Data/Effect/RangePlayer.png";
 
@@ -18,7 +19,7 @@ namespace {
     constexpr float SHADOW_SCALE = 2.2f;        // 体の半径の何倍の大きさか
     constexpr float SHADOW_ALPHA = 0.55f;       // 真ん中の濃さ 0〜1 外の縁では 0 になる
 
-    // ----- 足元の輪 (MarkerRing.png) -----
+    // ----- 足元の輪 (RingEnemy.png RingPlayer.png) -----
     constexpr float RING_SCALE = 2.0f;          // 輪を体の半径の何倍のところに描くか
     constexpr float RING_ALPHA = 0.9f;
     constexpr float RING_IMAGE_RATE = 0.667f;   // 画像の半分の幅に対して、輪のある所 外へは星の飾りが出ている
@@ -46,14 +47,15 @@ namespace {
 }
 
 MarkerRenderer::~MarkerRenderer() {
-    for (int graph : { _arrowGraph, _ringGraph, _enemyRangeGraph, _playerRangeGraph }) {
+    for (int graph : { _arrowGraph, _enemyRingGraph, _playerRingGraph, _enemyRangeGraph, _playerRangeGraph }) {
         if (graph != -1) DeleteGraph(graph);
     }
 }
 
 void MarkerRenderer::Setup() {
     _arrowGraph = LoadGraph(ARROW_IMAGE);
-    _ringGraph = LoadGraph(RING_IMAGE);
+    _enemyRingGraph = LoadGraph(ENEMY_RING_IMAGE);
+    _playerRingGraph = LoadGraph(PLAYER_RING_IMAGE);
     _enemyRangeGraph = LoadGraph(ENEMY_RANGE_IMAGE);
     _playerRangeGraph = LoadGraph(PLAYER_RANGE_IMAGE);
 
@@ -69,12 +71,7 @@ void MarkerRenderer::Render() {
     }
 
     for (Character* character : CharacterRegistry::GetAll()) {
-        if (!character || character->team != Team::Enemy || character->IsDead()) continue;
-
-        // 地面に立っていれば足の高さ、宙にいれば真下の地面
-        VECTOR ground = character->GetPosition();
-        if (!character->IsGrounded()) ground = StageBuilder::SnapToGround(ground);
-        BuildFootMarker(ground, character->bodyRadius);
+        if (character && !character->IsDead()) BuildFootMarker(*character);
     }
 
     for (const RangeDesc& range : _ranges) {
@@ -87,7 +84,8 @@ void MarkerRenderer::Render() {
     {
         TransparentScope scope(DX_BLENDMODE_ALPHA);
         DrawBatch(_shadowVertices, DX_NONE_GRAPH);
-        DrawBatch(_ringVertices, _ringGraph);
+        DrawBatch(_enemyRingVertices, _enemyRingGraph);
+        DrawBatch(_playerRingVertices, _playerRingGraph);
         DrawBatch(_enemyRangeVertices, _enemyRangeGraph);
         DrawBatch(_playerRangeVertices, _playerRangeGraph);
     }
@@ -100,8 +98,13 @@ void MarkerRenderer::DrawBatch(std::vector<VERTEX3D>& vertices, int graph) {
     vertices.clear();
 }
 
-void MarkerRenderer::BuildFootMarker(VECTOR ground, float bodyRadius) {
+void MarkerRenderer::BuildFootMarker(const Character& character) {
+    // 地面に立っていれば足の高さ、宙にいれば真下の地面
+    VECTOR ground = character.GetPosition();
+    if (!character.IsGrounded()) ground = StageBuilder::SnapToGround(ground);
+
     VECTOR center = VAdd(ground, VGet(0.0f, LIFT, 0.0f));
+    float bodyRadius = character.bodyRadius;
     const COLOR_U8 black = GetColorU8(0, 0, 0, 255);
     const COLOR_U8 white = GetColorU8(255, 255, 255, 255);
 
@@ -122,7 +125,7 @@ void MarkerRenderer::BuildFootMarker(VECTOR ground, float bodyRadius) {
     VERTEX3D a1 = MakeVertex(VAdd(center, VGet(half, 0.0f, half)), white, RING_ALPHA, 1.0f, 0.0f);
     VERTEX3D b0 = MakeVertex(VAdd(center, VGet(-half, 0.0f, -half)), white, RING_ALPHA, 0.0f, 1.0f);
     VERTEX3D b1 = MakeVertex(VAdd(center, VGet(half, 0.0f, -half)), white, RING_ALPHA, 1.0f, 1.0f);
-    PushQuad(_ringVertices, a0, a1, b0, b1);
+    PushQuad(character.team == Team::Enemy ? _enemyRingVertices : _playerRingVertices, a0, a1, b0, b1);
 }
 
 void MarkerRenderer::BuildRange(const RangeDesc& desc, float scale, float alpha) {
