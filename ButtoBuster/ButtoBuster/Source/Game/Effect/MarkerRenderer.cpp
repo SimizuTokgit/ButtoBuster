@@ -24,7 +24,7 @@ namespace {
     constexpr float RING_IMAGE_RATE = 0.667f;   // 画像の半分の幅に対して、輪のある所 外へは星の飾りが出ている
 
     // ----- 攻撃範囲 (RangeEnemy.png) -----
-    constexpr float RANGE_IMAGE_RATE = 0.779f;  // 画像の半分の幅に対して、外側の輪のある所 ここを届く距離に合わせる
+    constexpr float RANGE_IMAGE_RATE = 0.989f;  // 画像の半分の幅に対して、縁の線の外側 ここを届く距離に合わせる
     constexpr float RANGE_ALPHA = 0.55f;        // 範囲全体の濃さ
     constexpr float RANGE_FILL_ALPHA = 0.8f;    // 中から満ちていく分の濃さ 満ちきったときに当たる
 
@@ -155,7 +155,7 @@ void MarkerRenderer::BuildRange(const RangeDesc& desc, float scale, float alpha)
 
     const COLOR_U8 white = GetColorU8(255, 255, 255, 255);
 
-    // 画像の外側の輪が届く距離に来るよう、画像の半分の幅をこの長さにする
+    // 画像の縁の線が届く距離に来るよう、画像の半分の幅をこの長さにする
     // 満ちていく分は画像ごと縮めるので、uv は縮めない
     float imageHalf = desc.radius / RANGE_IMAGE_RATE * scale;
     VECTOR center = desc.center;
