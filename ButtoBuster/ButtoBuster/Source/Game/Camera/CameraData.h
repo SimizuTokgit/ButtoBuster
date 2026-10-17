@@ -70,4 +70,11 @@ struct CameraData {
 
     // ZoomPunch で寄るのにかける割合 残りでゆっくり戻す
     float punchInRate = 0.15f;
+
+    // ----- 撮影の見下ろし (CameraFollow の isOverhead) -----
+
+    // 真上近くから見下ろす角度と距離 プレイヤーのまわりで敵がどう並ぶかが、ひと目で見える
+    // 真上 (90 度) にすると、カメラの上の向きが決まらなくなるので少し倒す
+    float overheadPitch = 78.0f;
+    float overheadDistance = 1800.0f;
 };

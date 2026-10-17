@@ -14,6 +14,9 @@ public:
     // 追いかけ方の数値 追いかける処理はここから読む
     CameraData data;
 
+    // 制作用 true の間は、真上近くから見下ろす 敵の並び方を撮るため (DebugCheats のキー 5)
+    bool isOverhead = false;
+
 private:
     Camera* _camera = nullptr;
     VECTOR _focus = VGet(0.0f, 0.0f, 0.0f);

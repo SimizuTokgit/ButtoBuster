@@ -31,15 +31,17 @@ void CameraFollow::Update(float deltaTime) {
     UpdateFocus(unscaled);
     UpdateAngles(unscaled);
 
-    // 肩越しに見るよう、見る点もカメラも右へずらす
-    VECTOR lookAt = VAdd(GetLookAt(), VScale(GetGroundRight(), data.shoulderOffset));
+    // 肩越しに見るよう、見る点もカメラも右へずらす 見下ろすときは、プレイヤーを画面の真ん中に置く
+    VECTOR lookAt = GetLookAt();
+    if (!isOverhead) lookAt = VAdd(lookAt, VScale(GetGroundRight(), data.shoulderOffset));
 
     // 見ている点からカメラへ向かう向き
     float yaw = Transform::Deg2Rad(_yaw);
-    float pitch = Transform::Deg2Rad(_pitch);
+    float pitch = Transform::Deg2Rad(isOverhead ? data.overheadPitch : _pitch);
     VECTOR back = VGet(-sinf(yaw) * cosf(pitch), sinf(pitch), -cosf(yaw) * cosf(pitch));
 
-    float cameraDistance = ResolveObstacle(lookAt, back, data.distance, unscaled);
+    // 見下ろすときは障害物で縮めない 木や岩をまたいで、まわり全体を映す
+    float cameraDistance = isOverhead ? data.overheadDistance : ResolveObstacle(lookAt, back, data.distance, unscaled);
 
     VECTOR shake = GetShakeOffset();
     transform->localPosition = VAdd(VAdd(lookAt, VScale(back, cameraDistance)), shake);

@@ -8,7 +8,7 @@ class Hud;
 class CameraFollow;
 
 // 制作用のチート
-// F1 で一覧を出し、F3 から F12 と数字の 1 から 4 で使う
+// F1 で一覧を出し、F3 から F12 と数字の 1 から 5 で使う
 // ゲーム本体のコードにデバッグの分岐を混ぜないよう、切り替えの反映はここでまとめて行う
 class DebugCheats : public MonoBehaviour {
 private:

@@ -181,6 +181,7 @@ private:
         case KEY_INPUT_2:   return "2";
         case KEY_INPUT_3:   return "3";
         case KEY_INPUT_4:   return "4";
+        case KEY_INPUT_5:   return "5";
         default:            return "";
         }
     }

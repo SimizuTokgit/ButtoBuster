@@ -21,6 +21,7 @@ namespace {
     const char* const SLOW = "スロー";
     const char* const SHOW_STATE = "状態を表示";
     const char* const FLAT_MARKERS = "撮影: 足元の印と攻撃範囲を地面に沿わせない";
+    const char* const OVERHEAD = "撮影: 真上近くから見下ろす";
 
     // スローの速さ 動きを1コマずつ確かめられるくらい
     constexpr float SLOW_TIME_SCALE = 0.25f;
@@ -55,6 +56,7 @@ void DebugCheats::Setup(Player* player, PhaseDirector* director, Hud* hud, Camer
     menu.AddToggle(KEY_INPUT_F10, SLOW);
     menu.AddToggle(KEY_INPUT_F11, SHOW_STATE);
     menu.AddToggle(KEY_INPUT_4, FLAT_MARKERS);
+    menu.AddToggle(KEY_INPUT_5, OVERHEAD);
 
     // コマンドはシーンを変えると消える このシーンのものを掴んでいるため
     menu.AddCommand(KEY_INPUT_F4, "敵を全滅", [director]() {
@@ -160,6 +162,7 @@ void DebugCheats::Update(float deltaTime) {
     if (_player) _player->isCheatInvincible = menu.GetToggle(INVINCIBLE);
     if (_hud) _hud->isStateVisible = menu.GetToggle(SHOW_STATE);
     MarkerRenderer::followsGround = !menu.GetToggle(FLAT_MARKERS);
+    if (_camera) _camera->isOverhead = menu.GetToggle(OVERHEAD);
 
     // 変わったときだけ伝える 毎フレーム入れるとヒットストップと取り合いになる
     bool isSlow = menu.GetToggle(SLOW);
