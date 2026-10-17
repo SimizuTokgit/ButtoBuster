@@ -179,6 +179,9 @@ public:
     // 頭の上 ジャスト回避の知らせや溜めの光を出す所
     VECTOR GetHeadPosition() const;
 
+    // 最初の場所へ戻す 穴に落ちたときと、制作用の撮影で同じ所から始めるときに使う
+    void ReturnToSpawn();
+
 protected:
     const BlowSettings& GetBlowSettings() const override { return data.blow; }
 

@@ -395,6 +395,10 @@ void Player::ReturnIfFallen() {
     VECTOR position = transform->localPosition;
     if (position.y >= FALL_LIMIT_Y) return;
 
+    ReturnToSpawn();
+}
+
+void Player::ReturnToSpawn() {
     transform->localPosition = _spawnPosition;
     SetVerticalVelocity(0.0f);
 }

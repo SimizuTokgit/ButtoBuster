@@ -36,6 +36,9 @@ public:
     // 制作用 キャラの頭上に今の状態と吹っ飛ばされ値、隙があればその残りを出す
     bool isStateVisible = false;
 
+    // 制作用 1 以上なら、フェーズを止めている間 (撮影) に画面の右上へ「賢さ N」を出す 0 で出さない
+    int filmingIntelligence = 0;
+
     ~Hud() override;
 
     void Setup(Player* player, PhaseDirector* director);
@@ -50,4 +53,5 @@ private:
     void DrawCombo(int screenWidth, int screenHeight);
     void DrawControls(int screenWidth, int screenHeight);
     void DrawStates();
+    void DrawFilmingLabel(int screenWidth);
 };

@@ -178,6 +178,9 @@ private:
         case KEY_INPUT_F11: return "F11";
         case KEY_INPUT_F12: return "F12";
         case KEY_INPUT_1:   return "1";
+        case KEY_INPUT_2:   return "2";
+        case KEY_INPUT_3:   return "3";
+        case KEY_INPUT_4:   return "4";
         default:            return "";
         }
     }

@@ -51,6 +51,11 @@ void PhaseDirector::InitializePractice(Player* player, PlayerController* control
     _player = player;
     _controller = controller;
 
+    StopPhases();
+}
+
+void PhaseDirector::StopPhases() {
+    RemoveAllEnemies();
     _tokens.SetCapacity(data.practiceTokens);
     EnterStep(Step::Practice);
 }

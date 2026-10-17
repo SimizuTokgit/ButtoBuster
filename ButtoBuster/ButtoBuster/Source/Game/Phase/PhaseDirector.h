@@ -112,6 +112,9 @@ public:
     // 今いる敵をすぐに全部消す 練習の相手を入れ替えるときに使う
     void RemoveAllEnemies();
 
+    // 今いる敵を消し、フェーズを止めて練習の段にする 制作用の撮影でも、決めた敵だけを出すために使う
+    void StopPhases();
+
     // ----- 制作用 -----
 
     void DefeatAllEnemies();

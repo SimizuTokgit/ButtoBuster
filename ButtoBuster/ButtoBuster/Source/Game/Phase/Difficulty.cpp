@@ -52,10 +52,6 @@ namespace {
         return data;
     }
 
-    // 賢さの範囲 行動の木で動く敵は 1〜5 (EnemyAI.h の枝の一覧)
-    constexpr int MIN_INTELLIGENCE = 1;
-    constexpr int MAX_INTELLIGENCE = 5;
-
     Difficulty g_difficulty = Difficulty::Normal;
 }
 

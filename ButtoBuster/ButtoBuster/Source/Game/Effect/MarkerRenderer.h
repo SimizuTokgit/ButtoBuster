@@ -49,6 +49,9 @@ public:
     // このフレームに攻撃範囲を出す
     void ShowRange(const RangeDesc& desc) { _ranges.push_back(desc); }
 
+    // 制作用 false にすると網目の頂点を地面に沿わせず、足元の高さの平らな板で描く 沿わせる前と比べて撮るため
+    static inline bool followsGround = true;
+
 private:
     void BuildFootMarker(const Character& character);
     void BuildRange(const RangeDesc& desc, float scale, float alpha);

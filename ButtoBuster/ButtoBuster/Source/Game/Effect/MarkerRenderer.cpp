@@ -51,7 +51,7 @@ namespace {
     // (x, z) の真下の地面から lift だけ浮かせた所 地面が見つからなければ fallbackY の高さに置く
     VECTOR OnGround(float x, float z, float fallbackY, float lift) {
         float y = fallbackY;
-        StageBuilder::FindGroundHeight(x, z, y);
+        if (MarkerRenderer::followsGround) StageBuilder::FindGroundHeight(x, z, y);
         return VGet(x, y + lift, z);
     }
 }

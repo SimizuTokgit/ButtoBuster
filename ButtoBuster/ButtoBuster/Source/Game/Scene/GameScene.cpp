@@ -54,7 +54,7 @@ bool GameScene::OnLoad() {
 
     auto* debugObject = scene.CreateGameObject("DebugCheats");
     auto* cheats = debugObject->AddComponent<DebugCheats>();
-    cheats->Setup(arena.player, director, hud);
+    cheats->Setup(arena.player, director, hud, arena.cameraFollow);
 
     auto* poseDebugger = debugObject->AddComponent<ChargePoseDebugger>();
     poseDebugger->Setup(arena.player);

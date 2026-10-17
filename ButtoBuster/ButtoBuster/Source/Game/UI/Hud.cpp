@@ -231,8 +231,9 @@ void Hud::Render() {
     DrawDodgeStock();
     DrawSpecialGauge();
 
-    // チュートリアルの間はフェーズの表示を出さない
+    // チュートリアルの間はフェーズの表示を出さない 撮影でフェーズを止めているときは、そこに敵の賢さを出す
     if (_director->GetStep() != PhaseDirector::Step::Practice) DrawPhaseInfo(screenWidth);
+    else if (filmingIntelligence > 0) DrawFilmingLabel(screenWidth);
 
     DrawCombo(screenWidth, screenHeight);
     DrawControls(screenWidth, screenHeight);
@@ -425,6 +426,13 @@ void Hud::DrawSpecialGauge() {
         DrawRotaGraph(centerX, centerY, scale, 0.0, _specialLogoGraph, TRUE);
     }
     SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+}
+
+void Hud::DrawFilmingLabel(int screenWidth) {
+    // フェーズの番号と同じ所に、同じ大きさで出す
+    char text[32];
+    snprintf(text, sizeof(text), "賢さ %d", filmingIntelligence);
+    GameFont::DrawRight(screenWidth - PHASE_RIGHT_MARGIN, PHASE_Y, text, WHITE, GameFont::Size::Large);
 }
 
 void Hud::DrawPhaseInfo(int screenWidth) {

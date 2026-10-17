@@ -40,6 +40,10 @@ struct DifficultyData {
 
 // 選んでいる難易度 場面を切り替えると GameObject は全部消えるので、ここに置いて持ち越す
 namespace GameMode {
+    // 賢さの範囲 行動の木で動く敵は 1〜5 (EnemyAI.h の枝の一覧)
+    constexpr int MIN_INTELLIGENCE = 1;
+    constexpr int MAX_INTELLIGENCE = 5;
+
     Difficulty Get();
     void Set(Difficulty difficulty);
 
