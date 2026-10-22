@@ -5,7 +5,7 @@ Unity のコンポーネント指向の仕組みを C++ と DxLib で自作し�
 
 ## 紹介動画
 
-（YouTube の URL）
+https://youtu.be/_1TC9r3NtOI
 
 自作エンジン → ゲームの遊び方 → 工夫した 4 つ（敵 AI・ステートパターン・オブザーバー・画像を 3D に置く）の順に、約 3 分で紹介しています。
 
@@ -21,43 +21,15 @@ Unity のコンポーネント指向の仕組みを C++ と DxLib で自作し�
 
 ## 見てほしいところ
 
-### 1. 自作エンジン（`Source/Engine/`）
+詳しくは紹介動画とポートフォリオで説明しています。ファイルはすべて `ButtoBuster/ButtoBuster/Source/` の下です。
 
-Unity と同じ名前・同じ継承の並び（Object → Component → Behaviour → MonoBehaviour）で作り、Unity で書き慣れた形（部品を足し、Start と Update を書く）を C++ でそのまま書けるようにしました。
-
-| 部分 | ファイル | 見てほしいところ |
+| 見てほしいところ | ファイル | ひとこと |
 |---|---|---|
-| Component | `Core/GameObject.h` `Core/Component.h` | 部品を unique_ptr で持ち、型をキーにした表にも登録する。GetComponent はその表を引くだけ。部品は付けた順に Update される |
-| Quaternion・親子 | `Core/Quaternion.h` `Core/Transform.h` | 位置と向きは読むたびに親をたどって計算する（向き ＝ 親の回転 × 自分の回転） |
-| 骨に付ける | `Animation/BoneFollower.h` | 剣は手の骨を写す入れ物の子。骨の値はもう世界での値なので、入れ物は親の変換を無視し、回転が二重にかからないようにした |
-| Collider | `Physics/Collider.h` `Physics/PhysicsManager.cpp` | Collider は Component を継承。PhysicsManager が毎フレーム「動かす → 地形と当てる → 体どうし → 知らせる」の順に処理する |
-| 音 | `Audio/SoundManager.h` | 「フォルダ/名前」で音を引き、使い回す AudioSource（SE 20・BGM 2）で鳴らす |
-| アニメーション | `Animation/Animator.h` | キャラが渡す時間で進め、前のフレームとの間に入ったイベント（足音・振りの音）を呼ぶ |
-| 描画 | `Render/RenderManager.cpp` | 不透明 → 半透明の順に並べてから描く（Unity の Render Queue と同じ考え方） |
-| 1 フレーム | `Core/System.cpp` | 入力 → 物理 → Update → カメラ・空 → 音 → 描画 → 画面に出す → 破棄。消す物は印を付けて止め、フレームの最後にまとめて消す |
-
-Engine/ は Game/ を一切 include しません（依存は Game → Engine の一方通行）。最初のシーンもゲーム側から渡すので、エンジンはほかのゲームにも使えます。
-
-### 2. 敵 AI：ビヘイビアツリーと「賢さ」
-
-- `Engine/AI/BehaviorTree.h`：UE のビヘイビアツリーを参考に、Selector・Sequence・Condition・Action の 4 つの部品を C++ のテンプレートで自作
-- `Game/Enemy/EnemyAI.cpp` の `BuildTree`：上の行ほど優先。割り込みたい行動は上に 1 行足す
-- 枝ごとに必要な賢さ（1〜5）を決め、足りない枝は木に入れない。難易度は賢さの足し引き
-
-### 3. ステートパターン（`Source/Game/State/`、`Game/Player/State/`）
-
-- 1 つの行動を 1 つのクラスに（プレイヤー 13、敵 7）。入る・毎フレーム・抜けるを 1 つのクラスにまとめる
-- `StateManager.h`：切り替えを予約し、今の状態の処理が終わってから行う
-
-### 4. オブザーバーパターン（`Engine/Core/Observer.h`、`Game/Player/PlayerFactory.cpp`）
-
-- 大きな演出は「起きたこと」を知らせるだけにし、エフェクト・SE・UI は受け取る側が出す
-- 受け取る側をつなぐのは組み立てる場所（PlayerFactory など）の 1 行
-
-### 5. 2D の画像を 3D に置く
-
-- `Game/Effect/MarkerRenderer.cpp`：足元の輪を 4×4 のマスに分け、角 25 か所の真下の地面の高さに置いて、でこぼこの地面に沿わせる
-- `Game/Effect/SpriteEffectRenderer.cpp`：雷のイラストの板を、縦はまっすぐのまま横だけカメラへ回す
+| 自作エンジン | `Engine/` | Unity と同じ名前・継承の並びで、部品を足して作る形を C++ で自作。Engine は Game を一切 include しない |
+| 敵 AI | `Engine/AI/BehaviorTree.h` `Game/Enemy/EnemyAI.cpp` | UE を参考にビヘイビアツリーを自作。「賢さ」で使える行動を変え、難易度は賢さの足し引き |
+| ステートパターン | `Game/State/` `Game/Player/State/` | 1 つの行動を 1 つのクラスに（プレイヤー 13・敵 7） |
+| オブザーバー | `Engine/Core/Observer.h` | 大きな演出は知らせるだけにし、エフェクト・SE・UI は受け取る側が出す |
+| 画像を 3D に置く | `Game/Effect/MarkerRenderer.cpp` `Game/Effect/SpriteEffectRenderer.cpp` | 足元の輪を地面に沿わせ、雷の板は横だけカメラへ回す |
 
 ## 意識したところ
 
