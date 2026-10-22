@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "ICharacterState.h"
+#include "PlayerActions.h"
 
 class Player;
 
@@ -8,11 +9,9 @@ class Player;
 // 呼んでいる間と、落ちてから動けるまでの間は攻撃を受けない 時間は PlayerData の special で始まる値
 //
 // 雷の当たり方は PlayerAttacks の GetSpecial 見た目と音は、知らせ (SpecialEvent) を受けた Observer が出す
+// 刃の軌跡は、溜めの姿勢から振り抜き終わるまで (PlayerData の chargeSwingEndTime) 出す
 class PlayerSpecialState : public ICharacterState<Player> {
 private:
-    // 振り抜き終わるフレーム 刃の軌跡をここまで出す 姿勢と同じ Attack3 のフレーム
-    static constexpr float SWING_END_TIME = 13.0f;
-
     enum class Phase {
         Call,       // 剣を掲げて雷を呼ぶ
         Recover,    // 雷が落ちたあと、振り抜いて動けるようになるまで
@@ -22,7 +21,7 @@ private:
     float _timer = 0.0f;
 
     // 振り抜いている間に押された次の技 動けるようになったら出す
-    Technique _queued = Technique::None;
+    PlayerActions::QueuedTechnique _queued;
 
 public:
     void Enter(Player& player) override;
@@ -33,6 +32,4 @@ public:
 private:
     // 場にいる敵全員に雷を落とす
     void Strike(Player& player);
-
-    void HoldPose(Player& player) const;
 };

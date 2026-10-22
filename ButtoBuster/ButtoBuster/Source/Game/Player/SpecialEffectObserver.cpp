@@ -46,17 +46,6 @@ namespace {
     constexpr unsigned int STRIKE_FLASH_COLOR = 0xC8E8FF;
     constexpr float STRIKE_FLASH_ALPHA = 0.8f;
     constexpr float STRIKE_FLASH_TIME = 0.35f;
-
-    COLOR_U8 ToColor(unsigned int rgb) {
-        return GetColorU8((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
-    }
-
-    // 浮いている敵の下でも、輪は地面に広げる
-    VECTOR ToGround(VECTOR position) {
-        VECTOR ground = position;
-        StageBuilder::FindGroundHeight(position.x, position.z, ground.y);
-        return ground;
-    }
 }
 
 void SpecialEffectObserver::OnNotify(const SpecialEvent& event) {
@@ -71,7 +60,7 @@ void SpecialEffectObserver::PlayReady(const SpecialEvent& event) {
     auto* effects = EffectManager::Get();
     if (!effects) return;
 
-    effects->PlayShockwave(event.position, READY_RING_RADIUS, ToColor(READY_COLOR));
+    effects->PlayShockwave(event.position, READY_RING_RADIUS, EffectManager::ToColor(READY_COLOR));
     effects->FlashScreen(READY_COLOR, READY_FLASH_ALPHA, READY_FLASH_TIME);
 }
 
@@ -81,7 +70,7 @@ void SpecialEffectObserver::PlayCall(const SpecialEvent& event) {
 
     effects->FlashScreen(CALL_SHADE_COLOR, CALL_SHADE_ALPHA, event.callTime);
     effects->ZoomPunch(CALL_ZOOM, event.callTime);
-    effects->PlayShockwave(event.position, CALL_RING_RADIUS, ToColor(CALL_RING_COLOR));
+    effects->PlayShockwave(event.position, CALL_RING_RADIUS, EffectManager::ToColor(CALL_RING_COLOR));
 }
 
 void SpecialEffectObserver::PlayStrike(const SpecialEvent& event) {
@@ -97,10 +86,10 @@ void SpecialEffectObserver::PlayStrike(const SpecialEvent& event) {
         bolt.life = LIGHTNING_LIFE;
         bolt.fadeStart = LIGHTNING_FADE_START;
         bolt.flicker = LIGHTNING_FLICKER;
-        bolt.color = ToColor(LIGHTNING_COLOR);
+        bolt.color = EffectManager::ToColor(LIGHTNING_COLOR);
         effects->PlayLightning(bolt);
 
-        effects->PlayShockwave(ToGround(target), STRIKE_RING_RADIUS, ToColor(STRIKE_RING_COLOR));
+        effects->PlayShockwave(StageBuilder::SnapToGround(target), STRIKE_RING_RADIUS, EffectManager::ToColor(STRIKE_RING_COLOR));
     }
 
     effects->HitStop(STRIKE_HIT_STOP);

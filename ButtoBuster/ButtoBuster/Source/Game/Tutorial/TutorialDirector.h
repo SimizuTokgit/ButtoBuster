@@ -48,6 +48,7 @@ public:
 
     // 練習の相手を出す、プレイヤーの前 (カメラの向き) の距離 cm 大きい Golem はこの倍
     static constexpr float PARTNER_DISTANCE = 450.0f;
+    static constexpr float GOLEM_PARTNER_DISTANCE = PARTNER_DISTANCE * 2.0f;
 
     // 練習の相手が壁の近くに出そうなときに、体の太さとこの分だけ内側へ寄せる cm
     static constexpr float PARTNER_WALL_MARGIN = 200.0f;
@@ -58,6 +59,9 @@ public:
 
     // 練習の相手が倒れて場外へ消えたら、出し直すまでの秒数 まとめて出した練習台は、全部消えてから出し直す
     static constexpr float RESPAWN_DELAY = 1.5f;
+
+    // 回避の残りがこれより大きく減ったら、回避したと数える 回避すると 1 回分減るので、戻る途中の少しずつの増え方とは見分けられる
+    static constexpr float DODGE_STOCK_DROP = 0.5f;
 
 private:
     Player* _player = nullptr;
@@ -82,7 +86,6 @@ private:
     float _lookedDegrees = 0.0f;
     bool _wasJumping = false;
     bool _wasSlamming = false;
-    const void* _lastState = nullptr;   // 前のフレームの状態 空中の斬りが新しく始まったかを見る
     float _lastDodgeStock = 0.0f;
     int _guardCountAtStart = 0;
 

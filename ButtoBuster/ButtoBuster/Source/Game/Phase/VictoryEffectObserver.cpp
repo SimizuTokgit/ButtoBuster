@@ -21,10 +21,6 @@ namespace {
     // プレイヤーの足元に広げる輪の大きさと色 (0xRRGGBB)
     constexpr float SHOCKWAVE_RADIUS = 900.0f;
     constexpr unsigned int SHOCKWAVE_COLOR = 0xFFD060;
-
-    COLOR_U8 ToColor(unsigned int rgb) {
-        return GetColorU8((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
-    }
 }
 
 void VictoryEffectObserver::OnNotify(const VictoryEvent& event) {
@@ -36,7 +32,6 @@ void VictoryEffectObserver::OnNotify(const VictoryEvent& event) {
     effects->ZoomPunch(ZOOM, ZOOM_TIME);
 
     // 跳んでいても、輪は真下の地面に出す
-    VECTOR ground = event.playerPosition;
-    StageBuilder::FindGroundHeight(ground.x, ground.z, ground.y);
-    effects->PlayShockwave(ground, SHOCKWAVE_RADIUS, ToColor(SHOCKWAVE_COLOR));
+    VECTOR ground = StageBuilder::SnapToGround(event.playerPosition);
+    effects->PlayShockwave(ground, SHOCKWAVE_RADIUS, EffectManager::ToColor(SHOCKWAVE_COLOR));
 }

@@ -14,6 +14,9 @@ public:
     // 追いかけ方の数値 追いかける処理はここから読む
     CameraData data;
 
+    // 制作用 true の間は、真上近くから見下ろす 敵の並び方を撮るため (DebugCheats のキー 5)
+    bool isOverhead = false;
+
 private:
     Camera* _camera = nullptr;
     VECTOR _focus = VGet(0.0f, 0.0f, 0.0f);
@@ -45,7 +48,7 @@ private:
     float _shakeTime = 0.0f;
     float _shakeDuration = 0.0f;
 
-    float _baseFieldOfView = 60.0f;
+    // 寄る演出 画角は data.fieldOfView から狭める
     float _punchDegrees = 0.0f;
     float _punchTime = 0.0f;
     float _punchDuration = 0.0f;

@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "ICharacterState.h"
-#include "ArenaWall.h"
 #include "DxLib.h"
 #include <memory>
 
@@ -21,13 +20,23 @@ private:
     // 落とされた Bee が地面にいる時間 ここで地上の斬りが届く
     static constexpr float GROUNDED_TIME = 1.4f;
 
-    // 重い敵が押し飛ばされるときの上向きの最低の速さと、着地してから動き出すまでの時間
-    static constexpr float HEAVY_JUMP_SPEED = 250.0f;
+    // 重い敵が着地してから動き出すまでの時間
     static constexpr float HEAVY_RECOVER_TIME = 0.5f;
+
+    // 飛ばされるときの上向きの最低の速さ 弱く飛ばされても、この速さだけは跳ねる
+    // 吹き飛ぶアニメで飛ぶ敵と、それ以外 (羽ばたきを止めて落とされる空の敵と、構えたまま押し飛ばされる重い敵)
+    static constexpr float BLOW_JUMP_SPEED = 380.0f;
+    static constexpr float LOW_JUMP_SPEED = 250.0f;
+
+    // 飛んでいる間、水平の速さを毎秒この割合で減らす
+    static constexpr float DAMP_RATE = 1.5f;
+
+    // 起き上がるアニメ (BlowOut) の速さ
+    static constexpr float GET_UP_ANIMATION_SPEED = 1.2f;
 
     enum class Phase {
         Fly,
-        Stick,      // 壁に張り付いている 時間が来たら跳ね返って Fly に戻る
+        Stick,      // 壁に張り付いている 時間が来たら跳ね返って Fly に戻る (Character::HoldOnWall)
         Down,
         GetUp,
     };
@@ -36,10 +45,6 @@ private:
     std::shared_ptr<BlowChain> _chain;
     Phase _phase = Phase::Fly;
     float _timer = 0.0f;
-
-    // 張り付いた壁の様子と、張り付いている秒数 跳ね返すときに使う
-    ArenaWall::Hit _wallHit;
-    float _stickTime = 0.0f;
 
 public:
     EnemyBlowState(VECTOR knockback, std::shared_ptr<BlowChain> chain)

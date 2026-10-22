@@ -51,8 +51,9 @@ struct CameraData {
     // カメラへ向かって走ってくるときに、画面がぐるりと半周するのを防ぐ
     float followMaxAngle = 150.0f;
 
-    // 視点を戻すボタンで、背中側へ戻す速さ
+    // 視点を戻すボタンで、背中側へ戻す速さと、戻し終えたとみなす背中との角度の差
     float resetSharpness = 12.0f;
+    float resetFinishAngle = 0.5f;
 
     // ----- 壁際 -----
 
@@ -69,4 +70,12 @@ struct CameraData {
 
     // ZoomPunch で寄るのにかける割合 残りでゆっくり戻す
     float punchInRate = 0.15f;
+
+    // ----- 撮影の見下ろし (CameraFollow の isOverhead) -----
+
+    // 真上近くから見下ろす角度と距離 プレイヤーのまわりで敵がどう並ぶかが、ひと目で見える
+    // 真上 (90 度) にすると、カメラの上の向きが決まらなくなるので少し倒す
+    // 距離は、撮影で前に出した敵が画面の上の端に入るぎりぎりまで寄せ、敵を大きく映す
+    float overheadPitch = 78.0f;
+    float overheadDistance = 1400.0f;
 };

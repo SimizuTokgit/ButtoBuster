@@ -64,13 +64,15 @@ private:
     std::vector<Rigidbody*> _rigidbodies;
     std::vector<MeshCollider*> _meshColliders;
 
-    // 前フレームで衝突していたペア（Enter/Stay/Exit判定用）
-    std::unordered_set<CollisionPair, CollisionPairHash> _previousCollisions;
-    std::unordered_set<CollisionPair, CollisionPairHash> _currentCollisions;
+    using CollisionPairSet = std::unordered_set<CollisionPair, CollisionPairHash>;
 
-    // MeshColliderとの衝突ペア（Enter/Stay/Exit判定用）
-    std::unordered_set<CollisionPair, CollisionPairHash> _previousMeshCollisions;
-    std::unordered_set<CollisionPair, CollisionPairHash> _currentMeshCollisions;
+    // 前フレームで衝突していたペア（Enter/Stay/Exit判定用）
+    CollisionPairSet _previousCollisions;
+    CollisionPairSet _currentCollisions;
+
+    // MeshColliderとの衝突ペア（Enter/Stay/Exit判定用） a が CapsuleCollider b が MeshCollider
+    CollisionPairSet _previousMeshCollisions;
+    CollisionPairSet _currentMeshCollisions;
 
 public:
     /// <summary>シングルトンインスタンスを取得</summary>
@@ -190,14 +192,10 @@ private:
     );
 
     /// <summary>
-    /// Enter/Stay/Exitコールバックを発火
+    /// 今回と前回の衝突ペアを比べてEnter/Stay/Exitコールバックを発火し、今回の分を前回として残す
+    /// Collider同士とMeshColliderとの衝突の両方に使う
     /// </summary>
-    void InvokeCollisionCallbacks();
-
-    /// <summary>
-    /// MeshColliderとの衝突コールバックを発火
-    /// </summary>
-    void InvokeMeshCollisionCallbacks();
+    void InvokeCollisionCallbacks(const CollisionPairSet& current, CollisionPairSet& previous);
 
     /// <summary>
     /// Collision構造体を作成

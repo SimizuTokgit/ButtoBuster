@@ -3,9 +3,9 @@
 #include "Transform.h"
 #include "AudioClip.h"
 #include "AudioManager.h"
+#include "Mathf.h"
 #include "DxLib.h"
 #include <vector>
-#include <algorithm>
 
 /// <summary>
 /// 音を鳴らすためのコンポーネント
@@ -97,10 +97,7 @@ public:
         int handle = clip->handle;
 
         // 音量設定
-        int vol = mute ? 0 : static_cast<int>(volume * 255.0f);
-        if (vol < 0) vol = 0;
-        if (vol > 255) vol = 255;
-        ChangeVolumeSoundMem(vol, handle);
+        ChangeVolumeSoundMem(mute ? 0 : Mathf::ToByte(volume), handle);
 
         // ピッチ（周波数）設定
         if (pitch != 1.0f) {
@@ -138,10 +135,7 @@ public:
         // 音量設定
         float finalVolume = volume * volumeScale;
         if (mute) finalVolume = 0.0f;
-        int vol = static_cast<int>(finalVolume * 255.0f);
-        if (vol < 0) vol = 0;
-        if (vol > 255) vol = 255;
-        ChangeVolumeSoundMem(vol, dupHandle);
+        ChangeVolumeSoundMem(Mathf::ToByte(finalVolume), dupHandle);
 
         // 3Dサウンドパラメータ設定
         if (spatialBlend && transform) {
@@ -166,8 +160,9 @@ public:
     /// 一時停止
     /// </summary>
     void Pause() {
-        // DxLibにはPause APIがないため、停止で代用
-        // ※ 再開時は先頭から再生される制限あり
+        // 停止で代用する
+        // DxLib は PlaySoundMem の TopPositionFlag を FALSE にすれば止めた所から鳴らせるが、
+        // UnPause が呼ぶ Play は TRUE で鳴らすので、再開時は先頭から再生される
         Stop();
     }
 
@@ -190,10 +185,7 @@ public:
                 Set3DPositionSoundMem(transform->position, clip->handle);
                 Set3DRadiusSoundMem(maxDistance, clip->handle);
 
-                int vol = mute ? 0 : static_cast<int>(volume * 255.0f);
-                if (vol < 0) vol = 0;
-                if (vol > 255) vol = 255;
-                ChangeVolumeSoundMem(vol, clip->handle);
+                ChangeVolumeSoundMem(mute ? 0 : Mathf::ToByte(volume), clip->handle);
             }
         }
 

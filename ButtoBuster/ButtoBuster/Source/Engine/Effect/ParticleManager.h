@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <vector>
-#include <algorithm>
+#include "ContainerUtil.h"
 
 class ParticleSystem;
 
@@ -27,22 +27,14 @@ public:
     /// ParticleSystemを登録
     /// </summary>
     void Register(ParticleSystem* system) {
-        if (system) {
-            auto it = std::find(_systems.begin(), _systems.end(), system);
-            if (it == _systems.end()) {
-                _systems.push_back(system);
-            }
-        }
+        ContainerUtil::AddUnique(_systems, system);
     }
 
     /// <summary>
     /// ParticleSystemの登録解除
     /// </summary>
     void Unregister(ParticleSystem* system) {
-        auto it = std::find(_systems.begin(), _systems.end(), system);
-        if (it != _systems.end()) {
-            _systems.erase(it);
-        }
+        ContainerUtil::Remove(_systems, system);
     }
 
     /// <summary>

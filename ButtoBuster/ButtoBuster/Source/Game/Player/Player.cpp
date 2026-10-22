@@ -13,19 +13,44 @@
 #include "SkinnedMeshRenderer.h"
 #include "GameObject.h"
 #include "Transform.h"
+#include <cstring>
 #include <memory>
 
 namespace {
     // これより下に落ちたら戻す 地形の穴に落ちたときの保険
     constexpr float FALL_LIMIT_Y = -1500.0f;
 
-    // 頭の上のどこにジャスト回避の知らせを出すか
+    // 頭の上の知らせ (ジャスト回避 溜めの光) を、体の高さよりどれだけ上に出すか
     constexpr float HEAD_OFFSET = 30.0f;
 
     // 食らったときの声 吹っ飛ばされ値が許容値のこの割合以上なら、危ないときの声にする
     constexpr const char* DAMAGE_VOICE = "Player/Vc_Damage";
     constexpr const char* DANGER_DAMAGE_VOICE = "Player/Vc_Damage_Danger";
     constexpr float DANGER_VOICE_RATIO = 0.75f;
+
+    // 決まった反応の見た目 ガードで受けた 食らった 全回復した
+    // 知らせ (Observer) は通さず、Player がその場で出す
+    struct ReactionLook {
+        // ガードで受けたとき 盾の火花を出す体の前への距離と、止める秒数
+        float guardSparkForward = 45.0f;
+        float guardHitStop = 0.04f;
+
+        // 食らったとき 画面の揺れの強さと長さ
+        // 自分を見ていなくても食らったと分かるよう、画面を赤くする 色 (0xRRGGBB) と濃さと長さ
+        float hurtShake = 4.0f;
+        float hurtShakeTime = 0.2f;
+        unsigned int hurtFlashColor = 0xC02020;
+        float hurtFlashAlpha = 0.3f;
+        float hurtFlashTime = 0.25f;
+
+        // 全回復したとき 足元に広げる輪の大きさと色 (0xRRGGBB) 画面を光らせる色と濃さと長さ
+        float healRingRadius = 500.0f;
+        unsigned int healRingColor = 0x78FFA0;
+        unsigned int healFlashColor = 0x60FF90;
+        float healFlashAlpha = 0.3f;
+        float healFlashTime = 0.4f;
+    };
+    constexpr ReactionLook LOOK{};
 }
 
 void Player::Start() {
@@ -87,14 +112,14 @@ HitResult Player::TakeHit(const HitInfo& info) {
         _guardCount++;
         SetKnockback(VScale(info.knockback, data.guardPushRate));
 
-        VECTOR sparkPosition = VAdd(GetCenter(), VScale(GetForward(), 45.0f));
+        VECTOR sparkPosition = VAdd(GetCenter(), VScale(GetForward(), LOOK.guardSparkForward));
         if (effects) {
             // 盾で弾いた火花は正面へ散らす
             effects->PlayGuard(sparkPosition, GetForward());
-            effects->HitStop(0.04f);
+            effects->HitStop(LOOK.guardHitStop);
         }
         SoundManager::Instance().PlaySE("Player/guard_success");
-        SoundManager::Instance().PlaySE("Player/Vc_Guard", 0.8f);
+        SoundManager::Instance().PlaySE("Player/Vc_Guard", PlayerData::VOICE_VOLUME);
 
         StaggerGuardedAttacker(info);
         return HitResult::Guarded;
@@ -115,9 +140,8 @@ HitResult Player::TakeHit(const HitInfo& info) {
 
     if (effects) {
         effects->PlayHit(GetCenter(), knockback);
-        effects->Shake(4.0f, 0.2f);
-        // 自分を見ていなくても食らったと分かるよう、画面を赤くする
-        effects->FlashScreen(0xC02020, 0.3f, 0.25f);
+        effects->Shake(LOOK.hurtShake, LOOK.hurtShakeTime);
+        effects->FlashScreen(LOOK.hurtFlashColor, LOOK.hurtFlashAlpha, LOOK.hurtFlashTime);
     }
     if (info.hitSound && info.hitSound[0] != '\0') {
         SoundManager::Instance().PlaySE(info.hitSound);
@@ -184,6 +208,17 @@ bool Player::TryUseAirHang() {
     return true;
 }
 
+int Player::UseMove(const char* name) {
+    int count = 0;
+    for (const char* recent : _recentMoves) {
+        if (recent && strcmp(recent, name) == 0) count++;
+    }
+
+    _recentMoves[_recentMoveNext] = name;
+    _recentMoveNext = (_recentMoveNext + 1) % RECENT_MOVE_COUNT;
+    return count;
+}
+
 void Player::UseDodge() {
     _dodgeStock -= 1.0f;
     if (_dodgeStock < 0.0f) _dodgeStock = 0.0f;
@@ -234,8 +269,8 @@ void Player::HealFull() {
 
     if (auto* effects = EffectManager::Get()) {
         effects->PlayHeal(GetCenter());
-        effects->PlayShockwave(GetPosition(), 500.0f, GetColorU8(120, 255, 160, 255));
-        effects->FlashScreen(0x60FF90, 0.3f, 0.4f);
+        effects->PlayShockwave(GetPosition(), LOOK.healRingRadius, EffectManager::ToColor(LOOK.healRingColor));
+        effects->FlashScreen(LOOK.healFlashColor, LOOK.healFlashAlpha, LOOK.healFlashTime);
     }
     SoundManager::Instance().PlaySE("Game/SE_Recover");
 }
@@ -243,7 +278,7 @@ void Player::HealFull() {
 VECTOR Player::FindAimDirection(VECTOR inputDirection, float searchRadius) const {
     inputDirection.y = 0.0f;
     float inputLength = VSize(inputDirection);
-    VECTOR base = (inputLength > 0.2f) ? VScale(inputDirection, 1.0f / inputLength) : GetForward();
+    VECTOR base = (inputLength > data.aimInputMin) ? VScale(inputDirection, 1.0f / inputLength) : GetForward();
 
     const Character* best = nullptr;
     float bestDistance = searchRadius;
@@ -273,6 +308,15 @@ void Player::SetOpacity(float rate) {
     if (_renderer && _renderer->ModelHandle != -1) {
         MV1SetOpacityRate(_renderer->ModelHandle, rate);
     }
+}
+
+void Player::HoldChargePose() {
+    PlayAnimation(data.chargePoseAnimation, 0.0f);
+    SetAnimationTime(data.chargePoseTime);
+}
+
+VECTOR Player::GetHeadPosition() const {
+    return VAdd(GetPosition(), VGet(0.0f, bodyHeight + HEAD_OFFSET, 0.0f));
 }
 
 void Player::UpdateCombo(float deltaTime) {
@@ -340,7 +384,7 @@ void Player::SucceedJustDodge(const Character* attacker) {
     // 画面の演出 音 画面の文字は、知らせを受け取った側が出す
     JustDodgeEvent event;
     event.position = GetPosition();
-    event.headPosition = VAdd(event.position, VGet(0.0f, bodyHeight + HEAD_OFFSET, 0.0f));
+    event.headPosition = GetHeadPosition();
     _justDodgeEvents.Notify(event);
 }
 
@@ -351,6 +395,10 @@ void Player::ReturnIfFallen() {
     VECTOR position = transform->localPosition;
     if (position.y >= FALL_LIMIT_Y) return;
 
+    ReturnToSpawn();
+}
+
+void Player::ReturnToSpawn() {
     transform->localPosition = _spawnPosition;
     SetVerticalVelocity(0.0f);
 }

@@ -1,6 +1,8 @@
 ﻿#include "ChainCounter.h"
 #include "GameFont.h"
 #include "Time.h"
+#include "Mathf.h"
+#include "UiLayer.h"
 #include "DxLib.h"
 #include <cstdio>
 
@@ -8,10 +10,7 @@ namespace {
     // 画面の上の真ん中に出す
     constexpr int TOP = 84;
 
-    // フェーズの表示より奥、結果の画面より奥に描く
-    constexpr int SORTING_ORDER = 8;
-
-    // 連鎖が伸びるほど赤く、大きくする
+    // 連鎖が伸びるほど淡い黄から橙、赤へと濃くし、大きくする いちばん上の段は金にして特別に見せる
     unsigned int GetColor(int count) {
         if (count >= ChainMilestone::THIRD) return 0xFFD700;
         if (count >= ChainMilestone::SECOND) return 0xFF6A30;
@@ -21,7 +20,7 @@ namespace {
 }
 
 void ChainCounter::Setup() {
-    sortingOrder = SORTING_ORDER;
+    sortingOrder = UiLayer::POPUP;
 }
 
 void ChainCounter::OnNotify(const ChainEvent& event) {
@@ -84,6 +83,5 @@ float ChainCounter::GetAlpha() const {
     float fadeStart = _hasEnded ? HOLD_TIME : QUIET_TIME;
     if (_timer <= fadeStart) return 1.0f;
 
-    float rate = 1.0f - (_timer - fadeStart) / FADE_TIME;
-    return (rate > 0.0f) ? rate : 0.0f;
+    return Mathf::Clamp01(1.0f - (_timer - fadeStart) / FADE_TIME);
 }

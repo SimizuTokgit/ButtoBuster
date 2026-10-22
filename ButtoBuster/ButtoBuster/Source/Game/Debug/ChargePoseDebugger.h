@@ -32,4 +32,10 @@ private:
     void StepTime(float amount);
     void UpdateStep();
     float GetTotalTime() const;
+
+    // 今止めているアニメが、アニメの一覧の何番目か (0 から) 無ければ -1
+    int FindClipIndex() const;
+
+    // 止める時間がアニメの終わりを越えないようにする 長さが分からないときはそのまま
+    float ClampToClip(float time) const;
 };

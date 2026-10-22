@@ -4,6 +4,7 @@
 #include "InputSystem.h"
 #include "GameObject.h"
 #include "Time.h"
+#include "Mathf.h"
 #include <cmath>
 
 PlayerController::~PlayerController() {
@@ -122,11 +123,9 @@ VECTOR PlayerController::ReadMove() {
     // 画面の奥へ倒したら、カメラの向いている先へ進む
     // ただし押し続けている間は、押し始めたときのカメラの向きを使い続ける
     // 背中へ回り込むカメラに合わせて向きを変えると、横を押しただけで円を描いてしまう
-    bool hasInput = VSize(stick) > 0.1f;
-    float degree = atan2f(stick.x, stick.z) * 180.0f / DX_PI_F;
-    float change = degree - _moveBasisDegree;
-    while (change > 180.0f) change -= 360.0f;
-    while (change < -180.0f) change += 360.0f;
+    bool hasInput = VSize(stick) > MOVE_INPUT_THRESHOLD;
+    float degree = Mathf::YawFromDirection(stick);
+    float change = Mathf::WrapDegree(degree - _moveBasisDegree);
 
     bool isNewDirection = !_hasMoveBasis || fabsf(change) > MOVE_REBASE_DEGREE;
     if (!hasInput || isNewDirection || _hasViewInput) {
@@ -175,7 +174,7 @@ void PlayerController::UpdateView() {
     float pitch = -stick.z * STICK_PITCH_SPEED * deltaTime
         + input.MouseDeltaY() * MOUSE_SENSITIVITY;
 
-    _hasViewInput = fabsf(yaw) > 0.01f;
+    _hasViewInput = fabsf(yaw) > VIEW_INPUT_MIN_DEGREE;
     _camera->Rotate(yaw, pitch);
 }
 

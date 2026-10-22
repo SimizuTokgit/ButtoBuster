@@ -4,7 +4,6 @@
 #include "PlayerController.h"
 #include "PlayerJumpState.h"
 #include "PlayerAirSlamState.h"
-#include "PlayerAttackState.h"
 #include "CameraFollow.h"
 #include "PhaseDirector.h"
 #include "Enemy.h"
@@ -20,6 +19,8 @@
 #include "SoundManager.h"
 #include "InputSystem.h"
 #include "Time.h"
+#include "Mathf.h"
+#include "UiDraw.h"
 #include <algorithm>
 #include <cmath>
 
@@ -118,7 +119,7 @@ void TutorialDirector::Update(float deltaTime) {
 
     if (isRead) {
         if (IsWaitingConfirm() && InputSystem::Instance().ConfirmPressed()) {
-            SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
+            SoundManager::Instance().PlaySE(UiDraw::DECIDE_SE);
             if (step.goal == TutorialGoal::Finish) GoToGame();
             else NextStep();
         }
@@ -163,7 +164,6 @@ bool TutorialDirector::IsCounted() const {
     case TutorialGoal::Jump:
     case TutorialGoal::Combo:
     case TutorialGoal::Special:
-    case TutorialGoal::AirSlash:
     case TutorialGoal::AirSlam:
     case TutorialGoal::Guard:
     case TutorialGoal::Dodge:
@@ -224,7 +224,6 @@ void TutorialDirector::BeginStep() {
     _lookedDegrees = 0.0f;
     _wasJumping = states.IsIn<PlayerJumpState>();
     _wasSlamming = states.IsIn<PlayerAirSlamState>();
-    _lastState = states.GetCurrent();
     _lastDodgeStock = _player->GetDodgeStock();
     _guardCountAtStart = _player->GetGuardCount();
 
@@ -287,7 +286,7 @@ void TutorialDirector::UpdateSkip() {
     else _skipTimer = 0.0f;
 
     if (_skipTimer >= SKIP_HOLD_TIME) {
-        SoundManager::Instance().PlaySE("Game/SE_ButtonPush");
+        SoundManager::Instance().PlaySE(UiDraw::DECIDE_SE);
         GoToGame();
     }
 }
@@ -310,9 +309,7 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
     case TutorialGoal::Look: {
         // 手で回した分だけ数える 歩いてカメラが付いてきた分は数えない
         float yaw = GetCameraYaw();
-        float change = yaw - _lastYaw;
-        while (change > 180.0f) change -= 360.0f;
-        while (change < -180.0f) change += 360.0f;
+        float change = Mathf::WrapDegree(yaw - _lastYaw);
         _lastYaw = yaw;
 
         if (_controller && _controller->HasViewInput()) _lookedDegrees += fabsf(change);
@@ -332,16 +329,6 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
         SetProgress(_player->GetCombo());
         break;
 
-    case TutorialGoal::AirSlash: {
-        // 空中の斬りを振り始めた回数 段が進むたびに新しい状態になるので、状態が替わった所で数える
-        const auto* current = states.GetCurrent();
-        const auto* attack = dynamic_cast<const PlayerAttackState*>(current);
-        bool isAirSlash = attack && attack->GetKind() == PlayerAttackState::Kind::Air;
-        if (isAirSlash && current != _lastState) AddProgress(1);
-        _lastState = current;
-        break;
-    }
-
     case TutorialGoal::AirSlam: {
         bool isSlamming = states.IsIn<PlayerAirSlamState>();
         if (isSlamming && !_wasSlamming) AddProgress(1);
@@ -354,9 +341,8 @@ void TutorialDirector::UpdateGoal(const TutorialStep& step) {
         break;
 
     case TutorialGoal::Dodge: {
-        // 回避すると残りが 1 回分減る 戻る途中の少しずつの増え方とは見分けられる
         float stock = _player->GetDodgeStock();
-        if (stock < _lastDodgeStock - 0.5f) AddProgress(1);
+        if (stock < _lastDodgeStock - DODGE_STOCK_DROP) AddProgress(1);
         _lastDodgeStock = stock;
         break;
     }
@@ -432,7 +418,7 @@ void TutorialDirector::SpawnPartner() {
 
     // カメラの向いている先、プレイヤーの前に出す 出たところが見えるように
     VECTOR forward = _camera ? _camera->GetGroundForward() : _player->GetForward();
-    float distance = (_partnerKind == TutorialPartner::Golem) ? PARTNER_DISTANCE * 2.0f : PARTNER_DISTANCE;
+    float distance = (_partnerKind == TutorialPartner::Golem) ? GOLEM_PARTNER_DISTANCE : PARTNER_DISTANCE;
     VECTOR center = VAdd(_player->GetPosition(), VScale(forward, distance));
 
     if (_partnerKind != TutorialPartner::Crowd) {
@@ -458,7 +444,7 @@ Enemy* TutorialDirector::SpawnPartnerAt(const EnemyData& data, VECTOR position) 
 
     float groundY = _player->GetPosition().y;
     StageBuilder::FindGroundHeight(position.x, position.z, groundY);
-    position.y = groundY + (data.isFlying ? data.hoverHeight : 40.0f);
+    position.y = groundY + _phases->GetSpawnHeight(data);
 
     Enemy* enemy = _phases->SpawnAt(data, position);
     if (!enemy) return nullptr;
@@ -504,7 +490,7 @@ float TutorialDirector::GetCameraYaw() const {
     if (!_camera) return 0.0f;
 
     VECTOR forward = _camera->GetGroundForward();
-    return atan2f(forward.x, forward.z) * 180.0f / DX_PI_F;
+    return Mathf::YawFromDirection(forward);
 }
 
 bool TutorialDirector::IsReadGoal(TutorialGoal goal) {

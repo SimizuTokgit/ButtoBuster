@@ -1,7 +1,10 @@
 ﻿#include "ShapeEffectRenderer.h"
+#include "EffectDraw.h"
+#include "Transform.h"
 #include "Time.h"
-#include <algorithm>
 #include <cmath>
+
+using namespace EffectDraw;
 
 namespace {
     // 弧が振り終わりまで伸びきるまでの割合 残りの時間で薄れて消える
@@ -10,34 +13,17 @@ namespace {
     // 消えるまでに弧が外へ広がる割合 止まった絵に見えないように
     constexpr float ARC_GROW = 0.12f;
 
+    // 弧の両端の細り方 1 より小さいほど真ん中の太い所が長く続く
+    constexpr float ARC_TAPER_POWER = 0.6f;
+
+    // 通り過ぎたところの濃さ 振っている先は 1
+    constexpr float ARC_TAIL_ALPHA = 0.35f;
+
     // 地面に埋もれてちらつかないよう少し浮かせる
     constexpr float RING_LIFT = 4.0f;
 
-    VERTEX3D MakeVertex(VECTOR position, float u, float v, COLOR_U8 color, float alpha) {
-        if (alpha < 0.0f) alpha = 0.0f;
-        if (alpha > 1.0f) alpha = 1.0f;
-
-        VERTEX3D vertex{};
-        vertex.pos = position;
-        vertex.norm = VGet(0.0f, 1.0f, 0.0f);
-        vertex.dif = color;
-        vertex.dif.a = static_cast<unsigned char>(alpha * 255.0f);
-        vertex.spc = GetColorU8(0, 0, 0, 0);
-        vertex.u = u;
-        vertex.v = v;
-        return vertex;
-    }
-
-    void PushQuad(std::vector<VERTEX3D>& out,
-        const VERTEX3D& a0, const VERTEX3D& a1, const VERTEX3D& b0, const VERTEX3D& b1) {
-        out.push_back(a0);
-        out.push_back(a1);
-        out.push_back(b0);
-
-        out.push_back(b0);
-        out.push_back(a1);
-        out.push_back(b1);
-    }
+    // 輪のいちばん濃いところ 外の縁から太さのこの割合だけ内側
+    constexpr float RING_PEAK_RATE = 0.3f;
 }
 
 ShapeEffectRenderer::~ShapeEffectRenderer() {
@@ -76,12 +62,7 @@ void ShapeEffectRenderer::Render() {
     if (!enabled) return;
     if (_arcs.empty() && _rings.empty()) return;
 
-    // 奥のモデルには隠れるが、自分は奥行きを書かない 重なった部分が欠けないように
-    SetUseZBufferFlag(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseLighting(FALSE);
-    SetUseBackCulling(FALSE);
-    SetDrawBlendMode(DX_BLENDMODE_ADD, 255);
+    TransparentScope scope(DX_BLENDMODE_ADD);
 
     _vertices.clear();
     for (const auto& ring : _rings) BuildRing(ring);
@@ -90,27 +71,11 @@ void ShapeEffectRenderer::Render() {
     _vertices.clear();
     for (const auto& arc : _arcs) BuildArc(arc);
     Flush(_arcGraph);
-
-    // ほかのエフェクトと同じ初期の状態に戻す
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-    SetUseLighting(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseZBufferFlag(FALSE);
 }
 
 void ShapeEffectRenderer::Advance(float deltaTime) {
-    for (auto& arc : _arcs) arc.age += deltaTime;
-    for (auto& ring : _rings) ring.age += deltaTime;
-
-    _arcs.erase(
-        std::remove_if(_arcs.begin(), _arcs.end(),
-            [](const Arc& arc) { return arc.age >= arc.desc.life; }),
-        _arcs.end());
-
-    _rings.erase(
-        std::remove_if(_rings.begin(), _rings.end(),
-            [](const Ring& ring) { return ring.age >= ring.desc.life; }),
-        _rings.end());
+    AdvanceAndRemove(_arcs, deltaTime);
+    AdvanceAndRemove(_rings, deltaTime);
 }
 
 void ShapeEffectRenderer::BuildArc(const Arc& arc) {
@@ -118,9 +83,7 @@ void ShapeEffectRenderer::BuildArc(const Arc& arc) {
     float progress = arc.age / desc.life;
 
     // 振った先へ伸びていき、伸びきったら全体が薄れる
-    // std::min と std::max は Windows.h のマクロとぶつかるので比べて書く
-    float reach = progress / ARC_REVEAL;
-    if (reach > 1.0f) reach = 1.0f;
+    float reach = Mathf::Clamp01(progress / ARC_REVEAL);
     float fade = (progress < ARC_REVEAL) ? 1.0f : 1.0f - (progress - ARC_REVEAL) / (1.0f - ARC_REVEAL);
     if (reach <= 0.0f || fade <= 0.0f) return;
 
@@ -133,10 +96,10 @@ void ShapeEffectRenderer::BuildArc(const Arc& arc) {
     VECTOR right = VNorm(VCross(up, forward));
 
     // 傾けた面の中で弧を描く 横の向きを上へ倒すほど縦の振りになる
-    float tilt = desc.tiltDegree * DX_PI_F / 180.0f;
+    float tilt = Transform::Deg2Rad(desc.tiltDegree);
     VECTOR side = VAdd(VScale(right, cosf(tilt)), VScale(up, sinf(tilt)));
 
-    float halfArc = desc.arcDegree * 0.5f * DX_PI_F / 180.0f;
+    float halfArc = Transform::Deg2Rad(desc.arcDegree * 0.5f);
     float radius = desc.radius * (1.0f + ARC_GROW * progress);
 
     VERTEX3D prevOuter{};
@@ -149,20 +112,19 @@ void ShapeEffectRenderer::BuildArc(const Arc& arc) {
 
         // 両端を細くして三日月にする
         // 端では sin がわずかに負になり、powf が数でなくなるので 0 で止める
-        float taper = sinf(DX_PI_F * along);
-        if (taper < 0.0f) taper = 0.0f;
-        float width = desc.width * powf(taper, 0.6f);
+        float taper = Mathf::Clamp01(sinf(DX_PI_F * along));
+        float width = desc.width * powf(taper, ARC_TAPER_POWER);
 
         // 振っている先ほど濃く、通り過ぎたところほど薄く
         float trail = (reach > 0.0f) ? along / reach : 0.0f;
-        float alpha = fade * (0.35f + 0.65f * trail);
+        float alpha = fade * (ARC_TAIL_ALPHA + (1.0f - ARC_TAIL_ALPHA) * trail);
 
         VECTOR outer = VAdd(desc.center, VScale(direction, radius));
         VECTOR inner = VAdd(desc.center, VScale(direction, radius - width));
 
         // 画像は上の端が濃いので、外側を上に合わせて刃先を光らせる
-        VERTEX3D outerVertex = MakeVertex(outer, along, 0.0f, desc.color, alpha);
-        VERTEX3D innerVertex = MakeVertex(inner, along, 1.0f, desc.color, alpha);
+        VERTEX3D outerVertex = MakeVertex(outer, desc.color, alpha, along, 0.0f);
+        VERTEX3D innerVertex = MakeVertex(inner, desc.color, alpha, along, 1.0f);
 
         if (i > 0) PushQuad(_vertices, prevOuter, prevInner, outerVertex, innerVertex);
         prevOuter = outerVertex;
@@ -175,14 +137,13 @@ void ShapeEffectRenderer::BuildRing(const Ring& ring) {
     float progress = ring.age / desc.life;
 
     // 最初に勢いよく広がり、だんだんゆっくりになる
-    float eased = 1.0f - (1.0f - progress) * (1.0f - progress);
-    float radius = desc.startRadius + (desc.endRadius - desc.startRadius) * eased;
+    float radius = desc.startRadius + (desc.endRadius - desc.startRadius) * Mathf::EaseOutQuad(progress);
     float alpha = desc.alphaStart + (desc.alphaEnd - desc.alphaStart) * progress;
     if (radius <= 0.0f || alpha <= 0.0f) return;
 
     // 外の縁を一番濃くして、内と外へぼかす
     float outerRadius = radius;
-    float peakRadius = radius - desc.width * 0.3f;
+    float peakRadius = radius - desc.width * RING_PEAK_RATE;
     if (peakRadius < 0.0f) peakRadius = 0.0f;
     float innerRadius = radius - desc.width;
     if (innerRadius < 0.0f) innerRadius = 0.0f;
@@ -199,9 +160,9 @@ void ShapeEffectRenderer::BuildRing(const Ring& ring) {
         float u = t;
 
         VERTEX3D current[3] = {
-            MakeVertex(VAdd(center, VScale(direction, innerRadius)), u, 1.0f, desc.color, 0.0f),
-            MakeVertex(VAdd(center, VScale(direction, peakRadius)), u, 0.5f, desc.color, alpha),
-            MakeVertex(VAdd(center, VScale(direction, outerRadius)), u, 0.0f, desc.color, 0.0f),
+            MakeVertex(VAdd(center, VScale(direction, innerRadius)), desc.color, 0.0f, u, 1.0f),
+            MakeVertex(VAdd(center, VScale(direction, peakRadius)), desc.color, alpha, u, 0.5f),
+            MakeVertex(VAdd(center, VScale(direction, outerRadius)), desc.color, 0.0f, u, 0.0f),
         };
 
         if (i > 0) {

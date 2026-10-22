@@ -11,16 +11,26 @@
 #include "SoundManager.h"
 #include "Scene.h"
 #include "GameObject.h"
-#include <algorithm>
+#include "Mathf.h"
 #include <cmath>
 
 namespace {
     // フェーズを越えたときに、吹っ飛ばされ値が許容値のこの割合以上なら「危ない」の声にする
     constexpr float CLEAR_DANGER_RATIO = 0.75f;
 
-    float RandomRange(float min, float max) {
-        return min + (max - min) * (GetRand(1000) / 1000.0f);
-    }
+    // 手応えの数値
+    struct Feel {
+        // 全回復したときの画面の揺れの強さと長さ 秒
+        float healShake;
+        float healShakeTime;
+
+        // 負けたときと勝ったときに、ジングルの前に曲を消していく秒数
+        float endBgmFadeTime;
+
+        // 敵が現れる音の大きさ 0〜1 敵ごとの出る声に重ねる
+        float spawnSoundVolume;
+    };
+    constexpr Feel FEEL = { 6.0f, 0.5f, 1.0f, 0.6f };
 }
 
 PhaseDirector::~PhaseDirector() {
@@ -33,12 +43,6 @@ void PhaseDirector::Initialize(Player* player, PlayerController* controller) {
     _controller = controller;
     _bestPhase = SaveData::LoadBestPhase(GameMode::Get());
 
-    // 同時に攻撃してくる数は難易度で決める (Difficulty.cpp の表)
-    const DifficultyData& difficulty = GameMode::GetData();
-    data.tokenStepPhases = difficulty.tokenStepPhases;
-    data.maxTokens = difficulty.maxTokens;
-    data.healInterval = difficulty.healInterval;
-
     StartPhase(1);
 }
 
@@ -47,7 +51,12 @@ void PhaseDirector::InitializePractice(Player* player, PlayerController* control
     _player = player;
     _controller = controller;
 
-    _tokens.SetCapacity(1);
+    StopPhases();
+}
+
+void PhaseDirector::StopPhases() {
+    RemoveAllEnemies();
+    _tokens.SetCapacity(data.practiceTokens);
     EnterStep(Step::Practice);
 }
 
@@ -88,10 +97,10 @@ void PhaseDirector::Update(float deltaTime) {
     case Step::Clear:
         if (_stepTimer < data.clearTime) break;
 
-        if (_phase % data.healInterval == 0) {
+        if (GetPhasesUntilHeal() == 0) {
             EnterStep(Step::Rest);
             if (_player) _player->HealFull();
-            if (auto* effects = EffectManager::Get()) effects->Shake(6.0f, 0.5f);
+            if (auto* effects = EffectManager::Get()) effects->Shake(FEEL.healShake, FEEL.healShakeTime);
             SoundManager::Instance().PlayJingle("JINGLE_stageclear");
         }
         else {
@@ -124,8 +133,10 @@ int PhaseDirector::GetRemainingEnemyCount() const {
 }
 
 int PhaseDirector::GetPhasesUntilHeal() const {
-    int remainder = _phase % data.healInterval;
-    return (remainder == 0) ? 0 : data.healInterval - remainder;
+    // 全回復の間隔は難易度で決める (Difficulty.cpp の表)
+    int healInterval = GameMode::GetData().healInterval;
+    int remainder = _phase % healInterval;
+    return (remainder == 0) ? 0 : healInterval - remainder;
 }
 
 int PhaseDirector::GetPhasesUntilVictory() const {
@@ -139,12 +150,10 @@ void PhaseDirector::DefeatAllEnemies() {
     _spawnQueue.clear();
 
     // 体力がないので、真ん中から外へ向けて場外へ飛ばして倒す
-    VECTOR center = StageBuilder::GetArenaCenter();
     for (Enemy* enemy : _enemies) {
         if (enemy->IsDead()) continue;
 
-        VECTOR away = VSub(enemy->GetPosition(), center);
-        away.y = 0.0f;
+        VECTOR away = StageBuilder::GetFlatOffsetFromCenter(enemy->GetPosition());
         float length = VSize(away);
         VECTOR direction = (length > 1.0f) ? VScale(away, 1.0f / length) : VGet(1.0f, 0.0f, 0.0f);
         enemy->Defeat(VScale(direction, ArenaWall::BREAK_FLY_MIN_SPEED));
@@ -192,10 +201,10 @@ void PhaseDirector::StartPhase(int phase) {
     SoundManager::Instance().PlaySE("Common/system_enter");
     EnterStep(Step::Announce);
 
-    // 始まりの声 最初のフェーズと、ボスの曲になるフェーズ (ロックマキナが出る) だけ
+    // 始まりの声 最初のフェーズと、ボスのフェーズ (PhaseData の bossVoicePhase ロックマキナが出る) だけ
     if (_player) _hitCountAtPhaseStart = _player->GetHitCount();
     if (phase == 1) SoundManager::Instance().PlaySE("Player/Vc_Start");
-    else if (phase == data.bossBgmPhase) SoundManager::Instance().PlaySE("Player/Vc_Start_Boss");
+    else if (phase == data.bossVoicePhase) SoundManager::Instance().PlaySE("Player/Vc_Start_Boss");
 }
 
 void PhaseDirector::PlayPhaseClearVoice() {
@@ -222,9 +231,7 @@ void PhaseDirector::EnterGameOver() {
     // 倒れたフェーズまでたどり着いた、と数える
     SaveRecord();
 
-    SoundManager::Instance().StopAllBGM(1.0f);
-    SoundManager::Instance().PlayJingle("JINGLE_gameover");
-    _currentBgm.clear();
+    PlayEndJingle("JINGLE_gameover");
 }
 
 void PhaseDirector::EnterVictory() {
@@ -241,15 +248,19 @@ void PhaseDirector::EnterVictory() {
 void PhaseDirector::AnnounceVictory() {
     _isVictoryAnnounced = true;
 
-    SoundManager::Instance().StopAllBGM(1.0f);
-    SoundManager::Instance().PlayJingle("JINGLE_stageclear");
-    _currentBgm.clear();
+    PlayEndJingle("JINGLE_stageclear");
 
     // 画面の演出は、知らせを受けた Observer が出す (GameScene.cpp で登録)
     VictoryEvent event;
-    event.phase = _phase;
     if (_player) event.playerPosition = _player->GetPosition();
     _victoryEvents.Notify(event);
+}
+
+void PhaseDirector::PlayEndJingle(const char* jingle) {
+    // もう戦わないので曲は流し直さない 今の曲も忘れる
+    SoundManager::Instance().StopAllBGM(FEEL.endBgmFadeTime);
+    SoundManager::Instance().PlayJingle(jingle);
+    _currentBgm.clear();
 }
 
 void PhaseDirector::SaveRecord() {
@@ -308,8 +319,7 @@ void PhaseDirector::RemoveFinishedEnemies() {
     bool isFighting = _step == Step::Announce || _step == Step::Battle;
     if (hasNewDefeat && isFighting && _spawnQueue.empty() && GetAliveCount() == 0) {
         // 吹き飛んで宙にいることが多いので、輪は真下の地面に出す
-        StageBuilder::FindGroundHeight(lastDefeatPosition.x, lastDefeatPosition.z, lastDefeatPosition.y);
-        if (auto* effects = EffectManager::Get()) effects->PlayFinalBlow(lastDefeatPosition);
+        if (auto* effects = EffectManager::Get()) effects->PlayFinalBlow(StageBuilder::SnapToGround(lastDefeatPosition));
     }
 }
 
@@ -326,11 +336,9 @@ Enemy* PhaseDirector::SpawnAt(const EnemyData& enemyData, VECTOR position) {
 
     if (auto* effects = EffectManager::Get()) {
         // 飛ぶ敵も、現れる印は地面に出す
-        VECTOR ground = position;
-        StageBuilder::FindGroundHeight(position.x, position.z, ground.y);
-        effects->PlaySpawn(ground);
+        effects->PlaySpawn(StageBuilder::SnapToGround(position));
     }
-    SoundManager::Instance().PlaySE("Common/enemy_Nifram", 0.6f);
+    SoundManager::Instance().PlaySE("Common/enemy_Nifram", FEEL.spawnSoundVolume);
     SoundManager::Instance().PlaySE(enemyData.soundSpawn);
     return enemy;
 }
@@ -338,22 +346,16 @@ Enemy* PhaseDirector::SpawnAt(const EnemyData& enemyData, VECTOR position) {
 VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& enemyData) const {
     VECTOR arenaCenter = StageBuilder::GetArenaCenter();
     VECTOR playerPosition = _player ? _player->GetPosition() : arenaCenter;
-    float limit = StageBuilder::ARENA_RADIUS - 150.0f;
-    float height = enemyData.isFlying ? enemyData.hoverHeight : 40.0f;
+    float height = GetSpawnHeight(enemyData);
 
     constexpr int ATTEMPTS = 8;
     for (int i = 0; i < ATTEMPTS; ++i) {
-        float angle = RandomRange(0.0f, DX_TWO_PI_F);
-        float distance = RandomRange(data.spawnDistanceMin, data.spawnDistanceMax);
+        float angle = Mathf::RandomRange(0.0f, DX_TWO_PI_F);
+        float distance = Mathf::RandomRange(data.spawnDistanceMin, data.spawnDistanceMax);
         VECTOR position = VAdd(playerPosition, VGet(cosf(angle) * distance, 0.0f, sinf(angle) * distance));
 
         // 戦える範囲の外に出たら端まで戻す
-        VECTOR offset = VSub(position, arenaCenter);
-        offset.y = 0.0f;
-        float fromCenter = VSize(offset);
-        if (fromCenter > limit) {
-            position = VAdd(arenaCenter, VScale(offset, limit / fromCenter));
-        }
+        position = ArenaWall::ClampInside(position, data.spawnWallMargin);
 
         // 端へ戻したせいでプレイヤーの目の前になったら選び直す
         VECTOR gap = VSub(position, playerPosition);
@@ -368,17 +370,20 @@ VECTOR PhaseDirector::ChooseSpawnPosition(const EnemyData& enemyData) const {
     }
 
     // どこも見つからなければ、真ん中を挟んでプレイヤーの反対側に出す
-    VECTOR away = VSub(arenaCenter, playerPosition);
-    away.y = 0.0f;
+    VECTOR away = VScale(StageBuilder::GetFlatOffsetFromCenter(playerPosition), -1.0f);
     float awayLength = VSize(away);
     VECTOR fallback = (awayLength > 1.0f)
-        ? VAdd(arenaCenter, VScale(away, 900.0f / awayLength))
-        : VAdd(arenaCenter, VGet(900.0f, 0.0f, 0.0f));
+        ? VAdd(arenaCenter, VScale(away, data.fallbackSpawnDistance / awayLength))
+        : VAdd(arenaCenter, VGet(data.fallbackSpawnDistance, 0.0f, 0.0f));
 
     float groundY = playerPosition.y;
     StageBuilder::FindGroundHeight(fallback.x, fallback.z, groundY);
     fallback.y = groundY + height;
     return fallback;
+}
+
+float PhaseDirector::GetSpawnHeight(const EnemyData& enemyData) const {
+    return enemyData.isFlying ? enemyData.hoverHeight : data.groundSpawnHeight;
 }
 
 std::vector<EnemyKind> PhaseDirector::BuildComposition(int phase) const {
@@ -440,18 +445,19 @@ int PhaseDirector::GetAliveCount() const {
 
 // std::min は DxLib が読む Windows.h の min マクロとぶつかって使えないので、比べて書く
 int PhaseDirector::GetConcurrentLimit() const {
-    int limit = data.minConcurrent + _phase / 2;
+    int limit = data.minConcurrent + _phase / data.concurrentStepPhases;
     return (limit < data.maxConcurrent) ? limit : data.maxConcurrent;
 }
 
 int PhaseDirector::GetTokenCapacity() const {
-    // フェーズが進むほど同時に殴ってくる数を増やす
-    int capacity = 1 + (_phase - 1) / data.tokenStepPhases;
-    return (capacity < data.maxTokens) ? capacity : data.maxTokens;
+    // フェーズが進むほど同時に殴ってくる数を増やす 増え方は難易度で決める (Difficulty.cpp の表)
+    const DifficultyData& difficulty = GameMode::GetData();
+    int capacity = 1 + (_phase - 1) / difficulty.tokenStepPhases;
+    return (capacity < difficulty.maxTokens) ? capacity : difficulty.maxTokens;
 }
 
 void PhaseDirector::UpdateBgm() {
-    // 5〜10 の終盤は HeroArrived! (Data/Sound/ButtoBuster_SE&BGM/BGM)
+    // PhaseData の stage2BgmPhase から先の終盤は HeroArrived! (Data/Sound/ButtoBuster_SE&BGM/BGM)
     const char* bgm = "BGM_stg0";
     if (_phase >= data.stage2BgmPhase) bgm = "HeroArrived!";
 

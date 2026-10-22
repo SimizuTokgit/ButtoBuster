@@ -2,28 +2,57 @@
 #include "GameFont.h"
 #include "PhaseDirector.h"
 #include "EnemyData.h"
+#include "UiDraw.h"
+#include "UiLayer.h"
 #include "DxLib.h"
 #include <cstdio>
 
 namespace {
-    // 出てから消えるまでの濃さ 最初の少しで出して、最後の少しで消す
+    // ----- 置く場所 -----
+
+    // 文字を置く高さの基準 画面の真ん中からこれだけ上
+    constexpr int CENTER_RAISE = 60;
+
+    // 文字の後ろに敷く黒い帯 帯の真ん中は基準からこれだけ下 濃さは 0〜255
+    constexpr int BAND_OFFSET = 30;
+    constexpr int BAND_ALPHA = 150;
+
+    // 出てから消えるまでの濃さ 最初のこの秒数で出して、最後のこの秒数で消す
+    constexpr float FADE_TIME = 0.25f;
+
+    // ----- フェーズの開始 -----
+    // 文字の上の端は基準からの距離
+    constexpr int ANNOUNCE_BAND_HEIGHT = 170;
+    constexpr int ANNOUNCE_TITLE_Y = -20;
+    constexpr unsigned int ANNOUNCE_TITLE_COLOR = 0xFFFFFF;
+    constexpr int NEW_ENEMY_Y = 76;
+    constexpr unsigned int NEW_ENEMY_COLOR = 0xFFB060;
+
+    // ----- フェーズのクリア -----
+    constexpr unsigned int CLEAR_COLOR = 0xFFE070;
+
+    // ----- 全回復 -----
+    constexpr int REST_BAND_HEIGHT = 150;
+    constexpr int REST_TITLE_Y = -10;
+    constexpr unsigned int REST_TITLE_COLOR = 0x80FFA0;
+    constexpr int REST_TEXT_Y = 56;
+    constexpr unsigned int REST_TEXT_COLOR = 0xE0FFE8;
+
     float FadeAlpha(float time, float duration) {
-        constexpr float FADE = 0.25f;
-        if (time < FADE) return time / FADE;
-        if (time > duration - FADE) return (duration - time) / FADE;
+        if (time < FADE_TIME) return time / FADE_TIME;
+        if (time > duration - FADE_TIME) return (duration - time) / FADE_TIME;
         return 1.0f;
     }
 
     void DrawBand(int screenWidth, int centerY, int height, float alpha) {
-        SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 150.0f));
-        DrawBox(0, centerY - height / 2, screenWidth, centerY + height / 2, 0x000000, TRUE);
-        SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+        UiDraw::FillBox(0, centerY - height / 2, screenWidth, centerY + height / 2, 0x000000,
+            static_cast<int>(alpha * BAND_ALPHA));
     }
 }
 
 void PhaseBanner::Setup(PhaseDirector* director) {
     _director = director;
-    sortingOrder = 10;
+    sortingOrder = UiLayer::PHASE_BANNER;
 }
 
 void PhaseBanner::Render() {
@@ -33,7 +62,7 @@ void PhaseBanner::Render() {
     int screenHeight = 0;
     GetDrawScreenSize(&screenWidth, &screenHeight);
     int centerX = screenWidth / 2;
-    int centerY = screenHeight / 2 - 60;
+    int centerY = screenHeight / 2 - CENTER_RAISE;
 
     // 表示の長さは、進め方と同じ PhaseData の時間に合わせる
     const PhaseData& phase = _director->data;
@@ -45,15 +74,15 @@ void PhaseBanner::Render() {
         float alpha = FadeAlpha(time, phase.announceTime);
         if (alpha <= 0.0f) break;
 
-        DrawBand(screenWidth, centerY + 30, 170, alpha);
+        DrawBand(screenWidth, centerY + BAND_OFFSET, ANNOUNCE_BAND_HEIGHT, alpha);
         SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
 
         snprintf(text, sizeof(text), "PHASE %d", _director->GetPhase());
-        GameFont::DrawCentered(centerX, centerY - 20, text, 0xFFFFFF, GameFont::Size::Huge);
+        GameFont::DrawCentered(centerX, centerY + ANNOUNCE_TITLE_Y, text, ANNOUNCE_TITLE_COLOR, GameFont::Size::Huge);
 
         if (const char* newEnemy = FindNewEnemyName(_director->GetPhase())) {
             snprintf(text, sizeof(text), "新しい敵  %s", newEnemy);
-            GameFont::DrawCentered(centerX, centerY + 76, text, 0xFFB060, GameFont::Size::Medium);
+            GameFont::DrawCentered(centerX, centerY + NEW_ENEMY_Y, text, NEW_ENEMY_COLOR, GameFont::Size::Medium);
         }
         SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
         break;
@@ -64,7 +93,7 @@ void PhaseBanner::Render() {
         if (alpha <= 0.0f) break;
 
         SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
-        GameFont::DrawCentered(centerX, centerY, "PHASE CLEAR", 0xFFE070, GameFont::Size::Large);
+        GameFont::DrawCentered(centerX, centerY, "PHASE CLEAR", CLEAR_COLOR, GameFont::Size::Large);
         SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
         break;
     }
@@ -73,10 +102,10 @@ void PhaseBanner::Render() {
         float alpha = FadeAlpha(time, phase.restTime);
         if (alpha <= 0.0f) break;
 
-        DrawBand(screenWidth, centerY + 30, 150, alpha);
+        DrawBand(screenWidth, centerY + BAND_OFFSET, REST_BAND_HEIGHT, alpha);
         SetDrawBlendMode(DX_BLENDMODE_ALPHA, static_cast<int>(alpha * 255.0f));
-        GameFont::DrawCentered(centerX, centerY - 10, "FULL HEAL", 0x80FFA0, GameFont::Size::Large);
-        GameFont::DrawCentered(centerX, centerY + 56, "バースト値が 0 に戻った 次の波まで少し休める", 0xE0FFE8, GameFont::Size::Small);
+        GameFont::DrawCentered(centerX, centerY + REST_TITLE_Y, "FULL HEAL", REST_TITLE_COLOR, GameFont::Size::Large);
+        GameFont::DrawCentered(centerX, centerY + REST_TEXT_Y, "バースト値が 0 に戻った 次の波まで少し休める", REST_TEXT_COLOR, GameFont::Size::Small);
         SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
         break;
     }

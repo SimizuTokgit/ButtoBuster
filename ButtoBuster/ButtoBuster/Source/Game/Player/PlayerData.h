@@ -18,6 +18,9 @@ struct PlayerData {
     // 被弾してから次に食らうまでの猶予 囲まれて起き上がれないまま殴られ続けるのを防ぐ
     float hurtInvincibleTime = 0.6f;
 
+    // 食らって押された勢いが止まる速さ 毎秒この割合で減らす 大きいほどすぐ止まる
+    float hurtDamp = 8.0f;
+
     // 吹き飛ばされたときに上へ跳ねる最低の速さと、倒れている時間 秒
     // 強く飛ばされたときは、吹っ飛ぶ角度 (Character::LAUNCH_ANGLE) になるまで高く跳ねる
     float blownJumpSpeed = 420.0f;
@@ -30,7 +33,7 @@ struct PlayerData {
     // 体力はない 許容値に届いた状態で壁にぶつかると、壁を割られて負け
     // プレイヤーは時間では減らさない 減るのは、吹き飛んで起き上がったときと、何フェーズかごとの全回復 (難易度で変わる) だけ
     BlowSettings blow{
-        30.0f,  // limit
+        30.0f,  // limit 遊ぶときは PlayerFactory が難易度の値 (Difficulty.cpp の playerBlowLimit) で上書きする
         3.8f,   // growth
         1.0f,   // recoverDelay 時間では減らさないので使っていない
         0.0f,   // recoverRate 0 で時間では減らない
@@ -54,6 +57,9 @@ struct PlayerData {
     // 空中で動ける速さ moveSpeed に掛ける割合
     float airMoveRate = 0.85f;
 
+    // 着地したときの土煙の粒の数
+    int landDustCount = 8;
+
     // ----- 回避 -----
 
     float dodgeSpeed = 1500.0f;
@@ -61,6 +67,15 @@ struct PlayerData {
     // 走り抜ける時間と、そのあと次の行動を受け付けるまで 秒
     float dodgeTime = 0.26f;
     float dodgeRecoveryTime = 0.13f;
+
+    // 走り抜けたあと止まる速さ 毎秒この割合で減らす
+    float dodgeDamp = 18.0f;
+
+    // 走り抜けている間の見た目の濃さ 1 でふだんどおり
+    float dodgeOpacity = 0.45f;
+
+    // 地面を蹴った土煙の粒の数 ジャスト回避のあとに寄り始めるときも同じ
+    int dodgeDustCount = 6;
 
     // 回避の無敵 秒 走り抜けている間は全部かわせる
     float dodgeInvincibleTime = 0.2f;
@@ -111,7 +126,9 @@ struct PlayerData {
     float guardDot = 0.2f;
 
     // ガードで受けたときに押される強さ 攻撃の吹っ飛ばしに掛ける割合
+    // 押された勢いは、毎秒 guardDamp の割合で減って止まる
     float guardPushRate = 0.35f;
+    float guardDamp = 10.0f;
 
     // ガードで弾いた敵を押し返す強さ 敵はのけぞり (EnemyDamageState)、この 6 割の速さで後ろへ下がる
     float guardStaggerPush = 500.0f;
@@ -122,9 +139,19 @@ struct PlayerData {
     float damageRate = 1.0f;
     float knockbackRate = 1.0f;
 
+    // OP 相殺 直近に振った技 (Player::RECENT_MOVE_COUNT 回分) の中に同じ技が 1 回あるごとに、
+    // ダメージと吹っ飛ばしをこの割合ずつ下げ、あと隙をこの割合ずつ伸ばす
+    // 段や溜めの段階が違えば別の技 必殺技は数えない 違う技を混ぜると、古い分から押し出されて戻る
+    // 9 回とも同じ技なら、威力は 0.55 倍、あと隙は 1.9 倍
+    float stalePowerDownPerUse = 0.05f;
+    float staleRecoveryUpPerUse = 0.1f;
+
     // 振り始めに近くの敵へ向きを吸い付ける範囲と、正面から左右に何度までの敵を見るか (0.5 で 60 度)
     float aimRadius = 420.0f;
     float aimDot = 0.5f;
+
+    // スティックをこれより倒していれば倒した向きを、倒していなければ今の正面を基準に敵を探す
+    float aimInputMin = 0.2f;
 
     // 対空斬り (攻撃 + ジャンプ) で跳ぶ速さ
     float antiAirJumpSpeed = 620.0f;
@@ -164,6 +191,9 @@ struct PlayerData {
     float airSlamDiveSpeed = 2200.0f;
     float airSlamRecoveryTime = 0.35f;
 
+    // 叩きつけたときの土煙の粒の数
+    int airSlamDustCount = 16;
+
     // ----- 溜め (ヘビーアタック) -----
 
     // 押し始めてからこの秒数で 1 2 3 段目に上がる 段階の数 (CHARGE_LEVEL_MAX) と同じ数だけ書く
@@ -172,6 +202,15 @@ struct PlayerData {
 
     // 溜めている間に止める姿勢 アニメの名前と、止めるフレーム
     // ゲーム中に P と , . で探せる 決まった値をここに書くと、普段の溜めの姿勢になる
+    // 必殺技も同じ姿勢で剣を掲げ、空中の叩きつけも同じフレームで振りかぶって止める
     std::string chargePoseAnimation = "Attack3";
     float chargePoseTime = 5.5f;
+
+    // 止めた姿勢から振り抜き終わるフレーム 叩きつけと必殺技は、刃の軌跡をここまで出す
+    float chargeSwingEndTime = 13.0f;
+
+    // ----- 声 -----
+
+    // 振る 回避 ガード 溜めの声の大きさ 書き換えない決まった値
+    static constexpr float VOICE_VOLUME = 0.8f;
 };

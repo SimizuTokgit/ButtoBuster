@@ -8,8 +8,8 @@ class Player;
 // 倒された体はもう壁に止められない 負けたあとの流れは PhaseDirector が進める
 class PlayerDeadState : public ICharacterState<Player> {
 private:
-    // 割った勢いで上へ跳ねる速さ 場外へ大きく飛んでいくのが見えるように
-    static constexpr float JUMP_SPEED = 700.0f;
+    // 倒れたときに立てる砂ぼこりの数
+    static constexpr int DUST_COUNT = 12;
 
     VECTOR _knockback;
     bool _isDown = false;

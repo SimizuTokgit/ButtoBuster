@@ -1,15 +1,13 @@
 ﻿#include "PlayerDeadState.h"
 #include "Player.h"
-#include "EffectManager.h"
+#include "PlayerBlowState.h"
 
 void PlayerDeadState::Enter(Player& player) {
-    player.PlayAnimation("BlowIn", 1.0f, true);
-    player.SetKnockback(_knockback);
-    player.SetVerticalVelocity(JUMP_SPEED);
-    player.SetTrailEmitting(false);
-
     // 飛ばされた向きの逆を向いたまま、後ろ向きに飛んでいく
-    player.FaceImmediately(VScale(_knockback, -1.0f));
+    player.PlayBlowIn(_knockback);
+    player.SetKnockback(_knockback);
+    player.SetVerticalVelocity(Character::DEFEAT_JUMP_SPEED);
+    player.SetTrailEmitting(false);
 }
 
 void PlayerDeadState::Execute(Player& player, const InputInfo& input, float deltaTime) {
@@ -18,10 +16,6 @@ void PlayerDeadState::Execute(Player& player, const InputInfo& input, float delt
         return;
     }
 
-    player.DampHorizontal(2.0f, deltaTime);
-    if (player.IsAnimationFinished() && player.IsGrounded()) {
-        player.PlayAnimation("DownLoop");
-        if (auto* effects = EffectManager::Get()) effects->PlayDust(player.GetPosition(), 12);
-        _isDown = true;
-    }
+    // 落ち方は吹き飛んだときと同じ
+    _isDown = PlayerBlowState::FallDown(player, DUST_COUNT, deltaTime);
 }

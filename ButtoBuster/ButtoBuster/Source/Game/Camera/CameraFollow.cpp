@@ -4,22 +4,10 @@
 #include "Camera.h"
 #include "PhysicsManager.h"
 #include "Time.h"
+#include "Mathf.h"
 #include <cmath>
 
 namespace {
-    float ToRadian(float degree) { return degree * DX_PI_F / 180.0f; }
-
-    float WrapDegree(float degree) {
-        while (degree > 180.0f) degree -= 360.0f;
-        while (degree < -180.0f) degree += 360.0f;
-        return degree;
-    }
-
-    // 地面に沿った向きを角度にする +Z が 0 +X が 90
-    float YawFromDirection(VECTOR direction) {
-        return atan2f(direction.x, direction.z) * 180.0f / DX_PI_F;
-    }
-
     // 1 フレームで目標へ近づける割合 フレームレートが変わっても同じ速さになるよう指数で減らす
     float BlendRate(float sharpness, float deltaTime) {
         return 1.0f - expf(-sharpness * deltaTime);
@@ -28,10 +16,7 @@ namespace {
 
 void CameraFollow::Start() {
     _camera = GetComponent<Camera>();
-    if (_camera) {
-        _camera->fieldOfView = data.fieldOfView;
-        _baseFieldOfView = data.fieldOfView;
-    }
+    if (_camera) _camera->fieldOfView = data.fieldOfView;
     SnapToTarget();
 }
 
@@ -46,15 +31,17 @@ void CameraFollow::Update(float deltaTime) {
     UpdateFocus(unscaled);
     UpdateAngles(unscaled);
 
-    // 肩越しに見るよう、見る点もカメラも右へずらす
-    VECTOR lookAt = VAdd(GetLookAt(), VScale(GetGroundRight(), data.shoulderOffset));
+    // 肩越しに見るよう、見る点もカメラも右へずらす 見下ろすときは、プレイヤーを画面の真ん中に置く
+    VECTOR lookAt = GetLookAt();
+    if (!isOverhead) lookAt = VAdd(lookAt, VScale(GetGroundRight(), data.shoulderOffset));
 
     // 見ている点からカメラへ向かう向き
-    float yaw = ToRadian(_yaw);
-    float pitch = ToRadian(_pitch);
+    float yaw = Transform::Deg2Rad(_yaw);
+    float pitch = Transform::Deg2Rad(isOverhead ? data.overheadPitch : _pitch);
     VECTOR back = VGet(-sinf(yaw) * cosf(pitch), sinf(pitch), -cosf(yaw) * cosf(pitch));
 
-    float cameraDistance = ResolveObstacle(lookAt, back, data.distance, unscaled);
+    // 見下ろすときは障害物で縮めない 木や岩をまたいで、まわり全体を映す
+    float cameraDistance = isOverhead ? data.overheadDistance : ResolveObstacle(lookAt, back, data.distance, unscaled);
 
     VECTOR shake = GetShakeOffset();
     transform->localPosition = VAdd(VAdd(lookAt, VScale(back, cameraDistance)), shake);
@@ -75,17 +62,17 @@ void CameraFollow::ResetBehind(VECTOR facing) {
     facing.y = 0.0f;
     if (VSquareSize(facing) < 0.0001f) return;
 
-    _resetYaw = YawFromDirection(facing);
+    _resetYaw = Mathf::YawFromDirection(facing);
     _isResetting = true;
 }
 
 VECTOR CameraFollow::GetGroundForward() const {
-    float yaw = ToRadian(_yaw);
+    float yaw = Transform::Deg2Rad(_yaw);
     return VGet(sinf(yaw), 0.0f, cosf(yaw));
 }
 
 VECTOR CameraFollow::GetGroundRight() const {
-    float yaw = ToRadian(_yaw);
+    float yaw = Transform::Deg2Rad(_yaw);
     return VGet(cosf(yaw), 0.0f, -sinf(yaw));
 }
 
@@ -120,7 +107,7 @@ void CameraFollow::SnapToTarget() {
     // 背中側から見る
     VECTOR facing = target->forward;
     facing.y = 0.0f;
-    if (VSquareSize(facing) > 0.0001f) _yaw = YawFromDirection(facing);
+    if (VSquareSize(facing) > 0.0001f) _yaw = Mathf::YawFromDirection(facing);
     _pitch = data.basePitch;
     _isResetting = false;
 
@@ -164,10 +151,10 @@ void CameraFollow::UpdateAngles(float deltaTime) {
 
     if (_isResetting) {
         float rate = BlendRate(data.resetSharpness, deltaTime);
-        float difference = WrapDegree(_resetYaw - _yaw);
+        float difference = Mathf::WrapDegree(_resetYaw - _yaw);
         _yaw += difference * rate;
         _pitch += (data.basePitch - _pitch) * rate;
-        if (fabsf(difference) < 0.5f) _isResetting = false;
+        if (fabsf(difference) < data.resetFinishAngle) _isResetting = false;
     }
     else if (_idleTime > data.followDelay && data.behindFollowSharpness > 0.0f) {
         // 動いている間は、プレイヤーの背中の向きへ回り込む
@@ -176,20 +163,17 @@ void CameraFollow::UpdateAngles(float deltaTime) {
         bool isMoving = VSize(_moveVelocity) > data.followMinSpeed;
 
         if (isMoving && VSquareSize(facing) > 0.0001f) {
-            float difference = WrapDegree(YawFromDirection(facing) - _yaw);
+            float difference = Mathf::WrapDegree(Mathf::YawFromDirection(facing) - _yaw);
             if (fabsf(difference) < data.followMaxAngle) {
                 float step = difference * BlendRate(data.behindFollowSharpness, deltaTime);
                 float maxStep = data.behindFollowMaxSpeed * deltaTime;
-                if (step > maxStep) step = maxStep;
-                if (step < -maxStep) step = -maxStep;
-                _yaw += step;
+                _yaw += Mathf::Clamp(step, -maxStep, maxStep);
             }
         }
     }
 
-    _yaw = WrapDegree(_yaw);
-    if (_pitch < data.minPitch) _pitch = data.minPitch;
-    if (_pitch > data.maxPitch) _pitch = data.maxPitch;
+    _yaw = Mathf::WrapDegree(_yaw);
+    _pitch = Mathf::Clamp(_pitch, data.minPitch, data.maxPitch);
 }
 
 VECTOR CameraFollow::GetLookAt() const {
@@ -222,7 +206,7 @@ void CameraFollow::UpdateZoomPunch() {
     if (!_camera) return;
 
     if (_punchTime <= 0.0f) {
-        _camera->fieldOfView = _baseFieldOfView;
+        _camera->fieldOfView = data.fieldOfView;
         return;
     }
 
@@ -241,7 +225,7 @@ void CameraFollow::UpdateZoomPunch() {
         amount = (1.0f - back) * (1.0f - back);
     }
 
-    _camera->fieldOfView = _baseFieldOfView - _punchDegrees * amount;
+    _camera->fieldOfView = data.fieldOfView - _punchDegrees * amount;
 }
 
 VECTOR CameraFollow::GetShakeOffset() {
@@ -255,8 +239,8 @@ VECTOR CameraFollow::GetShakeOffset() {
 
     // 終わりに向けて弱める
     float power = _shakePower * (_shakeTime / _shakeDuration);
-    float x = (GetRand(2000) / 1000.0f - 1.0f) * power;
-    float y = (GetRand(2000) / 1000.0f - 1.0f) * power;
+    float x = Mathf::RandomRange(-1.0f, 1.0f) * power;
+    float y = Mathf::RandomRange(-1.0f, 1.0f) * power;
 
     // カメラが回っても画面の上で同じ揺れ方になるよう、カメラから見た左右と上下で揺らす
     return VAdd(VScale(GetGroundRight(), x), VGet(0.0f, y, 0.0f));

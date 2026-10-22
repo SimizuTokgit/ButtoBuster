@@ -1,13 +1,33 @@
 ﻿#pragma once
-#include "DxLib.h"
 #include <string>
 
 class GameObject;
 class Animator;
 class SkinnedMeshRenderer;
+class Rigidbody;
+class CapsuleCollider;
 
 // プレイヤーと敵の組み立てで共通する手順
 namespace CharacterBuilder {
+
+    // 体の当たり判定のカプセルの形
+    struct BodyShape {
+        float radius;
+        float height;
+        float centerY;      // 足元からカプセルの真ん中までの高さ
+    };
+
+    // 付けた体の部品 組み立ての最後に Character::Setup へ渡す
+    struct Body {
+        Rigidbody* rigidbody;
+        CapsuleCollider* collider;
+    };
+
+    // 物理で動く体と、カプセルの当たり判定を付けて登録する
+    Body AddBody(GameObject* root, bool useGravity, const BodyShape& shape);
+
+    // 見た目のモデルを置く子を作る モデルの正面を体の正面にそろえて回しておく
+    GameObject* AddModelRoot(GameObject* root, const char* name);
 
     struct ClipInfo {
         const char* fileName;   // Anim_Run.mv1 など

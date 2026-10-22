@@ -1,23 +1,25 @@
 ﻿#pragma once
 #include "ICharacterState.h"
 #include "AttackData.h"
+#include "PlayerActions.h"
+#include <vector>
 
 class Player;
+class Character;
 
 // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつける
-// 宙で一瞬振りかぶってから一気に落ち、着地した場所から衝撃波を広げて周りの敵を吹き飛ばす
+// 宙で一瞬振りかぶってから一気に落ちる 落ちる途中で宙の敵を捕まえ、一緒に地面へ叩き落とす (敵は地面で跳ね上がる)
+// 着地したら、前の扇形 (溜め斬りと同じ範囲) の敵を吹き飛ばす
 // 吹き飛ばした敵は連鎖の砲弾になり、群れの外へも広がっていく
+// 振りかぶりで止めるフレームと、振り抜き終わるフレームはヘビーアタックの溜めと同じ (PlayerData の chargePoseTime と chargeSwingEndTime)
 class PlayerAirSlamState : public ICharacterState<Player> {
 private:
-    // 振りかぶりで止める姿勢 アニメのフレーム ヘビーアタックの溜めと同じ、振り下ろす直前
-    static constexpr float POSE_TIME = 5.5f;
-
-    // 振り抜き終わるフレーム 刃の軌跡をここまで出す
-    static constexpr float SWING_END_TIME = 13.0f;
-
     // 地面に着かないまま落ち続けたときに、叩きつけたことにするまでの時間 秒
     // 落ちる速さと着地の隙は PlayerData
     static constexpr float DIVE_TIME_LIMIT = 1.5f;
+
+    // 叩きつけたときに画面を揺らす長さ 秒 強さは技の shake 外しても揺らす
+    static constexpr float LAND_SHAKE_TIME = 0.3f;
 
     enum class Phase {
         Windup,     // 宙で止まって振りかぶる
@@ -28,11 +30,20 @@ private:
     // 強化の倍率を掛けたり、ジャスト回避のあとなら反撃に書き換えたりするので、技の数値は写しを持つ
     AttackData _data;
 
+    // 着地してから動けるまで 秒 OP 相殺で伸びた分も入れてある
+    float _recoveryTime = 0.0f;
+
+    // OP 相殺で数えた回数 捕まえる当たりにも、同じだけ掛ける
+    int _staleCount = 0;
+
+    // 落ちる途中で捕まえた敵 同じ敵を 2 回捕まえず、着地の吹き飛ばしでも跳ね上がりを邪魔しないように覚えておく
+    std::vector<Character*> _caught;
+
     Phase _phase = Phase::Windup;
     float _timer = 0.0f;
 
     // 着地の隙の間に押された次の技 隙が明けたら出す
-    Technique _queued = Technique::None;
+    PlayerActions::QueuedTechnique _queued;
 
 public:
     void Enter(Player& player) override;
@@ -43,5 +54,6 @@ public:
 
 private:
     void StartDive(Player& player);
+    void Catch(Player& player);
     void Land(Player& player);
 };

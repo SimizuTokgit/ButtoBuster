@@ -49,6 +49,11 @@ private:
     // 着地までに、あと何回空中で浮き直せるか
     int _airHangLeft = 0;
 
+    // OP 相殺 直近に振った技の名前 (状態の GetName) 埋まったら古いものから上書きする
+    static constexpr int RECENT_MOVE_COUNT = 9;
+    const char* _recentMoves[RECENT_MOVE_COUNT] = {};
+    int _recentMoveNext = 0;
+
     // 回避の残り 1 で 1 回分 端数は戻っている途中の分
     float _dodgeStock = 0.0f;
 
@@ -135,6 +140,10 @@ public:
     // 空中で浮き直す 着地までの回数が残っていれば 1 回使って true
     bool TryUseAirHang();
 
+    // OP 相殺 技を振り始めるときに呼ぶ 直近に同じ技を振った回数を返し、この技を覚える
+    // 当たったかどうかは問わない 回数は PlayerAttacks::ApplyRates に渡す
+    int UseMove(const char* name);
+
     void SetGuarding(bool isGuarding) { _isGuarding = isGuarding; }
     bool IsGuarding() const override { return _isGuarding; }
 
@@ -162,6 +171,16 @@ public:
 
     // 見た目を半透明にする 回避の無敵中に使う
     void SetOpacity(float rate);
+
+    // 溜めの姿勢 (data の chargePose で始まる値) でアニメを止める 溜めと必殺技が使う
+    // 速さ 0 で止めたまま決めた時間の姿勢にする 間を再生しないので、アニメに付けた音は鳴らない
+    void HoldChargePose();
+
+    // 頭の上 ジャスト回避の知らせや溜めの光を出す所
+    VECTOR GetHeadPosition() const;
+
+    // 最初の場所へ戻す 穴に落ちたときと、制作用の撮影で同じ所から始めるときに使う
+    void ReturnToSpawn();
 
 protected:
     const BlowSettings& GetBlowSettings() const override { return data.blow; }

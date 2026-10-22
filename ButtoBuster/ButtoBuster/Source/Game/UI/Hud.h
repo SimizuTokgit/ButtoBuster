@@ -13,8 +13,6 @@ private:
     Player* _player = nullptr;
     PhaseDirector* _director = nullptr;
 
-    int _shownCombo = 0;
-
     // 危なさの音を最後に鳴らした脈の番号 同じ脈で 2 回鳴らさないように
     int _lastDangerBeat = -1;
 
@@ -38,6 +36,9 @@ public:
     // 制作用 キャラの頭上に今の状態と吹っ飛ばされ値、隙があればその残りを出す
     bool isStateVisible = false;
 
+    // 制作用 1 以上なら、フェーズを止めている間 (撮影) に画面の右上へ「賢さ N」を出す 0 で出さない
+    int filmingIntelligence = 0;
+
     ~Hud() override;
 
     void Setup(Player* player, PhaseDirector* director);
@@ -48,8 +49,9 @@ private:
     void DrawDanger(int screenWidth, int screenHeight);
     void DrawDodgeStock();
     void DrawSpecialGauge();
-    void DrawPhaseInfo(int screenWidth, int screenHeight);
+    void DrawPhaseInfo(int screenWidth);
     void DrawCombo(int screenWidth, int screenHeight);
     void DrawControls(int screenWidth, int screenHeight);
     void DrawStates();
+    void DrawFilmingLabel(int screenWidth);
 };

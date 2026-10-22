@@ -2,8 +2,19 @@
 #include "DxLib.h"
 #include "GameObject.h"
 #include "AudioSource.h"
+#include "Mathf.h"
 #include <cctype>
 #include <algorithm>
+
+namespace {
+    // 番号付きの名前の末尾 "_00" の文字数
+    constexpr size_t NUMBER_SUFFIX_LENGTH = 3;
+
+    // 起動からの時刻（秒）
+    float NowSeconds() {
+        return static_cast<float>(GetNowCount()) / 1000.0f;
+    }
+}
 
 SoundManager::SoundManager() = default;
 SoundManager::~SoundManager() = default;
@@ -14,21 +25,9 @@ void SoundManager::Init() {
     // サウンド専用 GameObject を生成（Scene には属さない）
     _soundGameObject = std::make_unique<GameObject>("SoundManager");
 
-    // SE 用 AudioSource プール
-    for (int i = 0; i < SE_SOURCE_COUNT; ++i) {
-        auto* src = _soundGameObject->AddComponent<AudioSource>();
-        src->spatialBlend = false;
-        src->Register();
-        _seSources.push_back(src);
-    }
-
-    // BGM 用 AudioSource プール
-    for (int i = 0; i < BGM_SOURCE_COUNT; ++i) {
-        auto* src = _soundGameObject->AddComponent<AudioSource>();
-        src->spatialBlend = false;
-        src->Register();
-        _bgmSources.push_back(src);
-    }
+    // SE 用と BGM 用の AudioSource プール
+    BuildSourcePool(_seSources, SE_SOURCE_COUNT);
+    BuildSourcePool(_bgmSources, BGM_SOURCE_COUNT);
 
     // クリップ一括ロード
     LoadFolder("Data/Sound/SE", "", _seClips, true);
@@ -62,63 +61,49 @@ void SoundManager::Terminate() {
 }
 
 void SoundManager::PlayJingle(const std::string& jingleName, float volumeScale) {
-    auto it = _bgmClips.find(jingleName);
-    if (it == _bgmClips.end() || !it->second || !it->second->IsLoaded()) return;
+    AudioClip* clip = FindLoadedClip(_bgmClips, jingleName);
+    if (!clip) return;
 
-    AudioSource* src = GetUnusedBGMSource();
+    AudioSource* src = FindUnusedSource(_bgmSources);
     if (!src) return;
 
-    src->clip = it->second.get();
-    src->loop = false;              // ここが PlayBGM との違い
-    src->spatialBlend = false;
-    src->mute = false;
-    src->volume = ClampVolume(_bgmVolume * volumeScale);
-    src->Play();
+    // ループさせないのが PlayBGM との違い
+    PlayOnSource(src, clip, false, Mathf::Clamp01(_bgmVolume * volumeScale));
 }
 
 void SoundManager::PlaySE(const std::string& seName, float volumeScale) {
     const std::string* resolved = ResolveSEName(seName);
     if (!resolved) return;
 
-    auto it = _seClips.find(*resolved);
-    if (it == _seClips.end() || !it->second || !it->second->IsLoaded()) return;
+    AudioClip* clip = FindLoadedClip(_seClips, *resolved);
+    if (!clip) return;
 
     // 同名 SE の連続再生抑制
     // 呼ばれた名前で見るので、番号違いを順に鳴らして抑制をすり抜けることはない
-    float now = static_cast<float>(GetNowCount()) / 1000.0f;
+    float now = NowSeconds();
     auto lastIt = _lastPlayedTimes.find(seName);
     if (lastIt != _lastPlayedTimes.end() && now - lastIt->second < INTERVAL) return;
 
-    AudioSource* src = GetUnusedSESource();
+    AudioSource* src = FindUnusedSource(_seSources);
     if (!src) return;
 
-    src->clip = it->second.get();
-    src->loop = false;
-    src->spatialBlend = false;
-    src->mute = false;
-    src->volume = ClampVolume(_seVolume * volumeScale);
-    src->Play();
+    PlayOnSource(src, clip, false, Mathf::Clamp01(_seVolume * volumeScale));
 
     _lastPlayedTimes[seName] = now;
 }
 
 void SoundManager::PlayBGM(const std::string& bgmName, float fadeInDuration) {
-    auto it = _bgmClips.find(bgmName);
-    if (it == _bgmClips.end() || !it->second || !it->second->IsLoaded()) return;
+    AudioClip* clip = FindLoadedClip(_bgmClips, bgmName);
+    if (!clip) return;
 
-    float now = static_cast<float>(GetNowCount()) / 1000.0f;
+    float now = NowSeconds();
     auto lastIt = _lastPlayedTimes.find(bgmName);
     if (lastIt != _lastPlayedTimes.end() && now - lastIt->second < INTERVAL) return;
 
-    AudioSource* src = GetUnusedBGMSource();
+    AudioSource* src = FindUnusedSource(_bgmSources);
     if (!src) return;
 
-    src->clip = it->second.get();
-    src->loop = true;
-    src->spatialBlend = false;
-    src->mute = false;
-    src->volume = (fadeInDuration > 0.0f) ? 0.0f : _bgmVolume;
-    src->Play();
+    PlayOnSource(src, clip, true, (fadeInDuration > 0.0f) ? 0.0f : _bgmVolume);
 
     if (fadeInDuration > 0.0f) {
         StartBGMFade(src, 0.0f, _bgmVolume, fadeInDuration, false);
@@ -128,10 +113,9 @@ void SoundManager::PlayBGM(const std::string& bgmName, float fadeInDuration) {
 }
 
 void SoundManager::StopBGM(const std::string& bgmName, float fadeOutDuration) {
-    auto it = _bgmClips.find(bgmName);
-    if (it == _bgmClips.end() || !it->second || !it->second->IsLoaded()) return;
+    AudioClip* targetClip = FindLoadedClip(_bgmClips, bgmName);
+    if (!targetClip) return;
 
-    AudioClip* targetClip = it->second.get();
     for (auto* src : _bgmSources) {
         if (src && src->clip == targetClip) {
             if (fadeOutDuration > 0.0f) {
@@ -161,10 +145,8 @@ void SoundManager::StopAllBGM(float fadeOutDuration) {
 }
 
 void SoundManager::CrossfadeBGM(const std::string& bgmName, float duration) {
-    auto it = _bgmClips.find(bgmName);
-    if (it == _bgmClips.end() || !it->second || !it->second->IsLoaded()) return;
-
-    AudioClip* targetClip = it->second.get();
+    AudioClip* targetClip = FindLoadedClip(_bgmClips, bgmName);
+    if (!targetClip) return;
 
     // 既に同じ BGM が鳴っているなら何もしない
     for (auto* src : _bgmSources) {
@@ -181,7 +163,7 @@ void SoundManager::CrossfadeBGM(const std::string& bgmName, float duration) {
     }
 
     // フェードイン用の空きソースを取得（無ければ強制的に 1 本回収）
-    AudioSource* newSrc = GetUnusedBGMSource();
+    AudioSource* newSrc = FindUnusedSource(_bgmSources);
     if (!newSrc) {
         // 全ソース使用中: 先頭ソースを強制停止して再利用
         for (auto* src : _bgmSources) {
@@ -195,16 +177,10 @@ void SoundManager::CrossfadeBGM(const std::string& bgmName, float duration) {
     }
     if (!newSrc) return;
 
-    newSrc->clip = targetClip;
-    newSrc->loop = true;
-    newSrc->spatialBlend = false;
-    newSrc->mute = false;
-    newSrc->volume = 0.0f;
-    newSrc->Play();
+    PlayOnSource(newSrc, targetClip, true, 0.0f);
     StartBGMFade(newSrc, 0.0f, _bgmVolume, duration, false);
 
-    float now = static_cast<float>(GetNowCount()) / 1000.0f;
-    _lastPlayedTimes[bgmName] = now;
+    _lastPlayedTimes[bgmName] = NowSeconds();
 }
 
 void SoundManager::Update(float deltaTime) {
@@ -219,10 +195,7 @@ void SoundManager::Update(float deltaTime) {
             it->source->volume = vol;
             // 再生中ハンドルにも即時反映
             if (it->source->clip && it->source->clip->IsLoaded()) {
-                int v = static_cast<int>(vol * 255.0f);
-                if (v < 0) v = 0;
-                if (v > 255) v = 255;
-                ChangeVolumeSoundMem(v, it->source->clip->handle);
+                ChangeVolumeSoundMem(Mathf::ToByte(vol), it->source->clip->handle);
             }
         }
 
@@ -288,32 +261,50 @@ AudioClip* SoundManager::GetBGMClip(const std::string& bgmName) {
 }
 
 void SoundManager::SetSEVolume(float v) {
-    _seVolume = ClampVolume(v);
-    // 再生中の SE にも即時反映
+    _seVolume = Mathf::Clamp01(v);
+    // プールの音量の値もそろえる
+    // DxLib へ音量を渡すのは Play のときだけなので、鳴っている途中の SE の大きさは変わらない
     for (auto* src : _seSources) {
         if (src) src->volume = _seVolume;
     }
 }
 
 void SoundManager::SetBGMVolume(float v) {
-    _bgmVolume = ClampVolume(v);
+    _bgmVolume = Mathf::Clamp01(v);
     for (auto* src : _bgmSources) {
         if (src) src->volume = _bgmVolume;
     }
 }
 
-AudioSource* SoundManager::GetUnusedSESource() {
-    for (auto* src : _seSources) {
+AudioClip* SoundManager::FindLoadedClip(const ClipMap& clips, const std::string& name) {
+    auto it = clips.find(name);
+    if (it == clips.end() || !it->second || !it->second->IsLoaded()) return nullptr;
+    return it->second.get();
+}
+
+void SoundManager::BuildSourcePool(std::vector<AudioSource*>& pool, int count) {
+    for (int i = 0; i < count; ++i) {
+        auto* src = _soundGameObject->AddComponent<AudioSource>();
+        src->spatialBlend = false;
+        src->Register();
+        pool.push_back(src);
+    }
+}
+
+AudioSource* SoundManager::FindUnusedSource(const std::vector<AudioSource*>& pool) {
+    for (auto* src : pool) {
         if (src && !src->IsPlaying()) return src;
     }
     return nullptr;
 }
 
-AudioSource* SoundManager::GetUnusedBGMSource() {
-    for (auto* src : _bgmSources) {
-        if (src && !src->IsPlaying()) return src;
-    }
-    return nullptr;
+void SoundManager::PlayOnSource(AudioSource* src, AudioClip* clip, bool loop, float volume) {
+    src->clip = clip;
+    src->loop = loop;
+    src->spatialBlend = false;
+    src->mute = false;
+    src->volume = volume;
+    src->Play();
 }
 
 void SoundManager::LoadFolder(const std::string& folderPath, const std::string& keyPrefix, ClipMap& target, bool makeGroups) {
@@ -357,12 +348,12 @@ void SoundManager::LoadFolder(const std::string& folderPath, const std::string& 
         // 末尾が _00 のような番号なら、番号を外した名前でもまとめて引けるようにする
         if (!makeGroups) continue;
         size_t length = stem.size();
-        bool hasNumber = length > 3
-            && stem[length - 3] == '_'
+        bool hasNumber = length > NUMBER_SUFFIX_LENGTH
+            && stem[length - NUMBER_SUFFIX_LENGTH] == '_'
             && std::isdigit(static_cast<unsigned char>(stem[length - 2]))
             && std::isdigit(static_cast<unsigned char>(stem[length - 1]));
         if (hasNumber) {
-            _seGroups[keyPrefix + stem.substr(0, length - 3)].push_back(key);
+            _seGroups[keyPrefix + stem.substr(0, length - NUMBER_SUFFIX_LENGTH)].push_back(key);
         }
     } while (FileRead_findNext(findHandle, &finfo) != -1);
 

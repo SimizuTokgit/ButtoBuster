@@ -5,22 +5,26 @@
 #include "Rigidbody.h"
 #include "Transform.h"
 #include "GameObject.h"
-#include <algorithm>
-#include <cmath>
+#include "ContainerUtil.h"
 
 using namespace std;
 
-// 着地中の床判定の補正値（足元より少し下まで判定）
-static constexpr float FLOOR_Y_ADJUST_WALK = -5.0f;
+namespace {
+    // ステージのポリゴンを集める範囲（キャラの位置からの半径）
+    constexpr float SEARCH_DISTANCE = 500.0f;
 
-// ジャンプ中（落下中）の床判定の補正値
-static constexpr float FLOOR_Y_ADJUST_JUMP = -1.0f;
+    // 床判定の補正値（足元より少し下まで判定）
+    constexpr float FLOOR_Y_ADJUST = -5.0f;
 
-// 壁押し出し距離
-static constexpr float HIT_SLIDE_DISTANCE = 1.0f;
+    // 床の高さを探すときの初期値 どの床よりも低くしておく
+    constexpr float FLOOR_SEARCH_START_Y = -100000.0f;
 
-// 壁押し出しの最大試行回数
-static constexpr int HIT_TRY_NUM = 16;
+    // 壁押し出し距離
+    constexpr float HIT_SLIDE_DISTANCE = 1.0f;
+
+    // 壁押し出しの最大試行回数
+    constexpr int HIT_TRY_NUM = 16;
+}
 
 PhysicsManager& PhysicsManager::Instance() {
     static PhysicsManager instance;
@@ -28,19 +32,11 @@ PhysicsManager& PhysicsManager::Instance() {
 }
 
 void PhysicsManager::RegisterCollider(Collider* collider) {
-    if (collider) {
-        auto it = find(_colliders.begin(), _colliders.end(), collider);
-        if (it == _colliders.end()) {
-            _colliders.push_back(collider);
-        }
-    }
+    ContainerUtil::AddUnique(_colliders, collider);
 }
 
 void PhysicsManager::UnregisterCollider(Collider* collider) {
-    auto it = find(_colliders.begin(), _colliders.end(), collider);
-    if (it != _colliders.end()) {
-        _colliders.erase(it);
-    }
+    ContainerUtil::Remove(_colliders, collider);
 
     // 衝突ペアの記録からも取り除く。
     // これを忘れると、破棄されたColliderが前フレームの衝突として残り、
@@ -51,7 +47,7 @@ void PhysicsManager::UnregisterCollider(Collider* collider) {
 void PhysicsManager::ForgetCollisionPairs(Collider* collider) {
     if (!collider) return;
 
-    auto purge = [collider](std::unordered_set<CollisionPair, CollisionPairHash>& pairs) {
+    auto purge = [collider](CollisionPairSet& pairs) {
         for (auto it = pairs.begin(); it != pairs.end(); ) {
             if (it->a == collider || it->b == collider) {
                 it = pairs.erase(it);
@@ -69,35 +65,19 @@ void PhysicsManager::ForgetCollisionPairs(Collider* collider) {
 }
 
 void PhysicsManager::RegisterRigidbody(Rigidbody* rigidbody) {
-    if (rigidbody) {
-        auto it = find(_rigidbodies.begin(), _rigidbodies.end(), rigidbody);
-        if (it == _rigidbodies.end()) {
-            _rigidbodies.push_back(rigidbody);
-        }
-    }
+    ContainerUtil::AddUnique(_rigidbodies, rigidbody);
 }
 
 void PhysicsManager::UnregisterRigidbody(Rigidbody* rigidbody) {
-    auto it = find(_rigidbodies.begin(), _rigidbodies.end(), rigidbody);
-    if (it != _rigidbodies.end()) {
-        _rigidbodies.erase(it);
-    }
+    ContainerUtil::Remove(_rigidbodies, rigidbody);
 }
 
 void PhysicsManager::RegisterMeshCollider(MeshCollider* meshCollider) {
-    if (meshCollider) {
-        auto it = find(_meshColliders.begin(), _meshColliders.end(), meshCollider);
-        if (it == _meshColliders.end()) {
-            _meshColliders.push_back(meshCollider);
-        }
-    }
+    ContainerUtil::AddUnique(_meshColliders, meshCollider);
 }
 
 void PhysicsManager::UnregisterMeshCollider(MeshCollider* meshCollider) {
-    auto it = find(_meshColliders.begin(), _meshColliders.end(), meshCollider);
-    if (it != _meshColliders.end()) {
-        _meshColliders.erase(it);
-    }
+    ContainerUtil::Remove(_meshColliders, meshCollider);
 
     // MeshCollider も Collider なので、衝突ペアの記録から取り除く
     ForgetCollisionPairs(meshCollider);
@@ -130,10 +110,10 @@ void PhysicsManager::Update(float deltaTime) {
     DetectCollisions();
 
     // 4. コールバック発火（Collider同士）
-    InvokeCollisionCallbacks();
+    InvokeCollisionCallbacks(_currentCollisions, _previousCollisions);
 
     // 5. MeshColliderとの衝突コールバック発火
-    InvokeMeshCollisionCallbacks();
+    InvokeCollisionCallbacks(_currentMeshCollisions, _previousMeshCollisions);
 }
 
 bool PhysicsManager::CheckCapsuleStageHit(VECTOR pos1, VECTOR pos2, float radius) {
@@ -242,12 +222,10 @@ void PhysicsManager::ProcessCapsuleStageCollision(
     if (!rb || !capsule || !rb->transform) return;
     if (_meshColliders.empty()) return;
 
-    const float SEARCH_DISTANCE = 500.0f;
-
     VECTOR nextPos = rb->transform->localPosition;
     bool isGrounded = false;
     
-    // 上向き速度がある場合はジャンプ中とみなす（床判定を厳密にする）
+    // 上向き速度がある場合はジャンプ中とみなす（床判定をしない）
     bool isJumping = rb->linearVelocity.y > 0.0f;
 
     // カプセルの座標を取得
@@ -367,7 +345,7 @@ void PhysicsManager::ProcessCapsuleStageCollision(
 
     // === 天井との衝突処理 ===
     if (!ceilingPolys.empty()) {
-        // 床判定用の線分座標を計算
+        // 天井判定用の線分座標を計算
         VECTOR lineTopPos = VAdd(nextPos, capsule->center);
         lineTopPos.y += capsule->height / 2.0f;
 
@@ -413,16 +391,10 @@ void PhysicsManager::ProcessCapsuleStageCollision(
         VECTOR lineBottomPos = VAdd(nextPos, capsule->center);
         lineBottomPos.y -= capsule->height / 2.0f + capsule->radius;
 
-        // 着地中は足元より少し下まで判定（坂道で浮かないように）
-        // ジャンプ中は足元ぎりぎりで判定
-        if (isJumping) {
-            lineBottomPos.y += FLOOR_Y_ADJUST_JUMP;
-        }
-        else {
-            lineBottomPos.y += FLOOR_Y_ADJUST_WALK;
-        }
+        // 足元より少し下まで判定（坂道で浮かないように）
+        lineBottomPos.y += FLOOR_Y_ADJUST;
 
-        float maxY = -100000.0f;
+        float maxY = FLOOR_SEARCH_START_Y;
         bool hitFloor = false;
 
         for (auto& pwc : floorPolys) {
@@ -567,126 +539,50 @@ void PhysicsManager::PushOutColliders(
     }
 }
 
-void PhysicsManager::InvokeCollisionCallbacks() {
-    // Enter: 今回衝突 && 前回非衝突
-    // Stay: 今回衝突 && 前回衝突
-    // Exit: 今回非衝突 && 前回衝突
-
-    // Enter と Stay
-    for (const auto& pair : _currentCollisions) {
-        bool wasPrevious = _previousCollisions.find(pair) != _previousCollisions.end();
-
-        if (!wasPrevious) {
-            // Enter
-            if (pair.a->isTrigger || pair.b->isTrigger) {
-                // トリガー: Collider*を渡す
-                pair.a->InvokeOnTriggerEnter(pair.b);
-                pair.b->InvokeOnTriggerEnter(pair.a);
-            }
-            else {
-                // 物理衝突: Collisionを渡す
-                Collision collisionA = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                Collision collisionB = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                pair.a->InvokeOnCollisionEnter(collisionA);
-                pair.b->InvokeOnCollisionEnter(collisionB);
-            }
+void PhysicsManager::InvokeCollisionCallbacks(const CollisionPairSet& current, CollisionPairSet& previous) {
+    // ペアの両側へ同じ種類のコールバックを送る
+    // トリガーなら相手の Collider* を、物理衝突なら相手を入れた Collision を渡す
+    auto invokeBoth = [this](
+        const CollisionPair& pair,
+        void (Collider::*onTrigger)(Collider*),
+        void (Collider::*onCollision)(const Collision&)
+    ) {
+        if (pair.a->isTrigger || pair.b->isTrigger) {
+            (pair.a->*onTrigger)(pair.b);
+            (pair.b->*onTrigger)(pair.a);
         }
         else {
-            // Stay
-            if (pair.a->isTrigger || pair.b->isTrigger) {
-                pair.a->InvokeOnTriggerStay(pair.b);
-                pair.b->InvokeOnTriggerStay(pair.a);
-            }
-            else {
-                Collision collisionA = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                Collision collisionB = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                pair.a->InvokeOnCollisionStay(collisionA);
-                pair.b->InvokeOnCollisionStay(collisionB);
-            }
+            Collision collisionA = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
+            Collision collisionB = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
+            (pair.a->*onCollision)(collisionA);
+            (pair.b->*onCollision)(collisionB);
+        }
+    };
+
+    // Enter: 今回衝突 && 前回非衝突
+    // Stay: 今回衝突 && 前回衝突
+    for (const auto& pair : current) {
+        bool wasPrevious = previous.find(pair) != previous.end();
+
+        if (!wasPrevious) {
+            invokeBoth(pair, &Collider::InvokeOnTriggerEnter, &Collider::InvokeOnCollisionEnter);
+        }
+        else {
+            invokeBoth(pair, &Collider::InvokeOnTriggerStay, &Collider::InvokeOnCollisionStay);
         }
     }
 
-    // Exit
-    for (const auto& pair : _previousCollisions) {
-        bool isCurrent = _currentCollisions.find(pair) != _currentCollisions.end();
+    // Exit: 今回非衝突 && 前回衝突
+    for (const auto& pair : previous) {
+        bool isCurrent = current.find(pair) != current.end();
 
         if (!isCurrent) {
-            if (pair.a->isTrigger || pair.b->isTrigger) {
-                pair.a->InvokeOnTriggerExit(pair.b);
-                pair.b->InvokeOnTriggerExit(pair.a);
-            }
-            else {
-                Collision collisionA = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                Collision collisionB = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                pair.a->InvokeOnCollisionExit(collisionA);
-                pair.b->InvokeOnCollisionExit(collisionB);
-            }
+            invokeBoth(pair, &Collider::InvokeOnTriggerExit, &Collider::InvokeOnCollisionExit);
         }
     }
 
     // 現在の衝突を前フレーム用に保存
-    _previousCollisions = _currentCollisions;
-}
-
-void PhysicsManager::InvokeMeshCollisionCallbacks() {
-    // MeshColliderとの衝突コールバック
-    // Enter: 今回衝突 && 前回非衝突
-    // Stay: 今回衝突 && 前回衝突
-    // Exit: 今回非衝突 && 前回衝突
-
-    // Enter と Stay
-    for (const auto& pair : _currentMeshCollisions) {
-        bool wasPrevious = _previousMeshCollisions.find(pair) != _previousMeshCollisions.end();
-
-        // pair.a = CapsuleCollider, pair.b = MeshCollider
-        if (!wasPrevious) {
-            // Enter
-            if (pair.a->isTrigger || pair.b->isTrigger) {
-                pair.a->InvokeOnTriggerEnter(pair.b);
-                pair.b->InvokeOnTriggerEnter(pair.a);
-            }
-            else {
-                Collision collisionForCapsule = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                Collision collisionForMesh = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                pair.a->InvokeOnCollisionEnter(collisionForCapsule);
-                pair.b->InvokeOnCollisionEnter(collisionForMesh);
-            }
-        }
-        else {
-            // Stay
-            if (pair.a->isTrigger || pair.b->isTrigger) {
-                pair.a->InvokeOnTriggerStay(pair.b);
-                pair.b->InvokeOnTriggerStay(pair.a);
-            }
-            else {
-                Collision collisionForCapsule = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                Collision collisionForMesh = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                pair.a->InvokeOnCollisionStay(collisionForCapsule);
-                pair.b->InvokeOnCollisionStay(collisionForMesh);
-            }
-        }
-    }
-
-    // Exit
-    for (const auto& pair : _previousMeshCollisions) {
-        bool isCurrent = _currentMeshCollisions.find(pair) != _currentMeshCollisions.end();
-
-        if (!isCurrent) {
-            if (pair.a->isTrigger || pair.b->isTrigger) {
-                pair.a->InvokeOnTriggerExit(pair.b);
-                pair.b->InvokeOnTriggerExit(pair.a);
-            }
-            else {
-                Collision collisionForCapsule = CreateCollision(pair.b, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                Collision collisionForMesh = CreateCollision(pair.a, VGet(0, 0, 0), VGet(0, 1, 0), 0);
-                pair.a->InvokeOnCollisionExit(collisionForCapsule);
-                pair.b->InvokeOnCollisionExit(collisionForMesh);
-            }
-        }
-    }
-
-    // 現在の衝突を前フレーム用に保存
-    _previousMeshCollisions = _currentMeshCollisions;
+    previous = current;
 }
 
 Collision PhysicsManager::CreateCollision(

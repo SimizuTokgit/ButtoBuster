@@ -8,6 +8,15 @@
 /// 3D回転を正しく合成するために使用する
 /// </summary>
 struct Quaternion {
+    // 長さが 0 とみなす大きさ 割り算の前にこれより小さければ回転なしを返す
+    static constexpr float EPSILON = 1e-10f;
+
+    // オイラー角に直すとき sin がこれより 1 に近ければジンバルロックとみなす
+    static constexpr float GIMBAL_LOCK_THRESHOLD = 0.9999f;
+
+    // Slerp で 2 つの向きの内積がこれより大きければ、ほぼ同じ向きなので線形補間で近似する
+    static constexpr float SLERP_LERP_THRESHOLD = 0.9995f;
+
     float x, y, z, w;
 
     Quaternion() : x(0), y(0), z(0), w(1) {}
@@ -98,7 +107,7 @@ struct Quaternion {
 
         float ex, ey, ez;
 
-        if (fabsf(sinX) > 0.9999f) {
+        if (fabsf(sinX) > GIMBAL_LOCK_THRESHOLD) {
             // ジンバルロック付近
             ex = 90.0f * sinX;
             ey = 180.0f / DX_PI_F * atan2f(2.0f * (x * z + w * y), 1.0f - 2.0f * (y * y + x * x));
@@ -175,7 +184,7 @@ struct Quaternion {
     /// </summary>
     Quaternion Inverse() const {
         float n = x * x + y * y + z * z + w * w;
-        if (n < 1e-10f) return Identity();
+        if (n < EPSILON) return Identity();
         float invN = 1.0f / n;
         return Quaternion(-x * invN, -y * invN, -z * invN, w * invN);
     }
@@ -204,7 +213,7 @@ struct Quaternion {
     /// </summary>
     Quaternion Normalized() const {
         float mag = Magnitude();
-        if (mag < 1e-10f) return Identity();
+        if (mag < EPSILON) return Identity();
         float inv = 1.0f / mag;
         return Quaternion(x * inv, y * inv, z * inv, w * inv);
     }
@@ -214,7 +223,7 @@ struct Quaternion {
     /// </summary>
     static Quaternion AngleAxis(float angleDeg, VECTOR axis) {
         float len = sqrtf(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
-        if (len < 1e-10f) return Identity();
+        if (len < EPSILON) return Identity();
         float inv = 1.0f / len;
         axis.x *= inv; axis.y *= inv; axis.z *= inv;
 
@@ -229,7 +238,7 @@ struct Quaternion {
     static Quaternion LookRotation(VECTOR forward, VECTOR up = VGet(0, 1, 0)) {
         // forward を正規化
         float fLen = sqrtf(forward.x * forward.x + forward.y * forward.y + forward.z * forward.z);
-        if (fLen < 1e-10f) return Identity();
+        if (fLen < EPSILON) return Identity();
         float fInv = 1.0f / fLen;
         forward.x *= fInv; forward.y *= fInv; forward.z *= fInv;
 
@@ -240,7 +249,7 @@ struct Quaternion {
             up.x * forward.y - up.y * forward.x
         );
         float rLen = sqrtf(right.x * right.x + right.y * right.y + right.z * right.z);
-        if (rLen < 1e-10f) return Identity();
+        if (rLen < EPSILON) return Identity();
         float rInv = 1.0f / rLen;
         right.x *= rInv; right.y *= rInv; right.z *= rInv;
 
@@ -273,7 +282,7 @@ struct Quaternion {
         }
 
         // dotが1に近い場合はLerpで近似
-        if (dot > 0.9995f) {
+        if (dot > SLERP_LERP_THRESHOLD) {
             return Quaternion(
                 a.x + t * (target.x - a.x),
                 a.y + t * (target.y - a.y),

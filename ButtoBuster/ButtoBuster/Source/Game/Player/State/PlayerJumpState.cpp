@@ -27,7 +27,7 @@ void PlayerJumpState::Execute(Player& player, const InputInfo& input, float delt
         if (PlayerActions::TryStart(player, this, input)) return;
 
         bool canMoveOn = player.IsAnimationFinished()
-            || (player.GetAnimationTime() > 6.0f && PlayerActions::HasMoveInput(input));
+            || (player.GetAnimationTime() > LAND_CANCEL_FRAME && PlayerActions::HasMoveInput(input));
         if (canMoveOn) {
             player.GetStates().Transition(this, make_unique<PlayerIdleState>());
         }
@@ -50,7 +50,7 @@ void PlayerJumpState::Execute(Player& player, const InputInfo& input, float delt
     if (_airTime > MIN_AIR_TIME && player.IsGrounded()) {
         _isLanding = true;
         player.StopHorizontal();
-        player.PlayAnimation("JumpOut", 1.4f, true);
-        if (auto* effects = EffectManager::Get()) effects->PlayDust(player.GetPosition(), 8);
+        player.PlayAnimation("JumpOut", LAND_ANIMATION_SPEED, true);
+        if (auto* effects = EffectManager::Get()) effects->PlayDust(player.GetPosition(), data.landDustCount);
     }
 }

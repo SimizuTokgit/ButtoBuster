@@ -8,9 +8,6 @@ class Enemy;
 // 倒された体はもう壁に止められず、誰にも当たらない
 class EnemyDeadState : public ICharacterState<Enemy> {
 private:
-    // 割った勢いで上へ跳ねる速さ 場外へ大きく飛んでいくのが見えるように
-    static constexpr float JUMP_SPEED = 700.0f;
-
     // 飛んでいく時間と、そのあと透けて消えるまでの時間 秒
     static constexpr float FLY_TIME = 1.0f;
     static constexpr float FADE_TIME = 0.5f;

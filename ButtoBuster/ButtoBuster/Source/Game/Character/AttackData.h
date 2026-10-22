@@ -1,8 +1,12 @@
 ﻿#pragma once
 #include "HitInfo.h"
 
+// アニメは 1 秒 30 フレームで作られていて、その速さで読み込む (CharacterBuilder)
+// 技の時間も、このフレームで数える
+constexpr float ANIMATION_FPS = 30.0f;
+
 // 近接攻撃1つ分の数値
-// 時間はすべてアニメのフレーム 30fps で数える
+// 時間はすべてアニメのフレーム (ANIMATION_FPS) で数える
 // 判定の出る時間は、アニメで武器を振っているフレームに合わせる
 struct AttackData {
     const char* animationName = "";
@@ -27,8 +31,8 @@ struct AttackData {
     HitReaction reaction = HitReaction::Flinch;
     float knockback = 200.0f;
 
-    // 0 より大きければ、のけぞらせた相手をこの速さで真上へ浮かせる
-    // 空中の斬りで相手を宙に留め、続けて斬れるようにする
+    // 0 より大きければ、のけぞらせた相手をこの速さで真上へ浮かせる 負なら真下へ落とす
+    // 空中の斬りで相手を宙に留め、続けて斬れるようにする 叩きつけは捕まえた相手を一緒に落とす
     float lift = 0.0f;
 
     // 自分の正面の扇形で当てる
@@ -39,6 +43,9 @@ struct AttackData {
     // 地上の技は空の Bee に届かないようにしてある
     float heightMin = -60.0f;
     float heightMax = 200.0f;
+
+    // 宙にいる相手にだけ当てる 叩きつけで、浮かせた相手を捕まえるのに使う
+    bool isAirOnly = false;
 
     // 振りながら前に出る速さ
     float lunge = 0.0f;
@@ -65,6 +72,7 @@ struct AttackData {
     // 1 で左から右へ -1 で右から左へ 縦のときは 1 で下から上へ
     float arcSwing = 1.0f;
 
+    // 弧の色 足元から広げる衝撃波 (下の shockwaveRadius と、敵の踏みつけ) もこの色
     COLOR_U8 arcColor = GetColorU8(255, 255, 255, 255);
 
     // 0 より大きければ、振り下ろした瞬間に足元から衝撃波を広げる

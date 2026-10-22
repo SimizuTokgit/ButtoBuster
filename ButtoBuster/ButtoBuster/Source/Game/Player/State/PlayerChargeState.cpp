@@ -7,15 +7,10 @@
 
 using std::make_unique;
 
-namespace {
-    // 頭の上のどこに溜めの光を出すか
-    constexpr float HEAD_OFFSET = 30.0f;
-}
-
 void PlayerChargeState::Enter(Player& player) {
     player.SetTrailEmitting(false);
     player.StopHorizontal();
-    HoldPose(player);
+    player.HoldChargePose();
 
     Notify(player, PlayerChargeEvent::Type::Start);
 }
@@ -25,7 +20,7 @@ void PlayerChargeState::Execute(Player& player, const InputInfo& input, float de
     if (input.technique == Technique::Dodge && PlayerActions::TryStart(player, this, input)) return;
 
     // 毎フレーム姿勢をかけ直す デバッグで姿勢を書き換えたとき、溜めたままその場で変わるように
-    HoldPose(player);
+    player.HoldChargePose();
 
     // その場で踏ん張って動かない 走りながら溜め始めても滑らないよう毎フレーム止める
     // 向きだけは変えて狙える
@@ -57,12 +52,6 @@ const char* PlayerChargeState::GetName() const {
     return names[_level];
 }
 
-void PlayerChargeState::HoldPose(Player& player) const {
-    // 速さ 0 で止めたまま、決めた時間の姿勢にする 間を再生しないので、アニメに付けた音は鳴らない
-    player.PlayAnimation(player.data.chargePoseAnimation, 0.0f);
-    player.SetAnimationTime(player.data.chargePoseTime);
-}
-
 void PlayerChargeState::Release(Player& player) {
     const AttackData& attack = PlayerAttacks::GetHeavy(_level);
     bool isStarted = player.GetStates().Transition(this,
@@ -79,6 +68,6 @@ void PlayerChargeState::Notify(Player& player, PlayerChargeEvent::Type type) con
     event.level = _level;
     event.maxLevel = PlayerAttacks::CHARGE_LEVEL_MAX;
     event.position = player.GetPosition();
-    event.headPosition = VAdd(event.position, VGet(0.0f, player.bodyHeight + HEAD_OFFSET, 0.0f));
+    event.headPosition = player.GetHeadPosition();
     player.GetChargeEvents().Notify(event);
 }

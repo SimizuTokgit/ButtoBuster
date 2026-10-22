@@ -100,14 +100,20 @@ public:
 
     // ----- チュートリアル -----
 
-    // フェーズを始めずに練習の段 (Practice) にする 敵は SpawnAt で頼まれたものだけを出す 攻撃の番は 1 体ずつ
+    // フェーズを始めずに練習の段 (Practice) にする 敵は SpawnAt で頼まれたものだけを出す 攻撃の番は PhaseData の practiceTokens 体ずつ
     void InitializePractice(Player* player, PlayerController* controller);
 
     // 決めた場所に敵を出す 数値を書き換えた敵も出せる 敵は enemyData を指したまま持つので、消えるまで残しておくこと
     Enemy* SpawnAt(const EnemyData& enemyData, VECTOR position);
 
+    // 敵を出す高さ 地面からの距離 飛ぶ敵は浮く高さ、地上の敵は PhaseData の groundSpawnHeight
+    float GetSpawnHeight(const EnemyData& enemyData) const;
+
     // 今いる敵をすぐに全部消す 練習の相手を入れ替えるときに使う
     void RemoveAllEnemies();
+
+    // 今いる敵を消し、フェーズを止めて練習の段にする 制作用の撮影でも、決めた敵だけを出すために使う
+    void StopPhases();
 
     // ----- 制作用 -----
 
@@ -123,6 +129,9 @@ private:
     void EnterGameOver();
     void EnterVictory();
     void AnnounceVictory();
+
+    // 負けか勝ちで、曲を消して終わりのジングルを鳴らす
+    void PlayEndJingle(const char* jingle);
 
     // たどり着いたフェーズが最高記録を超えていたら残す
     void SaveRecord();

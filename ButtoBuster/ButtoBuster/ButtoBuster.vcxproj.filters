@@ -147,7 +147,7 @@
     <ClCompile Include="Source\Game\Effect\EffectManager.cpp">
       <Filter>Source\Game\Effect</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Game\Effect\EnemyMarkerRenderer.cpp">
+    <ClCompile Include="Source\Game\Effect\MarkerRenderer.cpp">
       <Filter>Source\Game\Effect</Filter>
     </ClCompile>
     <ClCompile Include="Source\Game\Effect\ScreenFlash.cpp">
@@ -300,6 +300,9 @@
     <ClCompile Include="Source\Game\Projectile\NeedlePool.cpp">
       <Filter>Source\Game\Projectile</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Game\Scene\ArenaSceneBuilder.cpp">
+      <Filter>Source\Game\Scene</Filter>
+    </ClCompile>
     <ClCompile Include="Source\Game\Scene\GameScene.cpp">
       <Filter>Source\Game\Scene</Filter>
     </ClCompile>
@@ -395,7 +398,13 @@
     <ClInclude Include="Source\Engine\Core\Component.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Engine\Core\ContainerUtil.h">
+      <Filter>Source\Engine\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Engine\Core\GameObject.h">
+      <Filter>Source\Engine\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Engine\Core\Mathf.h">
       <Filter>Source\Engine\Core</Filter>
     </ClInclude>
     <ClInclude Include="Source\Engine\Core\MonoBehaviour.h">
@@ -479,9 +488,6 @@
     <ClInclude Include="Source\Engine\Render\Skybox.h">
       <Filter>Source\Engine\Render</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Engine\Render\SpriteRenderer.h">
-      <Filter>Source\Engine\Render</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Engine\UI\UIImage.h">
       <Filter>Source\Engine\UI</Filter>
     </ClInclude>
@@ -533,10 +539,13 @@
     <ClInclude Include="Source\Game\Debug\DebugCheats.h">
       <Filter>Source\Game\Debug</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Effect\EffectDraw.h">
+      <Filter>Source\Game\Effect</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Effect\EffectManager.h">
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Game\Effect\EnemyMarkerRenderer.h">
+    <ClInclude Include="Source\Game\Effect\MarkerRenderer.h">
       <Filter>Source\Game\Effect</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\Effect\ScreenFlash.h">
@@ -713,6 +722,9 @@
     <ClInclude Include="Source\Game\Projectile\NeedlePool.h">
       <Filter>Source\Game\Projectile</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\Scene\ArenaSceneBuilder.h">
+      <Filter>Source\Game\Scene</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\Scene\GameScene.h">
       <Filter>Source\Game\Scene</Filter>
     </ClInclude>
@@ -761,6 +773,9 @@
     <ClInclude Include="Source\Game\UI\ChainCounter.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Game\UI\ControlsList.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
     <ClInclude Include="Source\Game\UI\GameFont.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
@@ -783,6 +798,12 @@
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
     <ClInclude Include="Source\Game\UI\TutorialScreen.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\UiDraw.h">
+      <Filter>Source\Game\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Game\UI\UiLayer.h">
       <Filter>Source\Game\UI</Filter>
     </ClInclude>
   </ItemGroup>

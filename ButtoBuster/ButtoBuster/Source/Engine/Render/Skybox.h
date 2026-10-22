@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Component.h"
+#include "Camera.h"
 #include "DxLib.h"
 
 /// <summary>
@@ -13,7 +14,7 @@ public:
     float farClipPlane = 100000.0f;
 
     /// <summary>スカイボックス用の近クリップ面</summary>
-    float nearClipPlane = 10.0f;
+    float nearClipPlane = Camera::INITIAL_NEAR_CLIP;
 
     /// <summary>空用3Dモデルハンドル（準定数）</summary>
     int ModelHandle = -1;
@@ -64,7 +65,7 @@ public:
     /// </summary>
     /// <param name="savedNear">復元用の近クリップ面</param>
     /// <param name="savedFar">復元用の遠クリップ面</param>
-    void Render(float savedNear = 10.0f, float savedFar = 50000.0f) {
+    void Render(float savedNear = Camera::INITIAL_NEAR_CLIP, float savedFar = Camera::INITIAL_FAR_CLIP) {
         if (ModelHandle == -1) return;
 
         SetCameraNearFar(nearClipPlane, farClipPlane);

@@ -16,7 +16,7 @@ void EnemyIdleState::Execute(Enemy& enemy, const InputInfo& input, float deltaTi
 
     if (EnemyActions::TryStartAttack(enemy, this, input.technique)) return;
 
-    if (VSize(input.move) > 0.05f) {
+    if (VSize(input.move) > EnemyMoveState::DEADZONE) {
         enemy.GetStates().Transition(this, make_unique<EnemyMoveState>());
         return;
     }

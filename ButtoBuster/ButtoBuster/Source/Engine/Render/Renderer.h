@@ -130,6 +130,17 @@ public:
 
 protected:
     /// <summary>
+    /// モデルをTransformの位置に置いて描く
+    /// MeshRenderer と SkinnedMeshRenderer の Render はこれだけ
+    /// </summary>
+    void DrawModel() {
+        if (!enabled || ModelHandle == -1 || !transform) return;
+
+        ApplyTransform();
+        MV1DrawModel(ModelHandle);
+    }
+
+    /// <summary>
     /// Transformを適用（派生クラスで使用）
     /// Quaternionから回転行列を生成し、位置・スケールと合成して
     /// MV1SetMatrixで一括適用する

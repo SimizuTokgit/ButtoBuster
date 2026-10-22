@@ -25,7 +25,6 @@ public:
     const char* GetName() const override;
 
 private:
-    void HoldPose(Player& player) const;
     void Release(Player& player);
     void Notify(Player& player, PlayerChargeEvent::Type type) const;
 };

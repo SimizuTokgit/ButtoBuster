@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -102,7 +102,7 @@
     <ClCompile Include="Source\Game\Debug\ChargePoseDebugger.cpp" />
     <ClCompile Include="Source\Game\Debug\DebugCheats.cpp" />
     <ClCompile Include="Source\Game\Effect\EffectManager.cpp" />
-    <ClCompile Include="Source\Game\Effect\EnemyMarkerRenderer.cpp" />
+    <ClCompile Include="Source\Game\Effect\MarkerRenderer.cpp" />
     <ClCompile Include="Source\Game\Effect\ScreenFlash.cpp" />
     <ClCompile Include="Source\Game\Effect\ShapeEffectRenderer.cpp" />
     <ClCompile Include="Source\Game\Effect\SlashTrail.cpp" />
@@ -153,6 +153,7 @@
     <ClCompile Include="Source\Game\Player\State\PlayerSpecialState.cpp" />
     <ClCompile Include="Source\Game\Projectile\Needle.cpp" />
     <ClCompile Include="Source\Game\Projectile\NeedlePool.cpp" />
+    <ClCompile Include="Source\Game\Scene\ArenaSceneBuilder.cpp" />
     <ClCompile Include="Source\Game\Scene\GameScene.cpp" />
     <ClCompile Include="Source\Game\Scene\TutorialScene.cpp" />
     <ClCompile Include="Source\Game\Stage\ArenaBoundary.cpp" />
@@ -186,7 +187,9 @@
     <ClInclude Include="Source\Engine\Audio\SoundManager.h" />
     <ClInclude Include="Source\Engine\Core\Behaviour.h" />
     <ClInclude Include="Source\Engine\Core\Component.h" />
+    <ClInclude Include="Source\Engine\Core\ContainerUtil.h" />
     <ClInclude Include="Source\Engine\Core\GameObject.h" />
+    <ClInclude Include="Source\Engine\Core\Mathf.h" />
     <ClInclude Include="Source\Engine\Core\MonoBehaviour.h" />
     <ClInclude Include="Source\Engine\Core\Object.h" />
     <ClInclude Include="Source\Engine\Core\Observer.h" />
@@ -214,7 +217,6 @@
     <ClInclude Include="Source\Engine\Render\Renderer.h" />
     <ClInclude Include="Source\Engine\Render\SkinnedMeshRenderer.h" />
     <ClInclude Include="Source\Engine\Render\Skybox.h" />
-    <ClInclude Include="Source\Engine\Render\SpriteRenderer.h" />
     <ClInclude Include="Source\Engine\UI\UIImage.h" />
     <ClInclude Include="Source\Engine\UI\UIManager.h" />
     <ClInclude Include="Source\Game\Camera\CameraData.h" />
@@ -232,8 +234,9 @@
     <ClInclude Include="Source\Game\Debug\ChargePoseDebugger.h" />
     <ClInclude Include="Source\Game\Debug\ColliderGizmo.h" />
     <ClInclude Include="Source\Game\Debug\DebugCheats.h" />
+    <ClInclude Include="Source\Game\Effect\EffectDraw.h" />
     <ClInclude Include="Source\Game\Effect\EffectManager.h" />
-    <ClInclude Include="Source\Game\Effect\EnemyMarkerRenderer.h" />
+    <ClInclude Include="Source\Game\Effect\MarkerRenderer.h" />
     <ClInclude Include="Source\Game\Effect\ScreenFlash.h" />
     <ClInclude Include="Source\Game\Effect\ShapeEffectRenderer.h" />
     <ClInclude Include="Source\Game\Effect\SlashTrail.h" />
@@ -292,6 +295,7 @@
     <ClInclude Include="Source\Game\Player\State\PlayerSpecialState.h" />
     <ClInclude Include="Source\Game\Projectile\Needle.h" />
     <ClInclude Include="Source\Game\Projectile\NeedlePool.h" />
+    <ClInclude Include="Source\Game\Scene\ArenaSceneBuilder.h" />
     <ClInclude Include="Source\Game\Scene\GameScene.h" />
     <ClInclude Include="Source\Game\Scene\ModeSelectScene.h" />
     <ClInclude Include="Source\Game\Scene\TitleScene.h" />
@@ -308,6 +312,7 @@
     <ClInclude Include="Source\Game\Tutorial\TutorialDirector.h" />
     <ClInclude Include="Source\Game\Tutorial\TutorialSteps.h" />
     <ClInclude Include="Source\Game\UI\ChainCounter.h" />
+    <ClInclude Include="Source\Game\UI\ControlsList.h" />
     <ClInclude Include="Source\Game\UI\GameFont.h" />
     <ClInclude Include="Source\Game\UI\Hud.h" />
     <ClInclude Include="Source\Game\UI\JustDodgeBanner.h" />
@@ -316,6 +321,8 @@
     <ClInclude Include="Source\Game\UI\ResultScreen.h" />
     <ClInclude Include="Source\Game\UI\TitleScreen.h" />
     <ClInclude Include="Source\Game\UI\TutorialScreen.h" />
+    <ClInclude Include="Source\Game\UI\UiDraw.h" />
+    <ClInclude Include="Source\Game\UI\UiLayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

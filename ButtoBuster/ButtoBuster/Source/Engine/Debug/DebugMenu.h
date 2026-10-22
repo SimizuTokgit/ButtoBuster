@@ -29,6 +29,16 @@ private:
     static constexpr int MENU_KEY = KEY_INPUT_F1;
     static constexpr int LINE_HEIGHT = 18;
 
+    // 一覧を書き始める位置 画面の左上からの余白
+    static constexpr int MARGIN = 10;
+
+    // 行の色 見出し トグル ON トグル OFF コマンド 値を見るだけの行
+    static constexpr unsigned int TITLE_COLOR = 0xFFFF00;
+    static constexpr unsigned int TOGGLE_ON_COLOR = 0x00FF88;
+    static constexpr unsigned int TOGGLE_OFF_COLOR = 0x888888;
+    static constexpr unsigned int COMMAND_COLOR = 0xFFFFFF;
+    static constexpr unsigned int INFO_COLOR = 0x80FFFF;
+
     std::vector<Toggle> _toggles;
     std::vector<Command> _commands;
 
@@ -105,25 +115,25 @@ public:
     void Render() {
         if (!_visible) return;
 
-        int y = 10;
+        int y = MARGIN;
 
-        DrawFormatString(10, y, 0xFFFF00, "F1 デバッグ表示   FPS %d", _fps);
+        DrawFormatString(MARGIN, y, TITLE_COLOR, "F1 デバッグ表示   FPS %d", _fps);
         y += LINE_HEIGHT;
 
         for (const auto& toggle : _toggles) {
-            unsigned int color = toggle.value ? 0x00FF88 : 0x888888;
-            DrawFormatString(10, y, color, "%-4s %s  %s",
+            unsigned int color = toggle.value ? TOGGLE_ON_COLOR : TOGGLE_OFF_COLOR;
+            DrawFormatString(MARGIN, y, color, "%-4s %s  %s",
                 KeyName(toggle.key), toggle.name.c_str(), toggle.value ? "ON" : "OFF");
             y += LINE_HEIGHT;
         }
 
         for (const auto& command : _commands) {
-            DrawFormatString(10, y, 0xFFFFFF, "%-4s %s", KeyName(command.key), command.name.c_str());
+            DrawFormatString(MARGIN, y, COMMAND_COLOR, "%-4s %s", KeyName(command.key), command.name.c_str());
             y += LINE_HEIGHT;
         }
 
         for (const auto& makeText : _infos) {
-            DrawFormatString(10, y, 0x80FFFF, "%s", makeText().c_str());
+            DrawFormatString(MARGIN, y, INFO_COLOR, "%s", makeText().c_str());
             y += LINE_HEIGHT;
         }
     }
@@ -168,6 +178,10 @@ private:
         case KEY_INPUT_F11: return "F11";
         case KEY_INPUT_F12: return "F12";
         case KEY_INPUT_1:   return "1";
+        case KEY_INPUT_2:   return "2";
+        case KEY_INPUT_3:   return "3";
+        case KEY_INPUT_4:   return "4";
+        case KEY_INPUT_5:   return "5";
         default:            return "";
         }
     }

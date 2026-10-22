@@ -47,9 +47,14 @@ protected:
     // 攻撃を受けた直後に体を白く光らせる時間
     float _flashTimer = 0.0f;
 
-    // このフレームに壁へぶつかった様子 吹き飛んでいる状態が受け取って跳ね返す
+    // このフレームに壁へぶつかった様子 吹き飛んでいる間に StickToWall が受け取って張り付く
     ArenaWall::Hit _wallHit;
     bool _hasWallHit = false;
+
+    // 張り付いている壁の様子と、張り付いている秒数 時間が来たら HoldOnWall が跳ね返す
+    ArenaWall::Hit _stuckWallHit;
+    float _stickTime = 0.0f;
+    float _stickTimer = 0.0f;
 
     // 吹っ飛ばされ値と、最後に当たってから (吹き飛んでいたら着地してから) の時間
     float _blowValue = 0.0f;
@@ -145,6 +150,9 @@ public:
     // 弱い吹っ飛ばしでも minSpeed だけは跳ねる 吹き飛ぶ状態に入ったときに呼ぶ
     static float GetLaunchUpSpeed(VECTOR knockback, float minSpeed);
 
+    // 壁を割って倒されたときに、割った勢いで上へ跳ねる速さ 場外へ大きく飛んでいくのが見えるように
+    static constexpr float DEFEAT_JUMP_SPEED = 700.0f;
+
     // ----- アニメ -----
 
     void PlayAnimation(const std::string& name, float speed = 1.0f, bool restart = false);
@@ -154,6 +162,9 @@ public:
 
     // 今のアニメの再生位置を直接動かす 途中で鳴らす音は鳴らない 姿勢を止めて見せるときに使う
     void SetAnimationTime(float time);
+
+    // 吹き飛ぶアニメ (BlowIn) を頭から流し、velocity の逆を向く 飛ばされた向きの逆を向いたまま、後ろ向きに飛んでいく
+    void PlayBlowIn(VECTOR velocity);
 
     // ----- 移動 -----
 
@@ -176,8 +187,15 @@ public:
     VECTOR GetVelocity() const;
     bool IsGrounded() const;
 
-    // このフレームに壁へぶつかっていたら、その様子を 1 回だけ渡す 吹き飛んでいる状態が跳ね返すのに使う
-    bool ConsumeWallHit(ArenaWall::Hit& outHit);
+    // ----- 壁に張り付いて跳ね返る (吹き飛んでいる状態が使う) -----
+
+    // 飛んでいる間に毎フレーム呼ぶ このフレームに壁へぶつかっていたら ArenaWall::React に渡す
+    // 跳ね返るとき (Bounce) は、ぶつかった姿のまま壁に止めて張り付く 割ったとき (Break) は場外へ飛んでいく状態に移る
+    ArenaWall::Reaction StickToWall();
+
+    // 張り付いている間に毎フレーム呼ぶ 壁に止めておき (ここで追い打ちを当てられる)、張り付く秒数が過ぎたら跳ね返して true
+    // 跳ね返ったあとの向きとアニメは、呼んだ状態が決める
+    bool HoldOnWall(float deltaTime);
 
     // 前の状態のときにぶつかった分を捨てる 吹き飛び始めたときに呼ぶ
     // 外から来た切り替えはフレームの頭で通るので、歩いて壁を押していた分で跳ね返ってしまわないように
@@ -199,16 +217,18 @@ public:
     // 胴体の真ん中 エフェクトや飛び道具の狙いに使う
     VECTOR GetCenter() const;
 
+    // 体のてっぺん 頭の上に出す合図や光の位置に使う
+    VECTOR GetTopPosition() const;
+
     // 球が体のカプセルに触れているか 飛び道具の当たり判定に使う
     bool IsTouchingSphere(VECTOR center, float radius) const;
 
-    SkinnedMeshRenderer* GetRenderer() const { return _renderer; }
     Animator* GetAnimator() const { return _animator; }
 
 protected:
     void UpdateTimers(float deltaTime);
     void UpdateAnimation(float deltaTime);
-    void StartFlash() { _flashTimer = FLASH_TIME; }
+    void StartFlash() { _flashTimer = FLASH.time; }
     void MarkDefeated() { _isDefeated = true; }
 
     // 壁の内側に収める 状態がこのフレームのうちに跳ね返せるよう、状態の処理より先に呼ぶ
@@ -227,7 +247,12 @@ protected:
     void UpdateBlow(float deltaTime);
 
 private:
-    static constexpr float FLASH_TIME = 0.12f;
+    // 当たった瞬間の白い光 光っている秒数と、光り始めの明るさ 色に 1 + brightness を掛け、だんだん 1 に戻す
+    struct FlashLook {
+        float time;
+        float brightness;
+    };
+    static constexpr FlashLook FLASH = { 0.12f, 2.0f };
 
     // 吹っ飛ばしを伸ばすのは、値が許容値のこの倍まで 伸びすぎて一瞬で場外まで飛ばないように
     // 値もここで頭打ちにする
@@ -236,17 +261,22 @@ private:
     // 伸ばしたときの速さの上限 速すぎると地形をすり抜ける 技そのものがこれより速ければ、技の速さのまま
     static constexpr float KNOCKBACK_SPEED_MAX = 3600.0f;
 
-    // 赤み 許容値に届いたときに、赤をどれだけ強め、緑と青をどれだけ落とすか
-    static constexpr float HEAT_RED = 0.5f;
-    static constexpr float HEAT_FADE = 0.55f;
+    // 赤み 吹っ飛ばされ値が溜まるほど体を赤くする
+    struct HeatLook {
+        float red;          // 許容値に届いたときに、赤をどれだけ強めるか
+        float fade;         // 許容値に届いたときに、緑と青をどれだけ落とすか
+        float pulse;        // 許容値に届いたら赤を脈打たせる強さ 今ぶつければ壁が割れると分かるように
+        float pulseSpeed;   // 脈の速さ ラジアン/秒
+    };
+    static constexpr HeatLook HEAT = { 0.5f, 0.55f, 0.6f, 10.0f };
 
-    // 許容値に届いたら赤を脈打たせる 今ぶつければ壁が割れると分かるように 強さと速さ (ラジアン/秒)
-    static constexpr float HEAT_PULSE = 0.6f;
-    static constexpr float HEAT_PULSE_SPEED = 10.0f;
-
-    // 湯気 許容値のこの割合から出始める 出る数は 1 秒に STEAM_PER_SECOND × 割合 (許容値で頭打ち)
-    static constexpr float STEAM_START_RATIO = 0.3f;
-    static constexpr float STEAM_PER_SECOND = 14.0f;
+    // 湯気 吹っ飛ばされ値が溜まるほど多く立ちのぼらせる
+    struct SteamLook {
+        float startRatio;   // 許容値のこの割合から出始める
+        float perSecond;    // 出る数は 1 秒に perSecond × 割合 (許容値で頭打ち)
+        float heightRate;   // 出す高さ 胴体の真ん中から、体の高さのこの割合だけ上 (頭と肩のあたり)
+    };
+    static constexpr SteamLook STEAM = { 0.3f, 14.0f, 0.35f };
 
     // 当たった瞬間の白い光と、溜まり具合の赤みを体の色に出す
     void UpdateBodyColor();

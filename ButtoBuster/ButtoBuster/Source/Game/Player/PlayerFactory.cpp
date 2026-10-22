@@ -14,16 +14,26 @@
 #include "CharacterBuilder.h"
 #include "SlashTrail.h"
 #include "ColliderGizmo.h"
+#include "EffectManager.h"
 #include "Scene.h"
 #include "GameObject.h"
-#include "Rigidbody.h"
-#include "CapsuleCollider.h"
 #include "SkinnedMeshRenderer.h"
 #include "Animator.h"
 #include "Difficulty.h"
 
 namespace {
     const char* const FOLDER = "Data/Character/Player/";
+
+    // 体の当たり判定のカプセル
+    constexpr CharacterBuilder::BodyShape BODY = { 30.0f, 160.0f, 80.0f };
+
+    // 剣の軌跡 色と、軌跡を引く範囲 wp ボーンから刃に沿って下へ、根元側 (base) と先側 (tip) の距離
+    struct TrailLook {
+        unsigned int color;
+        float base;
+        float tip;
+    };
+    constexpr TrailLook TRAIL = { 0xAADCFF, 20.0f, 110.0f };
 
     const CharacterBuilder::ClipInfo CLIPS[] = {
         { "Anim_Neutral.mv1",      "Neutral",     true  },
@@ -75,15 +85,7 @@ Player* PlayerFactory::Create(VECTOR position) {
     auto* root = scene.CreateGameObject("Player");
     root->transform->localPosition = position;
 
-    auto* rigidbody = root->AddComponent<Rigidbody>();
-    rigidbody->useGravity = true;
-    rigidbody->Register();
-
-    auto* body = root->AddComponent<CapsuleCollider>();
-    body->radius = 30.0f;
-    body->height = 160.0f;
-    body->center = VGet(0.0f, 80.0f, 0.0f);
-    body->Register();
+    auto body = CharacterBuilder::AddBody(root, true, BODY);
 
     // 操作役を先に付けておくと、毎フレーム Player より先に入力を作る
     root->AddComponent<PlayerController>();
@@ -116,10 +118,7 @@ Player* PlayerFactory::Create(VECTOR position) {
     player->GetSpecialEvents().AddObserver(root->AddComponent<SpecialSoundObserver>());
     player->GetSpecialEvents().AddObserver(root->AddComponent<SpecialEffectObserver>());
 
-    auto* model = root->AddChild("PlayerModel");
-
-    // モデルは -Z を向いて作られているので、体の正面 +Z に合わせて半回転させる
-    model->transform->localEulerAngles = VGet(0.0f, 180.0f, 0.0f);
+    auto* model = CharacterBuilder::AddModelRoot(root, "PlayerModel");
 
     auto* renderer = model->AddComponent<SkinnedMeshRenderer>();
     if (!renderer->Load("Data/Character/Player/PC.mv1")) return nullptr;
@@ -134,13 +133,13 @@ Player* PlayerFactory::Create(VECTOR position) {
     CharacterBuilder::AttachToBone(model, renderer, "wp", "Data/Character/Weapon/Sabel/Sabel.mv1");
     CharacterBuilder::AttachToBone(model, renderer, "sayabone", "Data/Character/Player/Saya.mv1");
 
-    // 刃は wp ボーンから下に 100 伸びている
+    // 刃は wp ボーンから下へ伸びているので、軌跡もボーンの下側に引く
     auto* trailObject = model->AddChild("SlashTrail");
     auto* trail = trailObject->AddComponent<SlashTrail>();
-    trail->trailColor = GetColorU8(170, 220, 255, 255);
-    trail->Setup(renderer, "wp", VGet(0.0f, -20.0f, 0.0f), VGet(0.0f, -110.0f, 0.0f), "Data/Effect/SlashLocus.png");
+    trail->trailColor = EffectManager::ToColor(TRAIL.color);
+    trail->Setup(renderer, "wp", VGet(0.0f, -TRAIL.base, 0.0f), VGet(0.0f, -TRAIL.tip, 0.0f), "Data/Effect/SlashLocus.png");
     player->SetTrail(trail);
 
-    player->Setup(animator, renderer, rigidbody, body);
+    player->Setup(animator, renderer, body.rigidbody, body.collider);
     return player;
 }

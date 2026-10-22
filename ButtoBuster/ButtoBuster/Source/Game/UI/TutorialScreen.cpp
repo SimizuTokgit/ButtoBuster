@@ -1,8 +1,9 @@
 ﻿#include "TutorialScreen.h"
 #include "TutorialDirector.h"
 #include "GameFont.h"
+#include "UiDraw.h"
+#include "UiLayer.h"
 #include "DxLib.h"
-#include <cmath>
 #include <cstdio>
 
 namespace {
@@ -41,39 +42,41 @@ namespace {
     // 見出しと、右の「1 / 3」や進み具合のバーとの間 枠を広げるときに空けておく
     constexpr int TITLE_SIDE_GAP = 24;
 
+    // 「1 / 3」と進み具合のバーは金 決定を待つ文字は押すボタンの案内の色 (どちらも UiDraw.h)
     constexpr unsigned int STEP_COLOR = 0xA0A0A0;      // 「STEP 3 / 17」
     constexpr unsigned int TITLE_COLOR = 0xFFFFFF;     // 見出し
     constexpr unsigned int LINE_COLOR = 0xE0E0E0;      // 説明
-    constexpr unsigned int COUNT_COLOR = 0xFFD060;     // 「1 / 3」と進み具合のバー
     constexpr unsigned int CLEAR_COLOR = 0x80FF90;     // できたときの「OK!」
-    constexpr unsigned int CONFIRM_COLOR = 0xAAAAAA;   // 決定を待つ文字
 
-    // 進み具合のバーの大きさ 見出しの高さの真ん中に置く
+    // 進み具合のバーの大きさと枠の色 見出しの高さの真ん中に置く
     constexpr int BAR_WIDTH = 160;
     constexpr int BAR_HEIGHT = 8;
+    constexpr unsigned int BAR_LINE_COLOR = 0xFFFFFF;
 
     // 決定を待つ文字 最後の段だけ本番へ進む
     constexpr const char* CONFIRM_TEXT = "SPACE / 左クリック / A で次へ";
     constexpr const char* FINISH_TEXT = "SPACE / 左クリック / A で本番へ";
 
     // ----- 長押しでスキップ (右上) -----
+    // 溜まり具合のバーは金 (UiDraw.h)
 
     constexpr int SKIP_RIGHT_MARGIN = 40;
     constexpr int SKIP_TOP = 26;
     constexpr GameFont::Size SKIP_SIZE = GameFont::Size::Tiny;
     constexpr int SKIP_BAR_WIDTH = 200;
     constexpr int SKIP_BAR_HEIGHT = 5;
+    constexpr int SKIP_BAR_GAP = 5;             // 文字とバーの間
+    constexpr unsigned int SKIP_BAR_LINE_COLOR = 0x808080;
     constexpr int SKIP_SHADE_ALPHA = 120;
+    constexpr int SKIP_SHADE_MARGIN_X = 8;      // 後ろに敷く黒を、文字とバーより左右と上下に広げる分
+    constexpr int SKIP_SHADE_MARGIN_Y = 5;
     constexpr const char* SKIP_TEXT = "Enter / Start 長押しでスキップ";
     constexpr unsigned int SKIP_COLOR = 0xD0D0D0;
-    constexpr unsigned int SKIP_BAR_COLOR = 0xFFD060;
 }
 
 void TutorialScreen::Setup(TutorialDirector* director) {
     _director = director;
-
-    // 戦いの表示 (Hud) より手前に出す
-    sortingOrder = 12;
+    sortingOrder = UiLayer::TUTORIAL;
 }
 
 void TutorialScreen::Render() {
@@ -119,9 +122,7 @@ void TutorialScreen::DrawPanel(int screenWidth) {
     int rowCount = lineCount + (_director->IsReadStep() ? 1 : 0);
     int bottom = linesY + lineStep * rowCount - LINE_GAP + PANEL_PADDING;
 
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, PANEL_SHADE_ALPHA);
-    DrawBox(left, PANEL_TOP, right, bottom, 0x000000, TRUE);
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    UiDraw::FillBox(left, PANEL_TOP, right, bottom, 0x000000, PANEL_SHADE_ALPHA);
     DrawBox(left, PANEL_TOP, right, bottom, isCleared ? CLEAR_COLOR : PANEL_LINE_COLOR, FALSE);
 
     char text[32];
@@ -137,14 +138,12 @@ void TutorialScreen::DrawPanel(int screenWidth) {
     }
     else if (_director->IsCounted()) {
         snprintf(text, sizeof(text), "%d / %d", _director->GetProgress(), step.count);
-        GameFont::DrawRight(progressRight, titleY, text, COUNT_COLOR, TITLE_SIZE);
+        GameFont::DrawRight(progressRight, titleY, text, UiDraw::GOLD, TITLE_SIZE);
     }
     else if (_director->HasProgressBar()) {
-        int barLeft = progressRight - BAR_WIDTH;
         int barTop = titleY + (titleHeight - BAR_HEIGHT) / 2;
-        int fill = static_cast<int>(BAR_WIDTH * _director->GetProgressRatio());
-        DrawBox(barLeft, barTop, barLeft + fill, barTop + BAR_HEIGHT, COUNT_COLOR, TRUE);
-        DrawBox(barLeft, barTop, progressRight, barTop + BAR_HEIGHT, 0xFFFFFF, FALSE);
+        UiDraw::DrawBar(progressRight - BAR_WIDTH, barTop, BAR_WIDTH, BAR_HEIGHT,
+            _director->GetProgressRatio(), UiDraw::GOLD, BAR_LINE_COLOR);
     }
 
     int y = linesY;
@@ -155,28 +154,25 @@ void TutorialScreen::DrawPanel(int screenWidth) {
     }
 
     // 読む段は、決定を待つ文字を点滅させる
-    if (isWaiting && fmodf(_director->GetStepTime(), 1.0f) < 0.6f) {
+    if (isWaiting && UiDraw::IsBlinkOn(_director->GetStepTime())) {
         const char* confirm = (step.goal == TutorialGoal::Finish) ? FINISH_TEXT : CONFIRM_TEXT;
-        GameFont::DrawRight(progressRight, y, confirm, CONFIRM_COLOR, TEXT_SIZE);
+        GameFont::DrawRight(progressRight, y, confirm, UiDraw::PROMPT_COLOR, TEXT_SIZE);
     }
 }
 
 void TutorialScreen::DrawSkip(int screenWidth) {
     int right = screenWidth - SKIP_RIGHT_MARGIN;
     int textHeight = GameFont::GetHeight(SKIP_SIZE);
-    int barTop = SKIP_TOP + textHeight + 5;
+    int barTop = SKIP_TOP + textHeight + SKIP_BAR_GAP;
     int textWidth = GameFont::GetWidth(SKIP_TEXT, SKIP_SIZE);
-    int shadeLeft = right - ((textWidth > SKIP_BAR_WIDTH) ? textWidth : SKIP_BAR_WIDTH) - 8;
+    int shadeLeft = right - ((textWidth > SKIP_BAR_WIDTH) ? textWidth : SKIP_BAR_WIDTH) - SKIP_SHADE_MARGIN_X;
 
-    SetDrawBlendMode(DX_BLENDMODE_ALPHA, SKIP_SHADE_ALPHA);
-    DrawBox(shadeLeft, SKIP_TOP - 5, right + 8, barTop + SKIP_BAR_HEIGHT + 5, 0x000000, TRUE);
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+    UiDraw::FillBox(shadeLeft, SKIP_TOP - SKIP_SHADE_MARGIN_Y, right + SKIP_SHADE_MARGIN_X,
+        barTop + SKIP_BAR_HEIGHT + SKIP_SHADE_MARGIN_Y, 0x000000, SKIP_SHADE_ALPHA);
 
     GameFont::DrawRight(right, SKIP_TOP, SKIP_TEXT, SKIP_COLOR, SKIP_SIZE);
 
     // 押している間だけ、溜まり具合のバーを伸ばす
-    int barLeft = right - SKIP_BAR_WIDTH;
-    int fill = static_cast<int>(SKIP_BAR_WIDTH * _director->GetSkipRatio());
-    if (fill > 0) DrawBox(barLeft, barTop, barLeft + fill, barTop + SKIP_BAR_HEIGHT, SKIP_BAR_COLOR, TRUE);
-    DrawBox(barLeft, barTop, right, barTop + SKIP_BAR_HEIGHT, 0x808080, FALSE);
+    UiDraw::DrawBar(right - SKIP_BAR_WIDTH, barTop, SKIP_BAR_WIDTH, SKIP_BAR_HEIGHT,
+        _director->GetSkipRatio(), UiDraw::GOLD, SKIP_BAR_LINE_COLOR);
 }

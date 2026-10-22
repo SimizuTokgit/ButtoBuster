@@ -16,6 +16,9 @@ enum class CapsuleDirection {
 /// </summary>
 class CapsuleCollider : public Collider {
 public:
+    // デバッグ描画のカプセルの分割数
+    static constexpr int GIZMO_DIVISION = 8;
+
     /// <summary>カプセルの半径</summary>
     float radius = 0.5f;
 
@@ -90,7 +93,7 @@ public:
     /// </summary>
     /// <param name="color">描画色（デフォルト: 緑）</param>
     /// <param name="filled">塗りつぶすかどうか</param>
-    void DrawGizmo(unsigned int color = 0x00FF00, bool filled = false) const {
+    void DrawGizmo(unsigned int color = GIZMO_COLOR, bool filled = false) const {
         VECTOR point1, point2;
         GetCapsulePoints(point1, point2);
 
@@ -104,7 +107,7 @@ public:
             point1,
             point2,
             radius,
-            8,  // 分割数
+            GIZMO_DIVISION,
             color,
             color,
             filled ? TRUE : FALSE

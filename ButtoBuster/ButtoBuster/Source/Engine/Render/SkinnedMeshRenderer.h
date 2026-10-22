@@ -60,10 +60,7 @@ public:
     /// 描画
     /// </summary>
     void Render() override {
-        if (!enabled || ModelHandle == -1 || !transform) return;
-
-        ApplyTransform();
-        MV1DrawModel(ModelHandle);
+        DrawModel();
     }
 
     /// <summary>
@@ -91,7 +88,7 @@ public:
     }
 
     /// <summary>
-    /// 指定ボーンの回転をオイラー角（デグリー）で取得
+    /// 指定ボーンのワールド回転をQuaternionで取得
     /// ワールド行列からスケールを除去し、回転成分を抽出する
     /// </summary>
     Quaternion GetBoneRotation(int boneIndex) const {

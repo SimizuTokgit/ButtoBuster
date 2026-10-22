@@ -37,7 +37,8 @@ private:
     static constexpr float NEAR_ALPHA = 0.75f;
     static constexpr float VISIBLE_DISTANCE = 700.0f;
 
-    // 色だけの幕の高さ 地面から下と上へどこまで張るか 上へ行くほど消える (画像が読めないとき)
+    // 色だけの幕 (画像が読めないとき) の色 (0xRRGGBB) と高さ 地面から下と上へどこまで張るか 上へ行くほど消える
+    static constexpr unsigned int CURTAIN_COLOR = 0x5AC8FF;
     static constexpr float WALL_BELOW = 200.0f;
     static constexpr float WALL_ABOVE = 450.0f;
 
@@ -45,6 +46,13 @@ private:
     static constexpr int IMPACT_COUNT = 8;
     static constexpr float IMPACT_TIME = 0.5f;
     static constexpr float IMPACT_SPREAD = 8.0f;
+
+    // ぶつかった所の光の色 (0xRRGGBB) 幕より白に寄せて、ぶつかった瞬間を目立たせる
+    // 光の高さ ぶつかった高さから下と上へどこまで広げるか 左右はこの数に分けてぼかす
+    static constexpr unsigned int IMPACT_COLOR = 0xAAE6FF;
+    static constexpr float IMPACT_BELOW = 250.0f;
+    static constexpr float IMPACT_ABOVE = 550.0f;
+    static constexpr int IMPACT_STEPS = 8;
 
     struct Impact {
         // 中心から見た向き ラジアン
@@ -103,8 +111,4 @@ private:
 
     // 幕の上の点 angle は中心から見た向き
     VECTOR PointAt(float angle, float height) const;
-
-    // 四角を三角 2 枚で足す
-    static void AddQuad(std::vector<VERTEX3D>& out,
-        const VERTEX3D& leftBottom, const VERTEX3D& leftTop, const VERTEX3D& rightBottom, const VERTEX3D& rightTop);
 };

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ICharacterState.h"
 #include "AttackData.h"
+#include "PlayerActions.h"
 #include <memory>
 #include <vector>
 
@@ -43,7 +44,7 @@ private:
     bool _isHanging = false;
 
     // 振っている最中に押された次の技 振り終わったら出す
-    Technique _queued = Technique::None;
+    PlayerActions::QueuedTechnique _queued;
 
     // 最後の判定が消えてから経った時間 アニメのフレームで数える あと隙が明けたかを見る
     float _recoveryCount = 0.0f;
@@ -55,9 +56,6 @@ public:
     void Execute(Player& player, const InputInfo& input, float deltaTime) override;
     void Exit(Player& player) override;
     const char* GetName() const override;
-
-    // どの振りか チュートリアルが、空中の斬りを数えるのに使う
-    Kind GetKind() const { return _kind; }
     float GetOpeningTime(const Player& player) const override;
 
 private:

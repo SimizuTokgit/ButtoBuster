@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <vector>
-#include <algorithm>
+#include "ContainerUtil.h"
 
 // 前方宣言
 class Renderer;
@@ -28,22 +28,14 @@ public:
     /// Rendererを登録
     /// </summary>
     void Register(Renderer* renderer) {
-        if (renderer) {
-            auto it = std::find(_renderers.begin(), _renderers.end(), renderer);
-            if (it == _renderers.end()) {
-                _renderers.push_back(renderer);
-            }
-        }
+        ContainerUtil::AddUnique(_renderers, renderer);
     }
 
     /// <summary>
     /// Rendererの登録を解除
     /// </summary>
     void Unregister(Renderer* renderer) {
-        auto it = std::find(_renderers.begin(), _renderers.end(), renderer);
-        if (it != _renderers.end()) {
-            _renderers.erase(it);
-        }
+        ContainerUtil::Remove(_renderers, renderer);
     }
 
     /// <summary>

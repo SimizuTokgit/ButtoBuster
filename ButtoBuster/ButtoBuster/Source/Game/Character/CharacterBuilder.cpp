@@ -7,11 +7,33 @@
 #include "MeshRenderer.h"
 #include "BoneFollower.h"
 #include "SoundManager.h"
+#include "AttackData.h"
+#include "Rigidbody.h"
+#include "CapsuleCollider.h"
 #include <memory>
 
 namespace {
-    // アニメは1秒30フレームで作られている
-    constexpr float ANIMATION_FPS = 30.0f;
+    // モデルは -Z を向いて作られているので、Y 軸でこの角度 (度) 回して体の正面 +Z に合わせる
+    constexpr float MODEL_FACING_YAW = 180.0f;
+}
+
+CharacterBuilder::Body CharacterBuilder::AddBody(GameObject* root, bool useGravity, const BodyShape& shape) {
+    auto* rigidbody = root->AddComponent<Rigidbody>();
+    rigidbody->useGravity = useGravity;
+    rigidbody->Register();
+
+    auto* collider = root->AddComponent<CapsuleCollider>();
+    collider->radius = shape.radius;
+    collider->height = shape.height;
+    collider->center = VGet(0.0f, shape.centerY, 0.0f);
+    collider->Register();
+    return { rigidbody, collider };
+}
+
+GameObject* CharacterBuilder::AddModelRoot(GameObject* root, const char* name) {
+    auto* model = root->AddChild(name);
+    model->transform->localEulerAngles = VGet(0.0f, MODEL_FACING_YAW, 0.0f);
+    return model;
 }
 
 bool CharacterBuilder::LoadAnimations(Animator* animator, const std::string& folder, const ClipInfo* clips, int count) {

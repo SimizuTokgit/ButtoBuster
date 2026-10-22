@@ -22,11 +22,11 @@ struct DifficultyData {
     // 賢さ 0 の敵 (ビーザトール ロックマキナ) は専用の動きなので変えない
     int intelligenceShift = 0;
 
-    // 同時に攻撃してくる数 = 1 + (フェーズ - 1) ÷ tokenStepPhases (maxTokens まで) PhaseData の同じ名前の値を置き換える
+    // 同時に攻撃してくる数 = 1 + (フェーズ - 1) ÷ tokenStepPhases (maxTokens まで) ほかの敵は周りを回って順番を待つ
     int tokenStepPhases = 3;
     int maxTokens = 4;
 
-    // 何フェーズごとに全回復するか PhaseData の healInterval を置き換える
+    // 何フェーズごとに全回復して休ませるか
     // 勝ちはフェーズ 10 なので、3 なら 3 6 9 の 3 回、4 なら 4 8 の 2 回、5 なら 5 の 1 回
     int healInterval = 4;
 
@@ -40,6 +40,10 @@ struct DifficultyData {
 
 // 選んでいる難易度 場面を切り替えると GameObject は全部消えるので、ここに置いて持ち越す
 namespace GameMode {
+    // 賢さの範囲 行動の木で動く敵は 1〜5 (EnemyAI.h の枝の一覧)
+    constexpr int MIN_INTELLIGENCE = 1;
+    constexpr int MAX_INTELLIGENCE = 5;
+
     Difficulty Get();
     void Set(Difficulty difficulty);
 

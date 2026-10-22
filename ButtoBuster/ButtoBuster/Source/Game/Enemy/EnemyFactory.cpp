@@ -6,8 +6,6 @@
 #include "ColliderGizmo.h"
 #include "Scene.h"
 #include "GameObject.h"
-#include "Rigidbody.h"
-#include "CapsuleCollider.h"
 #include "SkinnedMeshRenderer.h"
 #include "Animator.h"
 #include <string>
@@ -49,6 +47,42 @@ namespace {
         { "Anim_Down.mv1",    "Down",    false },
     };
 
+    // 振りかぶる声の大きさ
+    constexpr float ATTACK_VOICE_VOLUME = 0.8f;
+
+    // ----- 音を鳴らすアニメのフレーム (RegisterSounds) 振りかぶりや踏み込みの動きに合わせてある -----
+    // 振りかぶる声と、振る音
+    constexpr struct {
+        float voice;
+        float swing;
+    } GOBLIN_SOUND_FRAMES = { 18.0f, 23.5f };
+
+    // 振りかぶる声と、二段斬りの 1 振り目と 2 振り目の音
+    constexpr struct {
+        float voice;
+        float swing;
+        float swing2;
+    } RED_GOBLIN_SOUND_FRAMES = { 21.0f, 23.0f, 33.0f };
+
+    // 針を撃つ音 (Attack1) と、急降下して刺すときの声と音 (Attack2)
+    constexpr struct {
+        float shoot;
+        float stabVoice;
+        float stab;
+    } BEE_SOUND_FRAMES = { 16.5f, 0.5f, 16.5f };
+
+    // 2 つの振り (Attack1 Attack2) の音と声 踏みつけ (Attack3) の予備動作の音 声 振る音 踏む音
+    constexpr struct {
+        float swing;
+        float voice;
+        float swingAlt;
+        float voiceAlt;
+        float stompSign;
+        float stompVoice;
+        float stompSwish;
+        float stomp;
+    } GOLEM_SOUND_FRAMES = { 23.5f, 29.0f, 23.0f, 28.0f, 13.0f, 41.5f, 50.5f, 57.0f };
+
     template<int N>
     int CountOf(const ClipInfo (&)[N]) {
         return N;
@@ -68,41 +102,41 @@ namespace {
         }
     }
 
-    // 鳴らす時間はアニメのフレーム 振りかぶりや踏み込みの動きに合わせてある
+    // アニメの決まったフレームに音を鳴らす
     // 振りかぶる声は、見えていなくても「来る」と分かる合図になる
     void RegisterSounds(EnemyKind kind, Animator* animator) {
         using CharacterBuilder::AddSound;
 
         switch (kind) {
         case EnemyKind::Goblin:
-            AddSound(animator, "Attack1", 18.0f, "Goblin/Vc_Goblin_Attack", 0.8f);
-            AddSound(animator, "Attack1", 23.5f, "Goblin/SE_Goblin_Attack");
+            AddSound(animator, "Attack1", GOBLIN_SOUND_FRAMES.voice, "Goblin/Vc_Goblin_Attack", ATTACK_VOICE_VOLUME);
+            AddSound(animator, "Attack1", GOBLIN_SOUND_FRAMES.swing, "Goblin/SE_Goblin_Attack");
             break;
 
         case EnemyKind::RedGoblin:
             // 二段斬り 1 振り目と 2 振り目で音を変える
-            AddSound(animator, "Attack1", 21.0f, "RedGoblin/Vc_RedGoblin_Attack", 0.8f);
-            AddSound(animator, "Attack1", 23.0f, "RedGoblin/SE_RedGoblin_Attack1");
-            AddSound(animator, "Attack1", 33.0f, "RedGoblin/SE_RedGoblin_Attack2");
+            AddSound(animator, "Attack1", RED_GOBLIN_SOUND_FRAMES.voice, "RedGoblin/Vc_RedGoblin_Attack", ATTACK_VOICE_VOLUME);
+            AddSound(animator, "Attack1", RED_GOBLIN_SOUND_FRAMES.swing, "RedGoblin/SE_RedGoblin_Attack1");
+            AddSound(animator, "Attack1", RED_GOBLIN_SOUND_FRAMES.swing2, "RedGoblin/SE_RedGoblin_Attack2");
             break;
 
         case EnemyKind::Bee:
-            AddSound(animator, "Attack1", 16.5f, "Bee/SE_Bee_Attack");
-            AddSound(animator, "Attack2", 0.5f, "Bee/Vc_Bee_Attack", 0.8f);
-            AddSound(animator, "Attack2", 16.5f, "Bee/attack_sult_B");
+            AddSound(animator, "Attack1", BEE_SOUND_FRAMES.shoot, "Bee/SE_Bee_Attack");
+            AddSound(animator, "Attack2", BEE_SOUND_FRAMES.stabVoice, "Bee/Vc_Bee_Attack", ATTACK_VOICE_VOLUME);
+            AddSound(animator, "Attack2", BEE_SOUND_FRAMES.stab, "Bee/attack_sult_B");
             AddSound(animator, "Down", 0.0f, "Bee/flapDead");
             break;
 
         case EnemyKind::Golem:
-            AddSound(animator, "Attack1", 23.5f, "Golem/SE_Golem_Attack");
-            AddSound(animator, "Attack1", 29.0f, "Golem/VO_attack");
-            AddSound(animator, "Attack2", 23.0f, "Golem/SE_Golem_Attack");
-            AddSound(animator, "Attack2", 28.0f, "Golem/VO_attack");
+            AddSound(animator, "Attack1", GOLEM_SOUND_FRAMES.swing, "Golem/SE_Golem_Attack");
+            AddSound(animator, "Attack1", GOLEM_SOUND_FRAMES.voice, "Golem/VO_attack");
+            AddSound(animator, "Attack2", GOLEM_SOUND_FRAMES.swingAlt, "Golem/SE_Golem_Attack");
+            AddSound(animator, "Attack2", GOLEM_SOUND_FRAMES.voiceAlt, "Golem/VO_attack");
             // 踏みつけの予備動作 この音を聞いたら離れるか回避する
-            AddSound(animator, "Attack3", 13.0f, "Golem/attack_stompPre");
-            AddSound(animator, "Attack3", 41.5f, "Golem/VO_attack_L");
-            AddSound(animator, "Attack3", 50.5f, "Golem/attack_swish_L");
-            AddSound(animator, "Attack3", 57.0f, "Golem/SE_Golem_SpAttack");
+            AddSound(animator, "Attack3", GOLEM_SOUND_FRAMES.stompSign, "Golem/attack_stompPre");
+            AddSound(animator, "Attack3", GOLEM_SOUND_FRAMES.stompVoice, "Golem/VO_attack_L");
+            AddSound(animator, "Attack3", GOLEM_SOUND_FRAMES.stompSwish, "Golem/attack_swish_L");
+            AddSound(animator, "Attack3", GOLEM_SOUND_FRAMES.stomp, "Golem/SE_Golem_SpAttack");
             AddSound(animator, "Down", 0.0f, "Golem/downing");
             break;
 
@@ -123,24 +157,20 @@ Enemy* EnemyFactory::Create(const EnemyData& data, VECTOR position, Character* t
     auto* root = scene.CreateGameObject(data.displayName);
     root->transform->localPosition = position;
 
-    auto* rigidbody = root->AddComponent<Rigidbody>();
-    rigidbody->useGravity = !data.isFlying;
-    rigidbody->Register();
-
-    auto* body = root->AddComponent<CapsuleCollider>();
-    body->radius = data.bodyRadius * data.scale;
-    body->height = data.bodyHeight * data.scale;
-    body->center = VGet(0.0f, data.bodyCenterY * data.scale, 0.0f);
-    body->Register();
+    // 体の大きさは見た目と同じ倍率で変える 空を飛ぶ敵は重力を受けない
+    CharacterBuilder::BodyShape shape = {
+        data.bodyRadius * data.scale,
+        data.bodyHeight * data.scale,
+        data.bodyCenterY * data.scale,
+    };
+    auto body = CharacterBuilder::AddBody(root, !data.isFlying, shape);
 
     root->AddComponent<EnemyAI>();
     auto* enemy = root->AddComponent<Enemy>();
     root->AddComponent<ColliderGizmo>();
     enemy->Initialize(data, id, target);
 
-    auto* model = root->AddChild("Model");
-    // モデルは -Z を向いて作られているので半回転させて体の正面 +Z に合わせる
-    model->transform->localEulerAngles = VGet(0.0f, 180.0f, 0.0f);
+    auto* model = CharacterBuilder::AddModelRoot(root, "Model");
     model->transform->localScale = VGet(data.scale, data.scale, data.scale);
 
     std::string folder = data.folder;
@@ -169,6 +199,6 @@ Enemy* EnemyFactory::Create(const EnemyData& data, VECTOR position, Character* t
         CharacterBuilder::AttachToBone(model, renderer, data.weaponBone, data.weaponModel);
     }
 
-    enemy->Setup(animator, renderer, rigidbody, body);
+    enemy->Setup(animator, renderer, body.rigidbody, body.collider);
     return enemy;
 }

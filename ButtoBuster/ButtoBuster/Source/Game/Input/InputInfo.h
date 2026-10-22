@@ -14,6 +14,9 @@ enum class Technique {
     Special,        // プレイヤーだけが使う 必殺技 ゲージが満タンのときに出る
 };
 
+// スティックを倒したとみなす量 move の長さがこれより大きければ動かしている
+constexpr float MOVE_INPUT_THRESHOLD = 0.1f;
+
 // キャラへの入力
 // 人が操作するときは PlayerController AI が動かすときは EnemyAI がこれを作る
 // キャラ本体はどちらが作ったかを知らない

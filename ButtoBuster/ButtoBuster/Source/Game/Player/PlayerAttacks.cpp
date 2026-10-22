@@ -1,10 +1,17 @@
 ﻿#include "PlayerAttacks.h"
 #include "PlayerData.h"
+#include "JustDodgeEvent.h"
+#include "EffectManager.h"
 
 namespace {
-    // 反撃の弧の色 ジャスト回避と同じ水色にして、反撃だと分かるようにする
-    COLOR_U8 GetCounterArcColor() {
-        return GetColorU8(120, 230, 255, 255);
+    // 1 2 段目の斬りの弧の色 (0xRRGGBB)
+    constexpr unsigned int SLASH_ARC_COLOR = 0xAAD7FF;
+
+    // 段の番号を 0〜SLASH_COUNT - 1 に収める
+    int ClampSlashIndex(int index) {
+        if (index < 0) return 0;
+        if (index >= PlayerAttacks::SLASH_COUNT) return PlayerAttacks::SLASH_COUNT - 1;
+        return index;
     }
 
     AttackData CreateSlash1() {
@@ -23,7 +30,7 @@ namespace {
         attack.hasArc = true;
         attack.arcTilt = 25.0f;
         attack.arcSwing = 1.0f;
-        attack.arcColor = GetColorU8(170, 215, 255, 255);
+        attack.arcColor = EffectManager::ToColor(SLASH_ARC_COLOR);
         return attack;
     }
 
@@ -44,7 +51,7 @@ namespace {
         attack.hasArc = true;
         attack.arcTilt = -25.0f;
         attack.arcSwing = -1.0f;
-        attack.arcColor = GetColorU8(170, 215, 255, 255);
+        attack.arcColor = EffectManager::ToColor(SLASH_ARC_COLOR);
         return attack;
     }
 
@@ -191,9 +198,11 @@ namespace {
         return attack;
     }
 
-    // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつけ、着地した場所から衝撃波で周りの敵を吹き飛ばす
-    // 振りかぶりはヘビーアタックと同じ大振りを使う
+    // 空中の強攻撃 (攻撃 + ガード) 真下へ叩きつけ、着地したら前の敵を吹き飛ばす
+    // 振りかぶりはヘビーアタックと同じ大振りを使う 当たる範囲 (届く距離と角度) は溜め斬りの 3 段目と同じ
     AttackData CreateAirSlam() {
+        const AttackData charged = CreateCharged(PlayerAttacks::CHARGE_LEVEL_MAX);
+
         AttackData attack;
         attack.animationName = "Attack3";
         attack.damage = 30;
@@ -202,8 +211,24 @@ namespace {
         attack.hitStop = 0.12f;
         attack.shake = 14.0f;
         attack.zoomPunch = 6.0f;
+        attack.reach = charged.reach;
+        attack.arcDegree = charged.arcDegree;
         attack.arcColor = GetColorU8(255, 190, 110, 255);
-        attack.shockwaveRadius = PlayerAttacks::AIR_SLAM_RADIUS;
+
+        // 着地した場所に広げる衝撃波 見た目だけで、当たりは上の扇形
+        attack.shockwaveRadius = 380.0f;
+        return attack;
+    }
+
+    // 叩きつけで落ちる途中に、宙の敵 (空中の斬りで浮かせた敵) を捕まえる
+    // のけぞらせて、自分と同じ速さで真下へ落とす (PlayerAirSlamState) 敵は地面で跳ね上がる (EnemyDamageState)
+    // 届く高さは、足元より下と、自分の体の高さまで
+    AttackData CreateAirSlamCatch() {
+        AttackData attack;
+        attack.damage = 20;
+        attack.knockback = 0.0f;
+        attack.heightMin = -1000.0f;
+        attack.isAirOnly = true;
         return attack;
     }
 
@@ -223,9 +248,7 @@ namespace {
 
 const AttackData& PlayerAttacks::GetSlash(int index) {
     static const AttackData slashes[SLASH_COUNT] = { CreateSlash1(), CreateSlash2(), CreateSlash3() };
-    if (index < 0) index = 0;
-    if (index >= SLASH_COUNT) index = SLASH_COUNT - 1;
-    return slashes[index];
+    return slashes[ClampSlashIndex(index)];
 }
 
 const AttackData& PlayerAttacks::GetStrong() {
@@ -251,9 +274,7 @@ const AttackData& PlayerAttacks::GetAirSlash(int index) {
     static const AttackData slashes[SLASH_COUNT] = {
         CreateAirSlash(CreateSlash1()), CreateAirSlash(CreateSlash2()), CreateAirSlash(CreateSlash3()),
     };
-    if (index < 0) index = 0;
-    if (index >= SLASH_COUNT) index = SLASH_COUNT - 1;
-    return slashes[index];
+    return slashes[ClampSlashIndex(index)];
 }
 
 const AttackData& PlayerAttacks::GetAirSlam() {
@@ -261,16 +282,28 @@ const AttackData& PlayerAttacks::GetAirSlam() {
     return slam;
 }
 
+const AttackData& PlayerAttacks::GetAirSlamCatch() {
+    static const AttackData slamCatch = CreateAirSlamCatch();
+    return slamCatch;
+}
+
 const AttackData& PlayerAttacks::GetSpecial() {
     static const AttackData special = CreateSpecial();
     return special;
 }
 
-AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerData& playerData) {
+AttackData PlayerAttacks::ApplyRates(const AttackData& base, const PlayerData& playerData, int staleCount) {
+    float stalePower = 1.0f - playerData.stalePowerDownPerUse * staleCount;
+
     AttackData attack = base;
-    attack.damage = static_cast<int>(base.damage * playerData.damageRate + 0.5f);
-    attack.knockback = base.knockback * playerData.knockbackRate;
+    attack.damage = static_cast<int>(base.damage * playerData.damageRate * stalePower + 0.5f);
+    attack.knockback = base.knockback * playerData.knockbackRate * stalePower;
+    attack.recovery = base.recovery * GetStaleRecoveryRate(staleCount, playerData);
     return attack;
+}
+
+float PlayerAttacks::GetStaleRecoveryRate(int staleCount, const PlayerData& playerData) {
+    return 1.0f + playerData.staleRecoveryUpPerUse * staleCount;
 }
 
 AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerData& playerData) {
@@ -288,7 +321,7 @@ AttackData PlayerAttacks::CreateCounter(const AttackData& base, const PlayerData
     attack.hitStop = base.hitStop + playerData.counterHitStopAdd;
     attack.shake = base.shake + playerData.counterShakeAdd;
     attack.zoomPunch = base.zoomPunch + playerData.counterZoomAdd;
-    attack.arcColor = GetCounterArcColor();
+    attack.arcColor = EffectManager::ToColor(JUST_DODGE_COLOR);
     return attack;
 }
 
@@ -298,6 +331,6 @@ AttackData PlayerAttacks::CreateCounterCombo(const AttackData& base, const Playe
     // のけぞりと浮かせはそのまま残し、締めまでつなげられるようにする 弧の色で反撃の続きだと分かるように
     // 重くした分で許容値に届けば、のけぞりの技でも吹き飛ぶ (Enemy::TakeHit)
     attack.damage = static_cast<int>(base.damage * playerData.counterDamageRate);
-    attack.arcColor = GetCounterArcColor();
+    attack.arcColor = EffectManager::ToColor(JUST_DODGE_COLOR);
     return attack;
 }

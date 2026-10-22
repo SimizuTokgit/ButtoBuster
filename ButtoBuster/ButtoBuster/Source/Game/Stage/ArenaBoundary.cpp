@@ -1,20 +1,11 @@
 ﻿#include "ArenaBoundary.h"
 #include "StageBuilder.h"
 #include "Transform.h"
+#include "EffectManager.h"
+#include "EffectDraw.h"
 #include <cmath>
 
-namespace {
-    VERTEX3D MakeVertex(VECTOR position, COLOR_U8 color, float alpha, float u = 0.0f, float v = 0.0f) {
-        VERTEX3D vertex{};
-        vertex.pos = position;
-        vertex.norm = VGet(0.0f, 1.0f, 0.0f);
-        vertex.dif = GetColorU8(color.r, color.g, color.b, static_cast<int>(alpha * 255.0f));
-        vertex.spc = GetColorU8(0, 0, 0, 0);
-        vertex.u = u;
-        vertex.v = v;
-        return vertex;
-    }
-}
+using namespace EffectDraw;
 
 ArenaBoundary::~ArenaBoundary() {
     if (_instance == this) _instance = nullptr;
@@ -51,7 +42,7 @@ void ArenaBoundary::Flash(VECTOR position, float strength, float seconds, float 
     impact.height = position.y;
     impact.strength = strength;
     impact.life = seconds;
-    impact.spread = spreadDegree * DX_PI_F / 180.0f;
+    impact.spread = Transform::Deg2Rad(spreadDegree);
     impact.startTime = GetNowCount();
 }
 
@@ -74,23 +65,13 @@ void ArenaBoundary::Render() {
 
     if (_vertices.empty() && _glowVertices.empty()) return;
 
-    SetUseZBufferFlag(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseLighting(FALSE);
-    SetUseBackCulling(FALSE);
-    SetDrawBlendMode(DX_BLENDMODE_ADD, 255);
-
+    TransparentScope scope(DX_BLENDMODE_ADD);
     if (!_vertices.empty()) {
         DrawPolygon3D(_vertices.data(), static_cast<int>(_vertices.size() / 3), _wallGraph, TRUE);
     }
     if (!_glowVertices.empty()) {
         DrawPolygon3D(_glowVertices.data(), static_cast<int>(_glowVertices.size() / 3), DX_NONE_GRAPH, TRUE);
     }
-
-    SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-    SetUseLighting(TRUE);
-    SetWriteZBufferFlag(FALSE);
-    SetUseZBufferFlag(FALSE);
 }
 
 void ArenaBoundary::AddPanels() {
@@ -112,7 +93,7 @@ void ArenaBoundary::AddPanels() {
         for (int row = 0; row < PANEL_ROWS; ++row) {
             float bottomA = _groundHeights[i] - PANEL_SINK + PANEL_HEIGHT * row;
             float bottomB = _groundHeights[next] - PANEL_SINK + PANEL_HEIGHT * row;
-            AddQuad(_vertices,
+            PushQuad(_vertices,
                 MakeVertex(PointAt(angleA, bottomA), color, alpha, uA, 1.0f),
                 MakeVertex(PointAt(angleA, bottomA + PANEL_HEIGHT), color, alpha, uA, 0.0f),
                 MakeVertex(PointAt(angleB, bottomB), color, alpha, uB, 1.0f),
@@ -122,7 +103,7 @@ void ArenaBoundary::AddPanels() {
 }
 
 void ArenaBoundary::AddCurtain() {
-    COLOR_U8 color = GetColorU8(90, 200, 255, 255);
+    COLOR_U8 color = EffectManager::ToColor(CURTAIN_COLOR);
 
     for (int i = 0; i < SEGMENT_COUNT; ++i) {
         int next = (i + 1) % SEGMENT_COUNT;
@@ -133,7 +114,7 @@ void ArenaBoundary::AddCurtain() {
         // 上に行くほど消える
         float groundA = _groundHeights[i];
         float groundB = _groundHeights[next];
-        AddQuad(_glowVertices,
+        PushQuad(_glowVertices,
             MakeVertex(PointAt(angleA, groundA - WALL_BELOW), color, alpha),
             MakeVertex(PointAt(angleA, groundA + WALL_ABOVE), color, 0.0f),
             MakeVertex(PointAt(angleB, groundB - WALL_BELOW), color, alpha),
@@ -142,34 +123,29 @@ void ArenaBoundary::AddCurtain() {
 }
 
 void ArenaBoundary::AddImpactGlow(const Impact& impact, float fade) {
-    constexpr int STEPS = 8;
-    constexpr float BELOW = 250.0f;
-    constexpr float ABOVE = 550.0f;
-
-    // 近づいたときの幕より白に寄せて、ぶつかった瞬間を目立たせる
-    COLOR_U8 color = GetColorU8(170, 230, 255, 255);
+    COLOR_U8 color = EffectManager::ToColor(IMPACT_COLOR);
 
     float spread = impact.spread;
-    float bottom = impact.height - BELOW;
-    float top = impact.height + ABOVE;
+    float bottom = impact.height - IMPACT_BELOW;
+    float top = impact.height + IMPACT_ABOVE;
     float peak = impact.strength * fade;
 
-    for (int i = 0; i < STEPS; ++i) {
+    for (int i = 0; i < IMPACT_STEPS; ++i) {
         // ぶつかった所がいちばん明るく、左右の端で消える 模様の板の上に、色だけの光として重ねる
-        float rateA = -1.0f + 2.0f * i / STEPS;
-        float rateB = -1.0f + 2.0f * (i + 1) / STEPS;
+        float rateA = -1.0f + 2.0f * i / IMPACT_STEPS;
+        float rateB = -1.0f + 2.0f * (i + 1) / IMPACT_STEPS;
         float angleA = impact.angle + spread * rateA;
         float angleB = impact.angle + spread * rateB;
         float alphaA = peak * (1.0f - fabsf(rateA));
         float alphaB = peak * (1.0f - fabsf(rateB));
 
         // ぶつかった高さを明るい芯にして、上下へ消していく
-        AddQuad(_glowVertices,
+        PushQuad(_glowVertices,
             MakeVertex(PointAt(angleA, bottom), color, 0.0f),
             MakeVertex(PointAt(angleA, impact.height), color, alphaA),
             MakeVertex(PointAt(angleB, bottom), color, 0.0f),
             MakeVertex(PointAt(angleB, impact.height), color, alphaB));
-        AddQuad(_glowVertices,
+        PushQuad(_glowVertices,
             MakeVertex(PointAt(angleA, impact.height), color, alphaA),
             MakeVertex(PointAt(angleA, top), color, 0.0f),
             MakeVertex(PointAt(angleB, impact.height), color, alphaB),
@@ -192,15 +168,4 @@ float ArenaBoundary::GetAlphaAt(float angleA, float angleB) const {
 
 VECTOR ArenaBoundary::PointAt(float angle, float height) const {
     return VGet(_center.x + cosf(angle) * _radius, height, _center.z + sinf(angle) * _radius);
-}
-
-void ArenaBoundary::AddQuad(std::vector<VERTEX3D>& out,
-    const VERTEX3D& leftBottom, const VERTEX3D& leftTop, const VERTEX3D& rightBottom, const VERTEX3D& rightTop) {
-    out.push_back(leftBottom);
-    out.push_back(leftTop);
-    out.push_back(rightBottom);
-
-    out.push_back(rightBottom);
-    out.push_back(leftTop);
-    out.push_back(rightTop);
 }

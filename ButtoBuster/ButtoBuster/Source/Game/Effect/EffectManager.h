@@ -2,6 +2,7 @@
 #include "MonoBehaviour.h"
 #include "ShapeEffectRenderer.h"
 #include "SpriteEffectRenderer.h"
+#include "MarkerRenderer.h"
 #include "DxLib.h"
 
 class ParticleSystem;
@@ -50,6 +51,7 @@ private:
 
     ShapeEffectRenderer* _shapes = nullptr;
     SpriteEffectRenderer* _sprites = nullptr;
+    MarkerRenderer* _markers = nullptr;
     ScreenFlash* _screenFlash = nullptr;
     CameraFollow* _camera = nullptr;
 
@@ -60,6 +62,11 @@ private:
 
 public:
     static EffectManager* Get() { return _instance; }
+
+    // 0xRRGGBB の色を COLOR_U8 にする FlashScreen と同じ書き方の色を、輪や雷にも使えるように
+    static COLOR_U8 ToColor(unsigned int rgb) {
+        return GetColorU8((rgb >> 16) & 0xFF, (rgb >> 8) & 0xFF, rgb & 0xFF, 255);
+    }
 
     ~EffectManager() override;
 
@@ -94,8 +101,10 @@ public:
     // 足元から広がる輪と、跳ね上がる破片
     void PlayShockwave(VECTOR groundPosition, float radius, COLOR_U8 color);
 
-    // 範囲攻撃が来る場所を先に見せる 輪が広がりきった瞬間に当たる
-    void PlayAreaWarning(VECTOR groundPosition, float radius, float seconds);
+    // このフレームに、地面へ攻撃範囲を出す 振りかぶっている間、毎フレーム呼ぶ (MarkerRenderer)
+    void ShowRange(const MarkerRenderer::RangeDesc& desc) {
+        if (_markers) _markers->ShowRange(desc);
+    }
 
     // ----- 画像の板 -----
     // 画像はここで読んだものを使い、場所 大きさ 長さ 濃さは desc で決める (desc.graph は入れなくてよい)
@@ -129,7 +138,6 @@ public:
 
     // デバッグのスロー再生用 ヒットストップが明けたらこの速さに戻る
     void SetBaseTimeScale(float scale);
-    float GetBaseTimeScale() const { return _baseTimeScale; }
 
 private:
     ParticleSystem* CreateSystem(const char* name, int graph);

@@ -1,5 +1,6 @@
 ﻿#include "UIManager.h"
 #include "UIImage.h"
+#include <algorithm>
 
 void UIManager::RenderAll() {
     // sortingOrder順にソート（小さい値が先に描画される）
